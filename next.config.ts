@@ -23,15 +23,11 @@ const nextConfig: NextConfig = {
   },
 }
 
-const sentryEnabled = !!process.env.NEXT_PUBLIC_SENTRY_DSN
-
-export default sentryEnabled
-  ? withSentryConfig(nextConfig, {
-      silent: true,
-      widenClientFileUpload: true,
-      tunnelRoute: "/monitoring",
-      disableLogger: true,
-      automaticVercelMonitors: true,
-      sourcemaps: { disable: false, deleteSourcemapsAfterUpload: true },
-    })
-  : nextConfig
+export default withSentryConfig(nextConfig, {
+  silent: true,
+  widenClientFileUpload: true,
+  tunnelRoute: "/monitoring",
+  disableLogger: true,
+  automaticVercelMonitors: true,
+  sourcemaps: { disable: true },
+})
