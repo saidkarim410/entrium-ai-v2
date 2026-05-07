@@ -49,11 +49,13 @@ export async function getCurrentProfile() {
   } = await supabase.auth.getUser()
   if (!user) return null
 
-  const { data: profile } = await supabase
+  // Use admin client for the SELECT — RLS-tied SELECT can fail under SSR
+  // when the auth context isn't fully propagated, causing redirect loops.
+  const { data: profile } = await supabaseAdmin
     .from("profiles")
     .select("*")
     .eq("id", user.id)
-    .single()
+    .maybeSingle()
 
   if (profile) return profile
 
