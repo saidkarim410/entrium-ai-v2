@@ -9,15 +9,59 @@
 
 ## 1. Production URLs & Resources
 
-- **Live site:** https://entrium-ai-v2.vercel.app
+- **Live site (v2):** https://entrium-ai-v2.vercel.app
+- **Original brand site:** https://entrium.ai · hello@entrium.ai · t.me/entriumuzb
 - **GitHub repo:** https://github.com/saidkarim410/entrium-ai-v2 (auto-deploy on push to `main`)
 - **Vercel project:** `prj_JiUijuqXlVnuG6OVjLBXf5o7pUtq` (team `team_MPhSFfSFW1AFxP4nHcdpGxpZ`)
 - **Supabase project:** `zcbbpqfdyqavdubzrgaf` (`https://zcbbpqfdyqavdubzrgaf.supabase.co`)
 - **Old v1 (legacy):** https://github.com/saidkarim410/entrium-ai (folder `C:\Users\Huawei\Documents\entrium-ai`)
 - **Telegram bot:** `@entriumleedbot` (chat group `-5273439557`)
+- **Telegram channel (public):** https://t.me/entriumuzb
 
-### Owner
-Саидкарим Турсунбаев · `tursunbaev505@gmail.com` · Telegram `@Tursunbaev01`
+### Owner & Brand
+- Саидкарим Турсунбаев · `tursunbaev505@gmail.com` · Telegram `@Tursunbaev01`
+- Brand contact: `hello@entrium.ai`
+- Tagline (RU): «Твой шанс на MIT · Stanford · Cambridge · ETH»
+- Mission (RU): «Помогаем студентам из Узбекистана и СНГ поступать в Harvard, Oxford, MIT — с AI-анализом профиля и дорожной картой, построенной под каждого.»
+- Footer: «© 2026 Entrium · Сделано в Узбекистане»
+
+---
+
+## 1.5. Product Model (from production entrium.ai)
+
+**Pricing:**
+
+| Tier | Price | What's in |
+|---|---|---|
+| **One-time AI Analysis** | $5 | AI-анализ профиля по 10 параметрам · Реалистичная оценка по каждому вузу · Конкретные next steps на 3 месяца · Доступ навсегда |
+| **Subscription (Pro)** | $18/мес | Всё из разовой + AI-тренер для эссе (3 режима) + Тренировка интервью + Персональный трекер с месячным планом |
+
+Payments: Stripe. Cancel anytime. No hidden fees.
+
+**4 core tools (consolidated from v1's 8):**
+
+1. **AI · Анализ профиля** — глубокий разбор шансов поступления, реалистичная оценка по 10-балльной шкале, сравнение с типичными профилями поступивших, рекомендации до конца года.
+2. **AI · Эссе** — три режима (Coach / Analyze / Humanize). Адаптировано под Common App + UCAS промпты. Распознаёт «AI-почерк», помогает писать живо.
+3. **AI · Интервью** — реальные вопросы под конкретный вуз и программу, оценка по STAR-методу, 10-балльная шкала, RU/EN/UZ.
+4. **Процесс · Трекер** — персональный план месяц за месяцем (тесты, эссе, активности, дедлайны). Перегенерация при изменении обстоятельств.
+
+**3-step user journey:**
+1. Заполни профиль — один экран, никакой бюрократии
+2. AI разберёт профиль — глубокий анализ за минуту
+3. Получи персональный план — дорожная карта по месяцам
+
+**Stats badges (для лендинга):**
+- 1500+ университетов
+- 300+ стипендий
+- 8 AI-инструментов
+
+**FAQ канон (используется на лендинге):**
+- «Это просто ChatGPT с другим интерфейсом?» — нет, специализированный promptarium + база QS + знание реалий поступления из СНГ
+- «Что с моими данными?» — RLS, encrypted, удаляются по запросу
+- «Можно отменить подписку?» — да, в любой момент через Stripe
+- «Что если AI-анализ не помог?» — refund политика
+- «Платформа только на русском?» — RU + EN + UZ
+- «Зачем если есть консультант?» — дополняет, не заменяет; работает 24/7
 
 ---
 
@@ -413,6 +457,75 @@ For Telegram Login Widget to work, run `/setdomain` in `@BotFather` → `entrium
 
 ---
 
+## 7.5. Design System (from production entrium.ai)
+
+The original entrium.ai brand uses a distinctive **dark editorial aesthetic** — gold + cream on near-black, serif typography for emphasis, mono labels for taxonomy. Adopt these tokens when polishing v2 UI.
+
+### Typography
+```
+Display / Headings:  Playfair Display (serif) or Cinzel (uppercase, letter-spaced)
+Body / Reading:      EB Garamond (serif, generous line-height ~1.85)
+UI / Buttons:        Inter (or system sans)
+Labels / Tags:       DM Mono (uppercase, letter-spacing 0.12-0.15em, 9-11px)
+```
+
+Italic serif is used for emphasis on university names (e.g., *Harvard, Oxford, MIT*).
+
+### Color palette
+```
+Backgrounds:
+  --bg            #0a0a0a   (page bg)
+  --bg1           #121212   (card bg)
+  --border        rgba(255,255,255,0.08)
+  --border2       rgba(255,255,255,0.16)
+
+Text:
+  --cream         #fce8b8   (primary text on dark)
+  --cream2        #d4c8a8   (secondary)
+  --cream3        rgba(252,232,184,0.5)  (muted)
+
+Accent / state:
+  --gold          #c9a84c   (primary accent — buttons, highlights)
+  --gold3         #e0c970   (lighter gold for hovers)
+  --green         #5aaa78   (success, ≥8/10 scores)
+  --amber         #c9a84c   (warning, ≥6/10 scores)
+  --red           #e05050   (error, <6/10 scores)
+  --purple        #9b6fc4   (Humanizer accent)
+  --blue          #4a9ec4   (Universities accent)
+
+Score color logic:
+  score >= 8  → #5aaa78  (green)
+  score >= 6  → #c9a84c  (amber/gold)
+  score <  6  → #e05050  (red)
+```
+
+### Card pattern (used everywhere)
+- Background: `var(--bg1)`
+- Border: `1px solid var(--border)`
+- Top accent stripe: `linear-gradient(90deg, transparent, {accent}, transparent)` height 2px
+- Padding: 20-28px
+- Headers in mono uppercase: «● AI ЖИВОЙ ПОИСК», «✦ РЕЗУЛЬТАТ ТРЕНЕРА»
+
+### Button styles
+- Primary: gold gradient `linear-gradient(135deg,#5a2d8a,#9b6fc4)` (purple-pink for AI actions) OR solid gold for primary CTAs
+- Secondary: transparent with `border: 1px solid var(--border)`
+- Mono uppercase text, letter-spacing 0.15em, 11px
+
+### Section labels
+Each section uses small mono caps as eyebrow: «● AI · АНАЛИЗ», «● ПОСТУПЛЕНИЕ · 2026», «ЦЕНЫ», «КАК ЭТО РАБОТАЕТ»
+
+### Mockup card pattern
+Throughout the landing: each tool feature has a mini "live mockup" card showing what the AI output looks like (e.g., score 7.6/10 with strengths list, essay draft with feedback, interview question with score). Cards have:
+- mono label top-left (e.g., "AI · Результат")
+- numeric score top-right with /10 suffix
+- 3-4 list items with check/cross icons
+- thin colored top border per category
+
+### Hero animation
+The original landing rotates through "MIT · Stanford · Cambridge · ETH" with italic serif. Adopt similar rotation in v2 hero.
+
+---
+
 ## 8. Working Conventions
 
 - **TypeScript strict** — no `any` unless interfacing with untyped third-party
@@ -428,18 +541,23 @@ For Telegram Login Widget to work, run `/setdomain` in `@BotFather` → `entrium
 
 ## 9. Roadmap (priority order)
 
-| # | Feature | Status |
-|---|---|---|
-| 1 | Stripe Pro подписка | Not started |
-| 2 | Custom domain (e.g. `entrium.ai`) | Not started |
-| 3 | PostHog аналитика | Code ready, needs key |
-| 4 | Email custom SMTP (Resend) | Not started |
-| 5 | Mobile sidebar (currently desktop-only) | Not started |
-| 6 | Profile onboarding (port `obProfile` flow from v1) | Not started |
-| 7 | AI Analyzer (radar chart based on `DIAG_CATS`) | Not started |
-| 8 | Real-time deadlines tracker (port from v1) | Not started |
-| 9 | Cost calculator (port `calcCosts` + `COST_DATA` from v1) | Not started |
-| 10 | Reference letter generator (port from v1) | Not started |
+Based on the production model at entrium.ai:
+
+| # | Feature | Status | Why |
+|---|---|---|---|
+| 1 | **Stripe** ($5 one-time + $18/mo Pro) | Not started | Core monetization model from entrium.ai |
+| 2 | **Custom domain `entrium.ai`** + transfer DNS | Not started | Brand consolidation |
+| 3 | **Onboarding flow** (port `obProfile` from v1: 5-step wizard) | Not started | Required for AI Analyzer to work |
+| 4 | **AI Analyzer** with radar chart (`DIAG_CATS` from v1) | Not started | Hero feature on landing |
+| 5 | **Adopt brand design tokens** (Playfair + Cinzel + EB Garamond, gold/cream palette) | Not started | Match entrium.ai aesthetic |
+| 6 | **Refactor 8 tools → 4 tools UI** (Analyzer, Essay 3-mode, Interview, Tracker) | Not started | Match production model |
+| 7 | **Mockup cards on landing** (live AI output previews) | Not started | Conversion-critical pattern |
+| 8 | PostHog аналитика | Code ready, needs key | — |
+| 9 | Email custom SMTP (Resend) | Not started | — |
+| 10 | Mobile sidebar (currently desktop-only) | Not started | — |
+| 11 | Cost calculator (port `calcCosts` + `COST_DATA` from v1) | Not started | — |
+| 12 | Reference letter generator (port from v1) | Not started | — |
+| 13 | Real-time deadlines tracker (port from v1) | Not started | — |
 
 ---
 
