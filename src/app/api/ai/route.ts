@@ -2,6 +2,10 @@ import { generateText } from "ai"
 import { z } from "zod"
 import { models } from "@/lib/ai"
 import { SYSTEM_PROMPTS, type ToolKey } from "@/lib/ai/prompts"
+import {
+  searchUniversities, searchScholarships,
+  formatUniversitiesContext, formatScholarshipsContext,
+} from "@/lib/ai/rag"
 import { getCurrentUser } from "@/lib/supabase/server"
 import { checkUsage, recordUsage, consumeBonus } from "@/lib/rate-limit"
 
@@ -48,10 +52,24 @@ export async function POST(req: Request) {
   const model = usage.tier === "pro" ? models.claudeSonnet : models.claudeHaiku
   const modelId = usage.tier === "pro" ? "claude-sonnet-4-5" : "claude-haiku-4-5"
 
+  // RAG enrichment for scholarship/university tools
+  let systemPrompt: string = system_override ?? SYSTEM_PROMPTS[tool]
+  if (!system_override && (tool === "university" || tool === "scholarship")) {
+    try {
+      const ctx =
+        tool === "university"
+          ? formatUniversitiesContext(await searchUniversities(userMessage, 12))
+          : formatScholarshipsContext(await searchScholarships(userMessage, 12))
+      if (ctx) systemPrompt = `${SYSTEM_PROMPTS[tool]}\n\n---\n\n${ctx}`
+    } catch (err) {
+      console.error("RAG search failed:", err)
+    }
+  }
+
   try {
     const result = await generateText({
       model,
-      system: system_override ?? SYSTEM_PROMPTS[tool],
+      system: systemPrompt,
       messages: [{ role: "user", content: userMessage }],
       ...(max_tokens && usage.tier === "pro" ? { maxOutputTokens: Math.min(max_tokens, 16000) } : {}),
     })

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { LangSwitcher } from "@/components/lang-switcher"
 import {
-  Sparkles, Brain, Sparkles as SparklesIcon, Map, FileText, Wand2,
+  Sparkles, Brain, Sparkles as SparklesIcon, Map, FileText,
   MessageSquare, Award, GraduationCap, LogOut, LayoutDashboard,
 } from "lucide-react"
 
@@ -23,7 +23,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     { slug: "university", name: t.sidebar.tool_university, icon: GraduationCap },
     { slug: "scholarship", name: t.sidebar.tool_scholarship, icon: Award },
     { slug: "essay", name: t.sidebar.tool_essay, icon: FileText },
-    { slug: "humanizer", name: t.sidebar.tool_humanizer, icon: Wand2 },
     { slug: "interview", name: t.sidebar.tool_interview, icon: MessageSquare },
   ]
   const browse = [
