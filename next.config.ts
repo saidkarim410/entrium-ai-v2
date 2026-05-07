@@ -1,5 +1,6 @@
 import type { NextConfig } from "next"
 import path from "path"
+import { withSentryConfig } from "@sentry/nextjs"
 
 const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
@@ -18,13 +19,19 @@ const nextConfig: NextConfig = {
     },
   },
   async headers() {
-    return [
-      {
-        source: "/(.*)",
-        headers: securityHeaders,
-      },
-    ]
+    return [{ source: "/(.*)", headers: securityHeaders }]
   },
 }
 
-export default nextConfig
+const sentryEnabled = !!process.env.NEXT_PUBLIC_SENTRY_DSN
+
+export default sentryEnabled
+  ? withSentryConfig(nextConfig, {
+      silent: true,
+      widenClientFileUpload: true,
+      tunnelRoute: "/monitoring",
+      disableLogger: true,
+      automaticVercelMonitors: true,
+      sourcemaps: { disable: false, deleteSourcemapsAfterUpload: true },
+    })
+  : nextConfig
