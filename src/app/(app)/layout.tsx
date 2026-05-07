@@ -1,0 +1,103 @@
+import { redirect } from "next/navigation"
+import Link from "next/link"
+import { getCurrentProfile } from "@/lib/supabase/server"
+import { logoutAction } from "@/app/(auth)/actions"
+import { getT } from "@/lib/i18n/server"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { LangSwitcher } from "@/components/lang-switcher"
+import {
+  Sparkles, Brain, Sparkles as SparklesIcon, Map, FileText, Wand2,
+  MessageSquare, Award, GraduationCap, LogOut, LayoutDashboard,
+} from "lucide-react"
+
+export default async function AppLayout({ children }: { children: React.ReactNode }) {
+  const profile = await getCurrentProfile()
+  if (!profile) redirect("/login")
+
+  const t = await getT()
+  const tools = [
+    { slug: "profile", name: t.sidebar.tool_profile, icon: Brain },
+    { slug: "analyzer", name: t.sidebar.tool_analyzer, icon: SparklesIcon },
+    { slug: "tracker", name: t.sidebar.tool_tracker, icon: Map },
+    { slug: "university", name: t.sidebar.tool_university, icon: GraduationCap },
+    { slug: "scholarship", name: t.sidebar.tool_scholarship, icon: Award },
+    { slug: "essay", name: t.sidebar.tool_essay, icon: FileText },
+    { slug: "humanizer", name: t.sidebar.tool_humanizer, icon: Wand2 },
+    { slug: "interview", name: t.sidebar.tool_interview, icon: MessageSquare },
+  ]
+  const browse = [
+    { href: "/universities", name: t.sidebar.all_universities, icon: GraduationCap },
+    { href: "/scholarships", name: t.sidebar.all_scholarships, icon: Award },
+  ]
+
+  return (
+    <div className="grid h-screen lg:grid-cols-[260px_1fr]">
+      <aside className="hidden lg:flex flex-col border-r border-border/40 bg-card/30">
+        <div className="flex h-16 items-center justify-between px-6 border-b border-border/40">
+          <Link href="/dashboard" className="flex items-center gap-2 font-semibold tracking-tight">
+            <span className="grid h-8 w-8 place-items-center rounded-lg bg-foreground text-background">
+              <Sparkles className="h-4 w-4" />
+            </span>
+            <span>Entrium AI</span>
+          </Link>
+          <LangSwitcher size="icon" />
+        </div>
+        <nav className="flex-1 space-y-1 p-3 overflow-y-auto">
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+          >
+            <LayoutDashboard className="h-4 w-4" />
+            Dashboard
+          </Link>
+          <div className="pt-4 pb-2 px-3 text-xs font-medium text-muted-foreground/70 uppercase tracking-wider">
+            {t.sidebar.tools}
+          </div>
+          {tools.map(({ slug, name, icon: Icon }) => (
+            <Link
+              key={slug}
+              href={`/tools/${slug}`}
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+            >
+              <Icon className="h-4 w-4" />
+              {name}
+            </Link>
+          ))}
+          <div className="pt-4 pb-2 px-3 text-xs font-medium text-muted-foreground/70 uppercase tracking-wider">
+            {t.sidebar.browse}
+          </div>
+          {browse.map(({ href, name, icon: Icon }) => (
+            <Link
+              key={href}
+              href={href}
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+            >
+              <Icon className="h-4 w-4" />
+              {name}
+            </Link>
+          ))}
+        </nav>
+        <div className="border-t border-border/40 p-3">
+          <div className="rounded-lg bg-accent/50 p-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium truncate">{profile.full_name ?? profile.email}</span>
+              <Badge variant={profile.tier === "pro" ? "default" : "secondary"} className="text-[10px]">
+                {profile.tier === "pro" ? t.common.pro : t.common.free}
+              </Badge>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground truncate">{profile.email}</p>
+            <form action={logoutAction} className="mt-3">
+              <Button type="submit" variant="ghost" size="sm" className="w-full justify-start gap-2 h-8">
+                <LogOut className="h-3.5 w-3.5" />
+                {t.nav.logout}
+              </Button>
+            </form>
+          </div>
+        </div>
+      </aside>
+
+      <main className="flex flex-col h-screen overflow-hidden">{children}</main>
+    </div>
+  )
+}
