@@ -13,7 +13,13 @@ import { User, GraduationCap, Target, Trophy, Loader2, Check, Sparkles } from "l
 
 const LEVELS = ["Bachelor", "Master", "PhD", "MBA", "Foundation"] as const
 
-export function ProfileSettings({ initial }: { initial: ApplicantProfile }) {
+export function ProfileSettings({
+  initial,
+  telegramSlot,
+}: {
+  initial: ApplicantProfile
+  telegramSlot?: React.ReactNode
+}) {
   const [profile, setProfile] = useState<ApplicantProfile>(initial)
   const [pending, startTransition] = useTransition()
   const [savedAt, setSavedAt] = useState<number | null>(null)
@@ -72,6 +78,8 @@ export function ProfileSettings({ initial }: { initial: ApplicantProfile }) {
 
         {/* Document upload */}
         <DocumentUploadCard onApply={(patch) => setProfile((p) => mergeProfilePatch(p, patch))} />
+
+        {telegramSlot}
 
         {/* Personal */}
         <Section icon={<User className="h-4 w-4 text-gold" />} title="Личные данные">

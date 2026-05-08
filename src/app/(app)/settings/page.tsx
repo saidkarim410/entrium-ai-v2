@@ -1,10 +1,17 @@
 import { getApplicantProfile } from "@/lib/applicant/actions"
+import { getTelegramStatus } from "@/lib/telegram-actions"
+import { telegramEnabled } from "@/lib/env"
 import { ProfileSettings } from "./profile-settings"
+import { TelegramLinkCard } from "@/components/telegram-link-card"
 
 export const dynamic = "force-dynamic"
 
 export default async function SettingsPage() {
-  const profile = await getApplicantProfile()
+  const [profile, telegramStatus] = await Promise.all([
+    getApplicantProfile(),
+    getTelegramStatus(),
+  ])
+
   return (
     <>
       <header className="flex h-16 items-center justify-between border-b border-border/40 px-4 sm:px-6 shrink-0 overflow-hidden">
@@ -13,7 +20,10 @@ export default async function SettingsPage() {
           <p className="font-mono-label text-cream-3 mt-0.5 truncate">Заполни один раз — autofill во всех 11 инструментах</p>
         </div>
       </header>
-      <ProfileSettings initial={profile} />
+      <ProfileSettings
+        initial={profile}
+        telegramSlot={telegramEnabled() ? <TelegramLinkCard initial={telegramStatus} /> : null}
+      />
     </>
   )
 }
