@@ -12,6 +12,8 @@ import { getCurrentUser } from "@/lib/supabase/server"
 import { checkUsage, recordUsage, consumeBonus } from "@/lib/rate-limit"
 import { getApplicantProfile } from "@/lib/applicant/actions"
 import { profileToContextBlock } from "@/lib/applicant/types"
+import { listApplications } from "@/lib/applications/actions"
+import { applicationsToContextBlock } from "@/lib/applications/types"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
@@ -74,16 +76,19 @@ export async function POST(req: Request) {
   const modelId = usage.tier === "pro" ? "claude-sonnet-4-5" : "claude-haiku-4-5"
   const modelMessages = await convertToModelMessages(body.messages)
 
-  // Profile context: counselor always knows applicant; other tools get it as bonus
+  // Profile + applications context: counselor always knows them; other tools get them as bonus
   let systemPrompt: string = SYSTEM_PROMPTS[tool]
   try {
-    const applicant = await getApplicantProfile()
+    const [applicant, apps] = await Promise.all([
+      getApplicantProfile(),
+      listApplications(),
+    ])
     const profileBlock = profileToContextBlock(applicant)
-    if (profileBlock) {
-      systemPrompt = `${systemPrompt}\n\n---\n\n${profileBlock}`
-    }
+    const appsBlock = applicationsToContextBlock(apps)
+    if (profileBlock) systemPrompt = `${systemPrompt}\n\n---\n\n${profileBlock}`
+    if (appsBlock) systemPrompt = `${systemPrompt}\n\n---\n\n${appsBlock}`
   } catch (err) {
-    console.error("Profile context fetch failed:", err)
+    console.error("Profile/apps context fetch failed:", err)
   }
 
   // RAG: inject database context for university/scholarship tools

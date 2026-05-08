@@ -11,7 +11,7 @@ import {
 import {
   LayoutDashboard, Bot, LayoutGrid, MoreHorizontal,
   Brain, Sparkles, Map, FileText, MessageSquare, Award, GraduationCap,
-  Mail, FileUser, Wallet, ShieldCheck, History, UserCog, LogOut,
+  Mail, FileUser, Wallet, ShieldCheck, History, UserCog, LogOut, ListChecks,
   type LucideIcon,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -43,6 +43,7 @@ const BROWSE: Array<{ href: string; name: string; icon: LucideIcon }> = [
 
 const ACCOUNT: Array<{ href: string; name: string; icon: LucideIcon }> = [
   { href: "/settings", name: "Профиль абитуриента", icon: UserCog },
+  { href: "/applications", name: "Мои заявки", icon: ListChecks },
   { href: "/history", name: "История", icon: History },
 ]
 

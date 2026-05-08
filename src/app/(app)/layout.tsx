@@ -11,7 +11,7 @@ import { MobileNav } from "@/components/mobile-nav"
 import {
   Sparkles, Brain, Sparkles as SparklesIcon, Map, FileText,
   MessageSquare, Award, GraduationCap, LogOut, LayoutDashboard, Mail, FileUser, Wallet, ShieldCheck,
-  History, UserCog, Bot,
+  History, UserCog, Bot, ListChecks,
 } from "lucide-react"
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -38,6 +38,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   ]
   const account = [
     { href: "/settings", name: "Профиль абитуриента", icon: UserCog },
+    { href: "/applications", name: "Мои заявки", icon: ListChecks },
     { href: "/history", name: "История", icon: History },
   ]
 

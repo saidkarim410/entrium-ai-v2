@@ -12,6 +12,8 @@ import { getCurrentUser } from "@/lib/supabase/server"
 import { checkUsage, recordUsage, consumeBonus } from "@/lib/rate-limit"
 import { getApplicantProfile, saveToolRun } from "@/lib/applicant/actions"
 import { profileToContextBlock } from "@/lib/applicant/types"
+import { listApplications } from "@/lib/applications/actions"
+import { applicationsToContextBlock } from "@/lib/applications/types"
 import { findMission, type MissionId } from "@/lib/agent/missions"
 
 export const runtime = "nodejs"
@@ -81,8 +83,12 @@ export async function POST(req: Request) {
     )
   }
 
-  const applicant = await getApplicantProfile()
+  const [applicant, apps] = await Promise.all([
+    getApplicantProfile(),
+    listApplications(),
+  ])
   const profileBlock = profileToContextBlock(applicant)
+  const appsBlock = applicationsToContextBlock(apps)
 
   const model = initialUsage.tier === "pro" ? models.claudeSonnet : models.claudeHaiku
   const modelId = initialUsage.tier === "pro" ? "claude-sonnet-4-5" : "claude-haiku-4-5"
@@ -112,11 +118,10 @@ export async function POST(req: Request) {
             description: step.description,
           })
 
-          // Build system prompt with profile + RAG enrichment
+          // Build system prompt with profile + applications + RAG enrichment
           let systemPrompt: string = SYSTEM_PROMPTS[step.tool]
-          if (profileBlock) {
-            systemPrompt = `${systemPrompt}\n\n---\n\n${profileBlock}`
-          }
+          if (profileBlock) systemPrompt = `${systemPrompt}\n\n---\n\n${profileBlock}`
+          if (appsBlock) systemPrompt = `${systemPrompt}\n\n---\n\n${appsBlock}`
 
           const userPrompt = step.buildPrompt(applicant)
 
