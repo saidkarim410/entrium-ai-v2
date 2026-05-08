@@ -30,6 +30,7 @@ export const dict = {
       recommendation: { title: "Letter of Recommendation", desc: "Профессиональное рекомендательное письмо со специфическими деталями" },
       cv: { title: "CV / Resume Builder", desc: "ATS-friendly CV с impact-метриками для admissions, internships и jobs" },
       cost: { title: "Cost Calculator", desc: "Полная стоимость обучения по странам + AI-стратегия financial aid" },
+      reviewer: { title: "Mock Application Reviewer", desc: "AI-симуляция admission officer — финальное review заявки до отправки" },
     },
     auth: {
       login_title: "Войти",
@@ -78,6 +79,7 @@ export const dict = {
       tool_recommendation: "Рекомендательное письмо",
       tool_cv: "CV Builder",
       tool_cost: "Калькулятор стоимости",
+      tool_reviewer: "Mock Reviewer",
     },
     chat: {
       empty: "Начни диалог — AI задаст уточняющие вопросы и подготовит ответ под твой контекст.",
@@ -123,6 +125,7 @@ export const dict = {
       recommendation: { title: "Letter of Recommendation", desc: "Professional recommendation letter with specific, vivid details" },
       cv: { title: "CV / Resume Builder", desc: "ATS-friendly CV with impact metrics for admissions, internships, jobs" },
       cost: { title: "Cost Calculator", desc: "Full study-abroad cost breakdown + AI financial aid strategy" },
+      reviewer: { title: "Mock Application Reviewer", desc: "AI admission officer simulation — final review before you submit" },
     },
     auth: {
       login_title: "Sign in",
@@ -171,6 +174,7 @@ export const dict = {
       tool_recommendation: "Recommendation Letter",
       tool_cv: "CV Builder",
       tool_cost: "Cost Calculator",
+      tool_reviewer: "Mock Reviewer",
     },
     chat: {
       empty: "Start the dialog — AI will ask clarifying questions and tailor the answer to your context.",
@@ -216,6 +220,7 @@ export const dict = {
       recommendation: { title: "Tavsiyanoma", desc: "Aniq tafsilotlar bilan professional tavsiyanoma" },
       cv: { title: "CV / Resume Builder", desc: "Qabul, internship va ish uchun ATS formatdagi CV" },
       cost: { title: "Xarajat kalkulyatori", desc: "To'liq o'qish xarajatlari + AI financial aid strategiyasi" },
+      reviewer: { title: "Mock Application Reviewer", desc: "Yuborishdan oldin AI admission officer simulyatori orqali tekshirish" },
     },
     auth: {
       login_title: "Kirish",
@@ -264,6 +269,7 @@ export const dict = {
       tool_recommendation: "Tavsiyanoma",
       tool_cv: "CV Builder",
       tool_cost: "Xarajat kalkulyatori",
+      tool_reviewer: "Mock Reviewer",
     },
     chat: {
       empty: "Suhbatni boshlang — AI aniqlashtiruvchi savollar beradi va kontekstingizga moslashgan javob tayyorlaydi.",

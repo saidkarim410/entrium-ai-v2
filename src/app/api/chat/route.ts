@@ -26,6 +26,7 @@ const toolSchema = z.enum([
   "recommendation",
   "cv",
   "cost",
+  "reviewer",
 ]) satisfies z.ZodType<ToolKey>
 
 function lastUserText(messages: UIMessage[]): string {

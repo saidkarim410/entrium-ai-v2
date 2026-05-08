@@ -4,7 +4,7 @@ import { updateSession } from "@/lib/supabase/middleware"
 const VALID_TOOLS = new Set([
   "profile", "analyzer", "tracker", "university",
   "scholarship", "essay", "humanizer", "interview",
-  "recommendation", "cv", "cost",
+  "recommendation", "cv", "cost", "reviewer",
 ])
 
 export async function proxy(request: NextRequest) {
