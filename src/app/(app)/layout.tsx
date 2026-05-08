@@ -6,10 +6,11 @@ import { getT } from "@/lib/i18n/server"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { LangSwitcher } from "@/components/lang-switcher"
+import { CounselorWidget } from "@/components/counselor-widget"
 import {
   Sparkles, Brain, Sparkles as SparklesIcon, Map, FileText,
   MessageSquare, Award, GraduationCap, LogOut, LayoutDashboard, Mail, FileUser, Wallet, ShieldCheck,
-  History, UserCog,
+  History, UserCog, Bot,
 } from "lucide-react"
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -58,6 +59,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           >
             <LayoutDashboard className="h-4 w-4" />
             Dashboard
+          </Link>
+          <Link
+            href="/agent"
+            className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground bg-gold/10 border border-gold/20 hover:bg-gold/15 transition-colors"
+          >
+            <Bot className="h-4 w-4 text-gold" />
+            <span>AI Agent</span>
+            <Badge variant="default" className="ml-auto text-[9px] py-0 px-1.5 bg-gold/20 text-gold border-gold/30">NEW</Badge>
           </Link>
           <div className="pt-4 pb-2 px-3 text-xs font-medium text-muted-foreground/70 uppercase tracking-wider">
             {t.sidebar.tools}
@@ -119,6 +128,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       </aside>
 
       <main className="flex flex-col h-screen overflow-hidden">{children}</main>
+      <CounselorWidget />
     </div>
   )
 }

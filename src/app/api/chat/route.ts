@@ -10,6 +10,8 @@ import {
 } from "@/lib/ai/rag"
 import { getCurrentUser } from "@/lib/supabase/server"
 import { checkUsage, recordUsage, consumeBonus } from "@/lib/rate-limit"
+import { getApplicantProfile } from "@/lib/applicant/actions"
+import { profileToContextBlock } from "@/lib/applicant/types"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
@@ -27,6 +29,7 @@ const toolSchema = z.enum([
   "cv",
   "cost",
   "reviewer",
+  "counselor",
 ]) satisfies z.ZodType<ToolKey>
 
 function lastUserText(messages: UIMessage[]): string {
@@ -71,8 +74,19 @@ export async function POST(req: Request) {
   const modelId = usage.tier === "pro" ? "claude-sonnet-4-5" : "claude-haiku-4-5"
   const modelMessages = await convertToModelMessages(body.messages)
 
-  // RAG: inject database context for university/scholarship tools
+  // Profile context: counselor always knows applicant; other tools get it as bonus
   let systemPrompt: string = SYSTEM_PROMPTS[tool]
+  try {
+    const applicant = await getApplicantProfile()
+    const profileBlock = profileToContextBlock(applicant)
+    if (profileBlock) {
+      systemPrompt = `${systemPrompt}\n\n---\n\n${profileBlock}`
+    }
+  } catch (err) {
+    console.error("Profile context fetch failed:", err)
+  }
+
+  // RAG: inject database context for university/scholarship tools
   if (tool === "university" || tool === "scholarship") {
     const query = lastUserText(body.messages)
     if (query) {
@@ -81,7 +95,7 @@ export async function POST(req: Request) {
           tool === "university"
             ? formatUniversitiesContext(await searchUniversities(query, 12))
             : formatScholarshipsContext(await searchScholarships(query, 12))
-        if (ctx) systemPrompt = `${SYSTEM_PROMPTS[tool]}\n\n---\n\n${ctx}`
+        if (ctx) systemPrompt = `${systemPrompt}\n\n---\n\n${ctx}`
       } catch (err) {
         console.error("RAG search failed:", err)
       }
