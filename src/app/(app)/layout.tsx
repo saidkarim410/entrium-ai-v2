@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { LangSwitcher } from "@/components/lang-switcher"
 import {
   Sparkles, Brain, Sparkles as SparklesIcon, Map, FileText,
-  MessageSquare, Award, GraduationCap, LogOut, LayoutDashboard, Mail, FileUser,
+  MessageSquare, Award, GraduationCap, LogOut, LayoutDashboard, Mail, FileUser, Wallet,
 } from "lucide-react"
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -26,6 +26,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     { slug: "interview", name: t.sidebar.tool_interview, icon: MessageSquare },
     { slug: "recommendation", name: t.sidebar.tool_recommendation, icon: Mail },
     { slug: "cv", name: t.sidebar.tool_cv, icon: FileUser },
+    { slug: "cost", name: t.sidebar.tool_cost, icon: Wallet },
   ]
   const browse = [
     { href: "/universities", name: t.sidebar.all_universities, icon: GraduationCap },
