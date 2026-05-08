@@ -14,6 +14,7 @@ import { getApplicantProfile } from "@/lib/applicant/actions"
 import { profileToContextBlock } from "@/lib/applicant/types"
 import { listApplications } from "@/lib/applications/actions"
 import { applicationsToContextBlock } from "@/lib/applications/types"
+import { getLanguageInstruction } from "@/lib/ai/language"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
@@ -79,14 +80,16 @@ export async function POST(req: Request) {
   // Profile + applications context: counselor always knows them; other tools get them as bonus
   let systemPrompt: string = SYSTEM_PROMPTS[tool]
   try {
-    const [applicant, apps] = await Promise.all([
+    const [applicant, apps, langInstr] = await Promise.all([
       getApplicantProfile(),
       listApplications(),
+      getLanguageInstruction(),
     ])
     const profileBlock = profileToContextBlock(applicant)
     const appsBlock = applicationsToContextBlock(apps)
     if (profileBlock) systemPrompt = `${systemPrompt}\n\n---\n\n${profileBlock}`
     if (appsBlock) systemPrompt = `${systemPrompt}\n\n---\n\n${appsBlock}`
+    systemPrompt = `${systemPrompt}\n\n---\n\n${langInstr}`
   } catch (err) {
     console.error("Profile/apps context fetch failed:", err)
   }

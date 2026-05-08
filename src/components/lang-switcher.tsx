@@ -4,6 +4,7 @@ import { useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { useLocale } from "@/lib/i18n/client"
 import { LOCALES, type Locale } from "@/lib/i18n/dict"
+import { persistUserLanguage } from "@/lib/i18n/actions"
 import { Languages } from "lucide-react"
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -21,6 +22,8 @@ export function LangSwitcher({ size = "sm" }: { size?: "sm" | "default" | "icon"
 
   function setLang(l: Locale) {
     document.cookie = `lang=${l}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`
+    // Best-effort: persist to profile so Telegram bot + email use the same lang
+    persistUserLanguage(l).catch(() => null)
     startTransition(() => router.refresh())
   }
 

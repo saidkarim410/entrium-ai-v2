@@ -16,6 +16,7 @@ import { listApplications } from "@/lib/applications/actions"
 import { applicationsToContextBlock } from "@/lib/applications/types"
 import { findMission, type MissionId } from "@/lib/agent/missions"
 import { createNotification } from "@/lib/notifications/actions"
+import { getLanguageInstruction } from "@/lib/ai/language"
 
 export const runtime = "nodejs"
 export const maxDuration = 300 // up to 5 minutes for full pipeline
@@ -84,9 +85,10 @@ export async function POST(req: Request) {
     )
   }
 
-  const [applicant, apps] = await Promise.all([
+  const [applicant, apps, langInstr] = await Promise.all([
     getApplicantProfile(),
     listApplications(),
+    getLanguageInstruction(),
   ])
   const profileBlock = profileToContextBlock(applicant)
   const appsBlock = applicationsToContextBlock(apps)
@@ -119,10 +121,11 @@ export async function POST(req: Request) {
             description: step.description,
           })
 
-          // Build system prompt with profile + applications + RAG enrichment
+          // Build system prompt with profile + applications + RAG enrichment + language
           let systemPrompt: string = SYSTEM_PROMPTS[step.tool]
           if (profileBlock) systemPrompt = `${systemPrompt}\n\n---\n\n${profileBlock}`
           if (appsBlock) systemPrompt = `${systemPrompt}\n\n---\n\n${appsBlock}`
+          systemPrompt = `${systemPrompt}\n\n---\n\n${langInstr}`
 
           const userPrompt = step.buildPrompt(applicant)
 

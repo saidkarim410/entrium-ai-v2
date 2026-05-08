@@ -9,6 +9,7 @@ import {
 import { getCurrentUser } from "@/lib/supabase/server"
 import { checkUsage, recordUsage, consumeBonus } from "@/lib/rate-limit"
 import { saveToolRun } from "@/lib/applicant/actions"
+import { getLanguageInstruction } from "@/lib/ai/language"
 
 export const runtime = "nodejs"
 export const maxDuration = 120
@@ -54,7 +55,7 @@ export async function POST(req: Request) {
   const model = usage.tier === "pro" ? models.claudeSonnet : models.claudeHaiku
   const modelId = usage.tier === "pro" ? "claude-sonnet-4-5" : "claude-haiku-4-5"
 
-  // RAG enrichment for scholarship/university tools
+  // RAG enrichment for scholarship/university tools + language
   let systemPrompt: string = system_override ?? SYSTEM_PROMPTS[tool]
   if (!system_override && (tool === "university" || tool === "scholarship")) {
     try {
@@ -65,6 +66,16 @@ export async function POST(req: Request) {
       if (ctx) systemPrompt = `${SYSTEM_PROMPTS[tool]}\n\n---\n\n${ctx}`
     } catch (err) {
       console.error("RAG search failed:", err)
+    }
+  }
+
+  // Always honor user's UI language for AI output
+  if (!system_override) {
+    try {
+      const langInstr = await getLanguageInstruction()
+      systemPrompt = `${systemPrompt}\n\n---\n\n${langInstr}`
+    } catch (err) {
+      console.error("language instruction failed:", err)
     }
   }
 

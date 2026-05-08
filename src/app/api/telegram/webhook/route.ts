@@ -7,6 +7,8 @@ import { sendTelegramMessage, sendTelegramAction, aiToTelegramHtml } from "@/lib
 import { profileToContextBlock, type ApplicantProfile, EMPTY_PROFILE } from "@/lib/applicant/types"
 import { applicationsToContextBlock } from "@/lib/applications/types"
 import { checkUsage, recordUsage } from "@/lib/rate-limit"
+import { languageInstruction } from "@/lib/ai/language"
+import type { Locale } from "@/lib/i18n/dict"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -176,7 +178,7 @@ async function handleCounselorMessage(chatId: string, text: string, msg: TGMessa
   // Resolve user
   const { data: profile } = await supabaseAdmin
     .from("profiles")
-    .select("id, tier, applicant_data")
+    .select("id, tier, applicant_data, language")
     .eq("telegram_chat_id", chatId)
     .maybeSingle()
 
@@ -215,10 +217,13 @@ async function handleCounselorMessage(chatId: string, text: string, msg: TGMessa
   if (profileBlock) systemPrompt += `\n\n---\n\n${profileBlock}`
   if (appsBlock) systemPrompt += `\n\n---\n\n${appsBlock}`
 
+  const userLang: Locale = ((profile.language as string | null) ?? "ru") as Locale
+  systemPrompt += `\n\n---\n\n${languageInstruction(userLang)}`
+
   systemPrompt +=
-    "\n\nIMPORTANT (Telegram delivery): Отвечай коротко (3-7 предложений), на русском. " +
-    "Не используй markdown-таблицы и code blocks. Можешь использовать **жирный** и _курсив_. " +
-    "Если нужен длинный анализ — пригласи открыть полный tool на сайте."
+    "\n\nIMPORTANT (Telegram delivery): Reply concisely (3-7 sentences). " +
+    "Avoid markdown tables and code blocks. You can use **bold** and _italic_. " +
+    "For deep analysis, invite the user to open the full tool on the website."
 
   const model = profile.tier === "pro" ? models.claudeSonnet : models.claudeHaiku
   const modelId = profile.tier === "pro" ? "claude-sonnet-4-5" : "claude-haiku-4-5"

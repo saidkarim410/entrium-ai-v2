@@ -6,6 +6,7 @@ import { supabaseAdmin } from "@/lib/supabase/admin"
 import { checkUsage, recordUsage } from "@/lib/rate-limit"
 import { profileToContextBlock, EMPTY_PROFILE, type ApplicantProfile } from "@/lib/applicant/types"
 import { daysUntil, STATUS_LABELS, PRIORITY_LABELS, type Application } from "@/lib/applications/types"
+import { getLanguageInstruction } from "@/lib/ai/language"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
@@ -87,6 +88,7 @@ export async function POST(
     .filter(Boolean)
     .join("\n")
 
+  const langInstr = await getLanguageInstruction()
   const system = [
     "Ты — личный admission strategist для абитуриента.",
     "Дай ЧЁТКИЕ, КОНКРЕТНЫЕ действия для ЭТОЙ заявки в ЭТОТ университет.",
@@ -103,6 +105,8 @@ export async function POST(
     "- checklist_additions: 3-8 атомарных задач (одно действие на пункт), готовых для добавления в чек-лист.",
     "",
     profileBlock,
+    "",
+    langInstr,
   ].join("\n")
 
   const model = usage.tier === "pro" ? models.claudeSonnet : models.claudeHaiku
