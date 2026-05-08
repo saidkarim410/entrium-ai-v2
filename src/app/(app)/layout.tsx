@@ -9,6 +9,7 @@ import { LangSwitcher } from "@/components/lang-switcher"
 import {
   Sparkles, Brain, Sparkles as SparklesIcon, Map, FileText,
   MessageSquare, Award, GraduationCap, LogOut, LayoutDashboard, Mail, FileUser, Wallet, ShieldCheck,
+  History, UserCog,
 } from "lucide-react"
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -32,6 +33,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const browse = [
     { href: "/universities", name: t.sidebar.all_universities, icon: GraduationCap },
     { href: "/scholarships", name: t.sidebar.all_scholarships, icon: Award },
+  ]
+  const account = [
+    { href: "/settings", name: "Профиль абитуриента", icon: UserCog },
+    { href: "/history", name: "История", icon: History },
   ]
 
   return (
@@ -71,6 +76,19 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             {t.sidebar.browse}
           </div>
           {browse.map(({ href, name, icon: Icon }) => (
+            <Link
+              key={href}
+              href={href}
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+            >
+              <Icon className="h-4 w-4" />
+              {name}
+            </Link>
+          ))}
+          <div className="pt-4 pb-2 px-3 text-xs font-medium text-muted-foreground/70 uppercase tracking-wider">
+            Аккаунт
+          </div>
+          {account.map(({ href, name, icon: Icon }) => (
             <Link
               key={href}
               href={href}

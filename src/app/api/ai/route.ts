@@ -8,6 +8,7 @@ import {
 } from "@/lib/ai/rag"
 import { getCurrentUser } from "@/lib/supabase/server"
 import { checkUsage, recordUsage, consumeBonus } from "@/lib/rate-limit"
+import { saveToolRun } from "@/lib/applicant/actions"
 
 export const runtime = "nodejs"
 export const maxDuration = 120
@@ -67,6 +68,8 @@ export async function POST(req: Request) {
     }
   }
 
+  const startTime = Date.now()
+
   try {
     const result = await generateText({
       model,
@@ -83,6 +86,16 @@ export async function POST(req: Request) {
       outputTokens: result.usage?.outputTokens ?? 0,
       costUsd: 0,
     })
+
+    // Save to history (tool_runs)
+    await saveToolRun({
+      userId: user.id,
+      tool,
+      input: { user: userMessage.slice(0, 4000) }, // truncate for storage
+      output: result.text,
+      durationMs: Date.now() - startTime,
+      status: "success",
+    }).catch((e) => console.error("saveToolRun failed:", e))
 
     const status = await checkUsage(user.id)
     if (status.tier === "free" && status.remaining === 0 && status.bonus > 0) {
