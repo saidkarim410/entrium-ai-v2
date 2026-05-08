@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Markdown } from "@/components/markdown"
-import { FileUser, Loader2, Sparkles, Copy, Check, Download, FileText } from "lucide-react"
+import { FileUser, Loader2, Sparkles, Copy, Check, Download, FileText, Printer } from "lucide-react"
 
 const FORMATS = [
   { id: "us_ats", label: "US ATS (для США / internships / jobs)" },
@@ -312,10 +312,13 @@ TEDx-style speaker at school assembly (2x)`}
         </Button>
 
         {result && (
-          <div className="rounded-xl border border-border bg-card/40 p-7 accent-strip">
-            <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
+          <div className="rounded-xl border border-border bg-card/40 p-7 accent-strip print-area">
+            <div className="flex items-center justify-between mb-5 flex-wrap gap-2 print-hide">
               <span className="font-mono-label text-gold">📄 CV ГОТОВ</span>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
+                <Button onClick={() => window.print()} variant="ghost" size="sm" className="gap-2">
+                  <Printer className="h-3.5 w-3.5" /> PDF / Print
+                </Button>
                 <Button onClick={copyResult} variant="ghost" size="sm" className="gap-2">
                   {copied ? <><Check className="h-3.5 w-3.5" /> Скопировано</> : <><Copy className="h-3.5 w-3.5" /> Копировать</>}
                 </Button>

@@ -150,3 +150,82 @@
 .shimmer {
   animation: shimmer 2.4s ease-in-out infinite;
 }
+
+/* ── Print mode ───────────────────────────────────────────────────────── */
+@media print {
+  @page {
+    size: A4;
+    margin: 18mm 16mm;
+  }
+
+  html, body {
+    background: #fff !important;
+    color: #111 !important;
+  }
+
+  /* Hide all chrome */
+  aside, nav, footer, header.no-print,
+  .print-hide,
+  button,
+  [role="button"],
+  [data-slot="dialog-content"],
+  [data-slot="sheet-content"],
+  [data-slot="dropdown-menu-content"] {
+    display: none !important;
+  }
+
+  /* Force the print region full-width */
+  main {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  /* Light printable styling — applies to print-area or .prose-entrium content */
+  .print-area, .prose-entrium {
+    background: #fff !important;
+    color: #111 !important;
+    padding: 0 !important;
+    border: none !important;
+  }
+  .print-area *, .prose-entrium * {
+    background: transparent !important;
+    border-color: #ddd !important;
+    color: #111 !important;
+    box-shadow: none !important;
+  }
+  .print-area h1, .print-area h2, .print-area h3,
+  .prose-entrium h1, .prose-entrium h2, .prose-entrium h3 {
+    color: #000 !important;
+    page-break-after: avoid;
+  }
+  .print-area p, .print-area li,
+  .prose-entrium p, .prose-entrium li {
+    color: #222 !important;
+  }
+  .print-area a, .prose-entrium a {
+    color: #555 !important;
+    text-decoration: none !important;
+  }
+  .print-area pre, .print-area code,
+  .prose-entrium pre, .prose-entrium code {
+    background: #f5f5f5 !important;
+    color: #111 !important;
+    border: 1px solid #ddd !important;
+  }
+  .print-area table, .prose-entrium table {
+    border-collapse: collapse !important;
+  }
+  .print-area td, .print-area th,
+  .prose-entrium td, .prose-entrium th {
+    border: 1px solid #ccc !important;
+    padding: 4px 6px !important;
+  }
+}
+
+.print-only {
+  display: none;
+}

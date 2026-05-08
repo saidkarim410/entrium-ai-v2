@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Map, Loader2, CheckSquare, Square, Sparkles } from "lucide-react"
+import { Map, Loader2, CheckSquare, Square, Sparkles, Printer } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 type Task = {
@@ -187,7 +187,7 @@ SAT/ACT: ${form.sat || "—"}
             </Button>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-6 print-area">
             {/* Header */}
             <div className="rounded-xl border border-border bg-card/50 p-6 accent-strip">
               <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
@@ -216,9 +216,14 @@ SAT/ACT: ${form.sat || "—"}
                 </div>
               </div>
 
-              <Button onClick={() => setPlan(null)} variant="ghost" size="sm" className="mt-4">
-                ← Изменить профиль и регенерировать
-              </Button>
+              <div className="flex flex-wrap gap-2 mt-4 print-hide">
+                <Button onClick={() => setPlan(null)} variant="ghost" size="sm">
+                  ← Изменить профиль и регенерировать
+                </Button>
+                <Button onClick={() => window.print()} variant="ghost" size="sm" className="gap-2">
+                  <Printer className="h-3.5 w-3.5" /> PDF / Print
+                </Button>
+              </div>
             </div>
 
             {/* Months */}

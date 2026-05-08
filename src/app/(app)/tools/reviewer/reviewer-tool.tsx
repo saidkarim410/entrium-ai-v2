@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Markdown } from "@/components/markdown"
-import { ShieldCheck, Loader2, Sparkles, Copy, Check, Download, AlertTriangle } from "lucide-react"
+import { ShieldCheck, Loader2, Sparkles, Copy, Check, Download, AlertTriangle, Printer } from "lucide-react"
 
 const ROUNDS = [
   "Early Decision (ED)",
@@ -311,10 +311,13 @@ ${form.constraints || "(нет)"}
         </Button>
 
         {result && (
-          <div className="rounded-xl border border-border bg-card/40 p-7 accent-strip">
-            <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
+          <div className="rounded-xl border border-border bg-card/40 p-7 accent-strip print-area">
+            <div className="flex items-center justify-between mb-5 flex-wrap gap-2 print-hide">
               <span className="font-mono-label text-gold">🎯 ADMISSION OFFICER REVIEW</span>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
+                <Button onClick={() => window.print()} variant="ghost" size="sm" className="gap-2">
+                  <Printer className="h-3.5 w-3.5" /> PDF / Print
+                </Button>
                 <Button onClick={copyResult} variant="ghost" size="sm" className="gap-2">
                   {copied ? <><Check className="h-3.5 w-3.5" /> Скопировано</> : <><Copy className="h-3.5 w-3.5" /> Копировать</>}
                 </Button>
@@ -326,6 +329,7 @@ ${form.constraints || "(нет)"}
                 </Button>
               </div>
             </div>
+            <h1 className="print-only font-display text-2xl mb-4">Application Review · Entrium AI</h1>
             <Markdown>{result}</Markdown>
           </div>
         )}
