@@ -15,6 +15,7 @@ import { profileToContextBlock } from "@/lib/applicant/types"
 import { listApplications } from "@/lib/applications/actions"
 import { applicationsToContextBlock } from "@/lib/applications/types"
 import { findMission, type MissionId } from "@/lib/agent/missions"
+import { createNotification } from "@/lib/notifications/actions"
 
 export const runtime = "nodejs"
 export const maxDuration = 300 // up to 5 minutes for full pipeline
@@ -198,6 +199,16 @@ export async function POST(req: Request) {
           durationMs: 0,
           status: "success",
         }).catch((e) => console.error("aggregate saveToolRun failed:", e))
+
+        // Notify on completion (also pushes via Telegram if linked)
+        await createNotification({
+          userId: user.id,
+          type: "agent_done",
+          title: `🤖 Миссия завершена: ${mission.title}`,
+          body: `Готовы ${aggregatedOutputs.length} разделов. Открой History чтобы вернуться к результатам.`,
+          link: "/history",
+          data: { mission_id: missionId, steps: aggregatedOutputs.length },
+        }).catch((e) => console.error("agent_done notification failed:", e))
 
         emit({ type: "done" })
       } catch (err) {

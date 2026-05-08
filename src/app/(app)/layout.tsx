@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge"
 import { LangSwitcher } from "@/components/lang-switcher"
 import { CounselorWidget } from "@/components/counselor-widget"
 import { MobileNav } from "@/components/mobile-nav"
+import { NotificationsBell } from "@/components/notifications-bell"
+import { unreadCount } from "@/lib/notifications/actions"
 import {
   Sparkles, Brain, Sparkles as SparklesIcon, Map, FileText,
   MessageSquare, Award, GraduationCap, LogOut, LayoutDashboard, Mail, FileUser, Wallet, ShieldCheck,
@@ -19,6 +21,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!profile) redirect("/login")
 
   const t = await getT()
+  const unread = await unreadCount()
   const tools = [
     { slug: "profile", name: t.sidebar.tool_profile, icon: Brain },
     { slug: "analyzer", name: t.sidebar.tool_analyzer, icon: SparklesIcon },
@@ -52,7 +55,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             </span>
             <span>Entrium AI</span>
           </Link>
-          <LangSwitcher size="icon" />
+          <div className="flex items-center gap-1">
+            <NotificationsBell initialUnread={unread} variant="sidebar" />
+            <LangSwitcher size="icon" />
+          </div>
         </div>
         <nav className="flex-1 space-y-1 p-3 overflow-y-auto">
           <Link
@@ -148,6 +154,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       </aside>
 
       <main className="flex flex-col h-[calc(100dvh-4rem)] lg:h-screen overflow-hidden">{children}</main>
+
+      {/* Mobile-only floating bell (top-right) */}
+      <div className="fixed top-2.5 right-3 z-30 lg:hidden">
+        <div className="rounded-lg bg-popover/85 backdrop-blur border border-border/50 p-0.5">
+          <NotificationsBell initialUnread={unread} variant="compact" />
+        </div>
+      </div>
+
       <MobileNav
         profile={{ email: profile.email, full_name: profile.full_name, tier: profile.tier }}
         logoutAction={logoutAction}
