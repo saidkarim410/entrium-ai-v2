@@ -13,7 +13,7 @@ import { unreadCount } from "@/lib/notifications/actions"
 import {
   Sparkles, Brain, Sparkles as SparklesIcon, Map, FileText,
   MessageSquare, Award, GraduationCap, LogOut, LayoutDashboard, Mail, FileUser, Wallet, ShieldCheck,
-  History, UserCog, Bot, ListChecks, Crown,
+  History, UserCog, Bot, ListChecks, Crown, Gift,
 } from "lucide-react"
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -43,6 +43,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     { href: "/settings", name: "Профиль абитуриента", icon: UserCog },
     { href: "/applications", name: "Мои заявки", icon: ListChecks },
     { href: "/history", name: "История", icon: History },
+    { href: "/refer", name: "Рефералы · +10", icon: Gift },
   ]
 
   return (

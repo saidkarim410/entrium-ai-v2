@@ -9,6 +9,7 @@ import { useT } from "@/lib/i18n/client"
 import { signupAction, type AuthState } from "../actions"
 import { GoogleButton } from "../google-button"
 import { TelegramButton } from "../telegram-button"
+import { RefCapture } from "@/components/ref-capture"
 
 const initialState: AuthState = {}
 
@@ -18,6 +19,7 @@ export default function SignupPage() {
 
   return (
     <div className="space-y-6">
+      <RefCapture />
       <div className="space-y-2">
         <h1 className="text-2xl font-semibold tracking-tight">{t.auth.signup_title}</h1>
         <p className="text-sm text-muted-foreground">

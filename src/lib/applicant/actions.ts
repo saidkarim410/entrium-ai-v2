@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { supabaseAdmin } from "@/lib/supabase/admin"
 import { getCurrentUser } from "@/lib/supabase/server"
+import { awardReferralOnCompletion } from "@/lib/referrals/actions"
 import { EMPTY_PROFILE, type ApplicantProfile } from "./types"
 
 export async function getApplicantProfile(): Promise<ApplicantProfile> {
@@ -22,6 +23,16 @@ export async function saveApplicantProfile(profile: ApplicantProfile): Promise<{
   const user = await getCurrentUser()
   if (!user) return { ok: false, error: "unauthorized" }
 
+  // Read prior state to detect onboarding completion transition
+  const { data: prior } = await supabaseAdmin
+    .from("profiles")
+    .select("applicant_data")
+    .eq("id", user.id)
+    .maybeSingle()
+  const wasCompleted = Boolean(
+    (prior?.applicant_data as { _completed?: boolean } | null | undefined)?._completed
+  )
+
   const merged: ApplicantProfile = {
     ...profile,
     _completed: true,
@@ -35,8 +46,16 @@ export async function saveApplicantProfile(profile: ApplicantProfile): Promise<{
 
   if (error) return { ok: false, error: error.message }
 
+  // First-time completion → award referrer (if any) + notify
+  if (!wasCompleted) {
+    awardReferralOnCompletion(user.id).catch((e) =>
+      console.error("awardReferralOnCompletion failed:", e)
+    )
+  }
+
   revalidatePath("/dashboard")
   revalidatePath("/settings")
+  revalidatePath("/refer")
   return { ok: true }
 }
 
