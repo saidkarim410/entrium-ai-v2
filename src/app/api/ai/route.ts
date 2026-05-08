@@ -16,7 +16,7 @@ const requestSchema = z.object({
   tool: z.enum([
     "profile", "analyzer", "tracker", "essay",
     "humanizer", "interview", "scholarship", "university",
-    "recommendation",
+    "recommendation", "cv",
   ]) satisfies z.ZodType<ToolKey>,
   system_override: z.string().optional(),
   user: z.string().min(1),

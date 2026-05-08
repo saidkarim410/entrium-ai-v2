@@ -28,6 +28,7 @@ export const dict = {
       humanizer: { title: "Humanizer", desc: "Превращает шаблонный текст в живое студенческое эссе" },
       interview: { title: "Interview Trainer", desc: "Симулятор admission interview с feedback по ответам" },
       recommendation: { title: "Letter of Recommendation", desc: "Профессиональное рекомендательное письмо со специфическими деталями" },
+      cv: { title: "CV / Resume Builder", desc: "ATS-friendly CV с impact-метриками для admissions, internships и jobs" },
     },
     auth: {
       login_title: "Войти",
@@ -74,6 +75,7 @@ export const dict = {
       tool_humanizer: "Humanizer",
       tool_interview: "Интервью",
       tool_recommendation: "Рекомендательное письмо",
+      tool_cv: "CV Builder",
     },
     chat: {
       empty: "Начни диалог — AI задаст уточняющие вопросы и подготовит ответ под твой контекст.",
@@ -117,6 +119,7 @@ export const dict = {
       humanizer: { title: "Humanizer", desc: "Turns template-sounding text into living student writing" },
       interview: { title: "Interview Trainer", desc: "Admission interview simulator with feedback on each answer" },
       recommendation: { title: "Letter of Recommendation", desc: "Professional recommendation letter with specific, vivid details" },
+      cv: { title: "CV / Resume Builder", desc: "ATS-friendly CV with impact metrics for admissions, internships, jobs" },
     },
     auth: {
       login_title: "Sign in",
@@ -163,6 +166,7 @@ export const dict = {
       tool_humanizer: "Humanizer",
       tool_interview: "Interview",
       tool_recommendation: "Recommendation Letter",
+      tool_cv: "CV Builder",
     },
     chat: {
       empty: "Start the dialog — AI will ask clarifying questions and tailor the answer to your context.",
@@ -206,6 +210,7 @@ export const dict = {
       humanizer: { title: "Humanizer", desc: "Shablon matnni jonli talaba insho ga aylantiradi" },
       interview: { title: "Interview Trainer", desc: "Har bir javobga fikr-mulohaza bilan qabul suhbati simulyatori" },
       recommendation: { title: "Tavsiyanoma", desc: "Aniq tafsilotlar bilan professional tavsiyanoma" },
+      cv: { title: "CV / Resume Builder", desc: "Qabul, internship va ish uchun ATS formatdagi CV" },
     },
     auth: {
       login_title: "Kirish",
@@ -252,6 +257,7 @@ export const dict = {
       tool_humanizer: "Humanizer",
       tool_interview: "Suhbat",
       tool_recommendation: "Tavsiyanoma",
+      tool_cv: "CV Builder",
     },
     chat: {
       empty: "Suhbatni boshlang — AI aniqlashtiruvchi savollar beradi va kontekstingizga moslashgan javob tayyorlaydi.",
