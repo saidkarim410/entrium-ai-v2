@@ -29,6 +29,20 @@ export type ChecklistItem = {
   due?: string // ISO date
 }
 
+export type AppSuggestion = {
+  title: string
+  body: string
+  priority: "high" | "medium" | "low"
+  weeks_estimate?: string
+}
+
+export type AppAiSuggestions = {
+  match_strength?: string
+  weakest_area?: string
+  items: AppSuggestion[]
+  checklist_additions?: string[]
+}
+
 export type Application = {
   id: string
   user_id: string
@@ -44,6 +58,8 @@ export type Application = {
   notes: string | null
   checklist: ChecklistItem[]
   result_decision: string | null
+  ai_suggestions: AppAiSuggestions | null
+  ai_suggestions_at: string | null
   created_at: string
   updated_at: string
 }

@@ -153,6 +153,57 @@ export async function updateApplicationStatus(
   return { ok: true }
 }
 
+export async function addChecklistItems(
+  id: string,
+  labels: string[]
+): Promise<{ ok: boolean; error?: string; added: number }> {
+  const user = await getCurrentUser()
+  if (!user) return { ok: false, error: "unauthorized", added: 0 }
+
+  const { data, error } = await supabaseAdmin
+    .from("applications")
+    .select("checklist")
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .maybeSingle()
+
+  if (error || !data) return { ok: false, error: error?.message ?? "not_found", added: 0 }
+
+  const existing = (data.checklist as ChecklistItem[]) ?? []
+  const existingLabels = new Set(existing.map((it) => it.label.toLowerCase().trim()))
+
+  const next: ChecklistItem[] = [...existing]
+  let added = 0
+  for (const raw of labels) {
+    const label = raw.trim()
+    if (!label || existingLabels.has(label.toLowerCase())) continue
+    next.push({
+      id: cryptoRandomId(),
+      label,
+      done: false,
+    })
+    added++
+  }
+
+  if (added === 0) return { ok: true, added: 0 }
+
+  const { error: updErr } = await supabaseAdmin
+    .from("applications")
+    .update({ checklist: next })
+    .eq("id", id)
+    .eq("user_id", user.id)
+
+  if (updErr) return { ok: false, error: updErr.message, added: 0 }
+  revalidatePath("/applications")
+  return { ok: true, added }
+}
+
+function cryptoRandomId(): string {
+  const arr = new Uint8Array(8)
+  crypto.getRandomValues(arr)
+  return Array.from(arr, (b) => b.toString(16).padStart(2, "0")).join("")
+}
+
 export async function toggleChecklistItem(
   id: string,
   itemId: string
