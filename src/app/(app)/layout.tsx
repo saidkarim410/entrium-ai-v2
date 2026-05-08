@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { LangSwitcher } from "@/components/lang-switcher"
 import { CounselorWidget } from "@/components/counselor-widget"
+import { MobileNav } from "@/components/mobile-nav"
 import {
   Sparkles, Brain, Sparkles as SparklesIcon, Map, FileText,
   MessageSquare, Award, GraduationCap, LogOut, LayoutDashboard, Mail, FileUser, Wallet, ShieldCheck,
@@ -127,7 +128,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </div>
       </aside>
 
-      <main className="flex flex-col h-screen overflow-hidden">{children}</main>
+      <main className="flex flex-col h-[calc(100dvh-4rem)] lg:h-screen overflow-hidden">{children}</main>
+      <MobileNav
+        profile={{ email: profile.email, full_name: profile.full_name, tier: profile.tier }}
+        logoutAction={logoutAction}
+      />
       <CounselorWidget />
     </div>
   )

@@ -59,12 +59,12 @@ export function CounselorWidget() {
 
   return (
     <>
-      {/* Floating button */}
+      {/* Floating button — sits above mobile bottom-nav (64px) on small screens */}
       <button
         onClick={() => setOpen((o) => !o)}
         aria-label={open ? "Закрыть AI-консультанта" : "Открыть AI-консультанта"}
         className={cn(
-          "fixed bottom-5 right-5 z-50 grid h-14 w-14 place-items-center rounded-full shadow-lg transition-all",
+          "fixed bottom-20 right-4 lg:bottom-5 lg:right-5 z-50 grid h-14 w-14 place-items-center rounded-full shadow-lg transition-all",
           "bg-gold text-background hover:bg-gold-soft hover:scale-105",
           open && "rotate-90"
         )}
@@ -74,7 +74,7 @@ export function CounselorWidget() {
 
       {/* Chat panel */}
       {open && (
-        <div className="fixed bottom-24 right-5 z-50 flex flex-col rounded-xl border border-border bg-popover shadow-2xl w-[calc(100vw-2.5rem)] sm:w-[420px] h-[min(80vh,640px)] overflow-hidden accent-strip">
+        <div className="fixed bottom-[10.5rem] right-4 lg:bottom-24 lg:right-5 z-50 flex flex-col rounded-xl border border-border bg-popover shadow-2xl w-[calc(100vw-2rem)] sm:w-[420px] h-[min(70vh,560px)] lg:h-[min(80vh,640px)] overflow-hidden accent-strip">
           {/* Header */}
           <div className="flex items-center gap-3 px-5 py-4 border-b border-border shrink-0">
             <div className="grid h-9 w-9 place-items-center rounded-lg bg-gold/15">
