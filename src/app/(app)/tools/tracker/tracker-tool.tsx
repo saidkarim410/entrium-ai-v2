@@ -74,22 +74,57 @@ SAT/ACT: ${form.sat || "—"}
 
 Создай персональный план подготовки к поступлению.`
 
-    try {
-      const res = await fetch("/api/ai", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tool: "tracker", user: userPrompt, max_tokens: 12000 }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.message ?? data.error ?? "Ошибка")
-      const text = String(data.text ?? "").replace(/^```json\s*/i, "").replace(/^```\s*/, "").replace(/\s*```\s*$/, "").trim()
-      const parsed = JSON.parse(text) as Plan
-      setPlan(parsed)
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Не удалось сгенерировать план")
-    } finally {
-      setLoading(false)
+    let parsedPlan: Plan | null = null
+    let lastErr: unknown = null
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const res = await fetch("/api/ai", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            tool: "tracker",
+            user: attempt === 1
+              ? userPrompt
+              : userPrompt + "\n\nВНИМАНИЕ: ответ ДОЛЖЕН быть ТОЛЬКО JSON. Первый символ — { , последний — }. Никакого Markdown.",
+            max_tokens: 12000,
+          }),
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.message ?? data.error ?? "Ошибка")
+
+        let jsonStr = String(data.text ?? "")
+          .trim()
+          .replace(/^```json\s*/i, "")
+          .replace(/^```\s*/, "")
+          .replace(/\s*```\s*$/, "")
+          .trim()
+
+        if (!jsonStr.startsWith("{")) {
+          const start = jsonStr.indexOf("{")
+          const end = jsonStr.lastIndexOf("}")
+          if (start === -1 || end === -1 || end <= start) {
+            throw new Error("AI вернул не JSON")
+          }
+          jsonStr = jsonStr.slice(start, end + 1)
+        }
+
+        const parsed = JSON.parse(jsonStr) as Plan
+        if (!parsed.months || !Array.isArray(parsed.months) || parsed.months.length === 0) {
+          throw new Error("Пустой план")
+        }
+        parsedPlan = parsed
+        break
+      } catch (e) {
+        lastErr = e
+      }
     }
+
+    if (parsedPlan) {
+      setPlan(parsedPlan)
+    } else {
+      toast.error(lastErr instanceof Error ? lastErr.message : "Не удалось сгенерировать план. Попробуйте ещё раз.")
+    }
+    setLoading(false)
   }
 
   function toggle(id: string) {

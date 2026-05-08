@@ -39,7 +39,7 @@ export function LangSwitcher({ size = "sm" }: { size?: "sm" | "default" | "icon"
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         {LOCALES.map((l) => (
-          <DropdownMenuItem key={l} onSelect={() => setLang(l)} className="gap-2">
+          <DropdownMenuItem key={l} onClick={() => setLang(l)} className="gap-2 cursor-pointer">
             {FLAGS[l]} {NAMES[l]}
             {l === current && <span className="ml-auto text-xs">✓</span>}
           </DropdownMenuItem>
