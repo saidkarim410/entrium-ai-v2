@@ -27,6 +27,7 @@ export const dict = {
       essay: { title: "Essay Coach", desc: "Анализ структуры, аргументации, языка с конкретными правками" },
       humanizer: { title: "Humanizer", desc: "Превращает шаблонный текст в живое студенческое эссе" },
       interview: { title: "Interview Trainer", desc: "Симулятор admission interview с feedback по ответам" },
+      recommendation: { title: "Letter of Recommendation", desc: "Профессиональное рекомендательное письмо со специфическими деталями" },
     },
     auth: {
       login_title: "Войти",
@@ -72,6 +73,7 @@ export const dict = {
       tool_essay: "Essay Coach",
       tool_humanizer: "Humanizer",
       tool_interview: "Интервью",
+      tool_recommendation: "Рекомендательное письмо",
     },
     chat: {
       empty: "Начни диалог — AI задаст уточняющие вопросы и подготовит ответ под твой контекст.",
@@ -114,6 +116,7 @@ export const dict = {
       essay: { title: "Essay Coach", desc: "Analysis of structure, arguments, and language with concrete edits" },
       humanizer: { title: "Humanizer", desc: "Turns template-sounding text into living student writing" },
       interview: { title: "Interview Trainer", desc: "Admission interview simulator with feedback on each answer" },
+      recommendation: { title: "Letter of Recommendation", desc: "Professional recommendation letter with specific, vivid details" },
     },
     auth: {
       login_title: "Sign in",
@@ -159,6 +162,7 @@ export const dict = {
       tool_essay: "Essay Coach",
       tool_humanizer: "Humanizer",
       tool_interview: "Interview",
+      tool_recommendation: "Recommendation Letter",
     },
     chat: {
       empty: "Start the dialog — AI will ask clarifying questions and tailor the answer to your context.",
@@ -201,6 +205,7 @@ export const dict = {
       essay: { title: "Essay Coach", desc: "Tuzilishi, argumentatsiyasi va tilini aniq tahrirlar bilan tahlil qilish" },
       humanizer: { title: "Humanizer", desc: "Shablon matnni jonli talaba insho ga aylantiradi" },
       interview: { title: "Interview Trainer", desc: "Har bir javobga fikr-mulohaza bilan qabul suhbati simulyatori" },
+      recommendation: { title: "Tavsiyanoma", desc: "Aniq tafsilotlar bilan professional tavsiyanoma" },
     },
     auth: {
       login_title: "Kirish",
@@ -246,6 +251,7 @@ export const dict = {
       tool_essay: "Essay Coach",
       tool_humanizer: "Humanizer",
       tool_interview: "Suhbat",
+      tool_recommendation: "Tavsiyanoma",
     },
     chat: {
       empty: "Suhbatni boshlang — AI aniqlashtiruvchi savollar beradi va kontekstingizga moslashgan javob tayyorlaydi.",

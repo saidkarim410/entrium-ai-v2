@@ -3,7 +3,7 @@ import { getCurrentProfile } from "@/lib/supabase/server"
 import { checkUsage } from "@/lib/rate-limit"
 import { getT } from "@/lib/i18n/server"
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Brain, Sparkles, Map, FileText, Wand2, MessageSquare, Award, GraduationCap } from "lucide-react"
+import { Brain, Sparkles, Map, FileText, Wand2, MessageSquare, Award, GraduationCap, Mail } from "lucide-react"
 
 const ICONS = {
   profile: Brain,
@@ -14,6 +14,7 @@ const ICONS = {
   essay: FileText,
   humanizer: Wand2,
   interview: MessageSquare,
+  recommendation: Mail,
 } as const
 
 export default async function DashboardPage() {
