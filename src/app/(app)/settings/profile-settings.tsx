@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { saveApplicantProfile } from "@/lib/applicant/actions"
 import { profileCompleteness, type ApplicantProfile } from "@/lib/applicant/types"
+import { DocumentUploadCard, mergeProfilePatch } from "@/components/document-upload-card"
 import { User, GraduationCap, Target, Trophy, Loader2, Check, Sparkles } from "lucide-react"
 
 const LEVELS = ["Bachelor", "Master", "PhD", "MBA", "Foundation"] as const
@@ -68,6 +69,9 @@ export function ProfileSettings({ initial }: { initial: ApplicantProfile }) {
                 : "Отлично! Профиль полный — AI получит максимум контекста"}
           </p>
         </div>
+
+        {/* Document upload */}
+        <DocumentUploadCard onApply={(patch) => setProfile((p) => mergeProfilePatch(p, patch))} />
 
         {/* Personal */}
         <Section icon={<User className="h-4 w-4 text-gold" />} title="Личные данные">
