@@ -1,15 +1,18 @@
 import { getApplicantProfile } from "@/lib/applicant/actions"
 import { getTelegramStatus } from "@/lib/telegram-actions"
+import { getSharingStatus } from "@/lib/share/actions"
 import { telegramEnabled } from "@/lib/env"
 import { ProfileSettings } from "./profile-settings"
 import { TelegramLinkCard } from "@/components/telegram-link-card"
+import { ShareCard } from "@/components/share-card"
 
 export const dynamic = "force-dynamic"
 
 export default async function SettingsPage() {
-  const [profile, telegramStatus] = await Promise.all([
+  const [profile, telegramStatus, sharingStatus] = await Promise.all([
     getApplicantProfile(),
     getTelegramStatus(),
+    getSharingStatus(),
   ])
 
   return (
@@ -23,6 +26,7 @@ export default async function SettingsPage() {
       <ProfileSettings
         initial={profile}
         telegramSlot={telegramEnabled() ? <TelegramLinkCard initial={telegramStatus} /> : null}
+        shareSlot={<ShareCard initial={sharingStatus} />}
       />
     </>
   )

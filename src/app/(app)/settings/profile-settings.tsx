@@ -16,9 +16,11 @@ const LEVELS = ["Bachelor", "Master", "PhD", "MBA", "Foundation"] as const
 export function ProfileSettings({
   initial,
   telegramSlot,
+  shareSlot,
 }: {
   initial: ApplicantProfile
   telegramSlot?: React.ReactNode
+  shareSlot?: React.ReactNode
 }) {
   const [profile, setProfile] = useState<ApplicantProfile>(initial)
   const [pending, startTransition] = useTransition()
@@ -79,6 +81,7 @@ export function ProfileSettings({
         {/* Document upload */}
         <DocumentUploadCard onApply={(patch) => setProfile((p) => mergeProfilePatch(p, patch))} />
 
+        {shareSlot}
         {telegramSlot}
 
         {/* Personal */}
