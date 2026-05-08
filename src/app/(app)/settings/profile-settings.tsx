@@ -17,10 +17,12 @@ export function ProfileSettings({
   initial,
   telegramSlot,
   shareSlot,
+  emailSlot,
 }: {
   initial: ApplicantProfile
   telegramSlot?: React.ReactNode
   shareSlot?: React.ReactNode
+  emailSlot?: React.ReactNode
 }) {
   const [profile, setProfile] = useState<ApplicantProfile>(initial)
   const [pending, startTransition] = useTransition()
@@ -83,6 +85,7 @@ export function ProfileSettings({
 
         {shareSlot}
         {telegramSlot}
+        {emailSlot}
 
         {/* Personal */}
         <Section icon={<User className="h-4 w-4 text-gold" />} title="Личные данные">

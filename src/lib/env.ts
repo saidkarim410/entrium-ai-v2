@@ -42,6 +42,17 @@ export const env = {
   get TELEGRAM_WEBHOOK_SECRET() {
     return process.env.TELEGRAM_WEBHOOK_SECRET ?? ""
   },
+
+  // ── Resend (optional — email digest) ────────────────────────────
+  get RESEND_API_KEY() {
+    return process.env.RESEND_API_KEY ?? ""
+  },
+  get RESEND_FROM() {
+    return process.env.RESEND_FROM ?? "Entrium AI <noreply@entrium.ai>"
+  },
+  get EMAIL_TOKEN_SECRET() {
+    return process.env.EMAIL_TOKEN_SECRET ?? process.env.SUPABASE_SERVICE_ROLE_KEY ?? ""
+  },
 }
 
 /** Check if Stripe integration is wired up */
@@ -52,4 +63,9 @@ export function stripeEnabled(): boolean {
 /** Check if Telegram bot is wired up */
 export function telegramEnabled(): boolean {
   return Boolean(process.env.TELEGRAM_BOT_TOKEN)
+}
+
+/** Check if Resend email is wired up */
+export function emailEnabled(): boolean {
+  return Boolean(process.env.RESEND_API_KEY)
 }
