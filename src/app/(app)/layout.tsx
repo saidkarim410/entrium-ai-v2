@@ -11,7 +11,7 @@ import { MobileNav } from "@/components/mobile-nav"
 import {
   Sparkles, Brain, Sparkles as SparklesIcon, Map, FileText,
   MessageSquare, Award, GraduationCap, LogOut, LayoutDashboard, Mail, FileUser, Wallet, ShieldCheck,
-  History, UserCog, Bot, ListChecks,
+  History, UserCog, Bot, ListChecks, Crown,
 } from "lucide-react"
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -119,7 +119,25 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               </Badge>
             </div>
             <p className="mt-1 text-xs text-muted-foreground truncate">{profile.email}</p>
-            <form action={logoutAction} className="mt-3">
+            {profile.tier !== "pro" && (
+              <Link
+                href="/pricing"
+                className="mt-3 flex items-center gap-2 rounded-md bg-gold/15 hover:bg-gold/25 border border-gold/30 px-3 py-2 text-xs font-medium text-gold transition-colors"
+              >
+                <Crown className="h-3.5 w-3.5" />
+                Открыть Pro
+              </Link>
+            )}
+            {profile.tier === "pro" && (
+              <Link
+                href="/pricing"
+                className="mt-3 flex items-center gap-2 rounded-md hover:bg-accent px-3 py-2 text-xs text-muted-foreground transition-colors"
+              >
+                <Crown className="h-3.5 w-3.5" />
+                Управлять Pro
+              </Link>
+            )}
+            <form action={logoutAction} className="mt-2">
               <Button type="submit" variant="ghost" size="sm" className="w-full justify-start gap-2 h-8">
                 <LogOut className="h-3.5 w-3.5" />
                 {t.nav.logout}

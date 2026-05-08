@@ -11,7 +11,7 @@ import {
 import {
   LayoutDashboard, Bot, LayoutGrid, MoreHorizontal,
   Brain, Sparkles, Map, FileText, MessageSquare, Award, GraduationCap,
-  Mail, FileUser, Wallet, ShieldCheck, History, UserCog, LogOut, ListChecks,
+  Mail, FileUser, Wallet, ShieldCheck, History, UserCog, LogOut, ListChecks, Crown,
   type LucideIcon,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -177,6 +177,25 @@ export function MobileNav({
             <div className="flex items-center justify-between gap-3 px-4 pb-3">
               <span className="text-sm font-mono-label text-cream-3">Язык интерфейса</span>
               <LangSwitcher size="sm" />
+            </div>
+
+            <div className="px-2 pb-3">
+              <SheetClose
+                render={
+                  <Link
+                    href="/pricing"
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors",
+                      profile.tier === "pro"
+                        ? "hover:bg-accent text-cream-2"
+                        : "bg-gold/10 border border-gold/20 text-gold hover:bg-gold/20"
+                    )}
+                  >
+                    <Crown className="h-4 w-4" />
+                    {profile.tier === "pro" ? "Управлять Pro" : "Открыть Pro"}
+                  </Link>
+                }
+              />
             </div>
 
             <div className="space-y-1 px-2 pb-4">
