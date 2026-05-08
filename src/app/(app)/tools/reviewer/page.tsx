@@ -1,6 +1,11 @@
 import { ReviewerTool } from "./reviewer-tool"
+import { getApplicantProfile } from "@/lib/applicant/actions"
+import { reviewerDefaults } from "@/lib/applicant/prefill"
 
-export default function ReviewerPage() {
+export const dynamic = "force-dynamic"
+
+export default async function ReviewerPage() {
+  const applicant = await getApplicantProfile()
   return (
     <>
       <header className="flex h-16 items-center justify-between border-b border-border/40 px-4 sm:px-6 shrink-0 overflow-hidden">
@@ -9,7 +14,7 @@ export default function ReviewerPage() {
           <p className="font-mono-label text-cream-3 mt-0.5 truncate">AI · Финальное review заявки до отправки</p>
         </div>
       </header>
-      <ReviewerTool />
+      <ReviewerTool initial={reviewerDefaults(applicant)} />
     </>
   )
 }

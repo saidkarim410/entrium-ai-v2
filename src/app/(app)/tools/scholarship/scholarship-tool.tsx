@@ -9,12 +9,18 @@ import { Textarea } from "@/components/ui/textarea"
 import { Markdown } from "@/components/markdown"
 import { Award, Loader2, Sparkles, Copy, Check } from "lucide-react"
 
-export function ScholarshipTool() {
+type ScholarshipDefaults = {
+  citizenship: string; gpa: string; eng: string
+  major: string; prog: string
+  countries: string; needFull: string; extra: string
+}
+
+export function ScholarshipTool({ initial }: { initial?: ScholarshipDefaults } = {}) {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState("")
   const [copied, setCopied] = useState(false)
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<ScholarshipDefaults>(initial ?? {
     citizenship: "Узбекистан", gpa: "", eng: "",
     major: "", prog: "Bachelor",
     countries: "", needFull: "yes",

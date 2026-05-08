@@ -1,6 +1,11 @@
 import { ScholarshipTool } from "./scholarship-tool"
+import { getApplicantProfile } from "@/lib/applicant/actions"
+import { scholarshipDefaults } from "@/lib/applicant/prefill"
 
-export default function ScholarshipPage() {
+export const dynamic = "force-dynamic"
+
+export default async function ScholarshipPage() {
+  const applicant = await getApplicantProfile()
   return (
     <>
       <header className="flex h-16 items-center justify-between border-b border-border/40 px-4 sm:px-6 shrink-0 overflow-hidden">
@@ -9,7 +14,7 @@ export default function ScholarshipPage() {
           <p className="font-mono-label text-cream-3 mt-0.5 truncate">AI · Подбор стипендий по профилю</p>
         </div>
       </header>
-      <ScholarshipTool />
+      <ScholarshipTool initial={scholarshipDefaults(applicant)} />
     </>
   )
 }

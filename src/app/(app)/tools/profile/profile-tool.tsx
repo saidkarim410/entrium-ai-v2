@@ -9,12 +9,20 @@ import { Textarea } from "@/components/ui/textarea"
 import { Markdown } from "@/components/markdown"
 import { Brain, Loader2, Sparkles, Copy, Check } from "lucide-react"
 
-export function ProfileTool() {
+type ProfileFormDefaults = {
+  name: string; age: string; level: string; year: string
+  gpa: string; eng: string; sat: string; apTests: string
+  major: string; prog: string; region: string
+  unis: string; budget: string; citizenship: string
+  extra: string; awards: string; weak: string; goals: string
+}
+
+export function ProfileTool({ initial }: { initial?: ProfileFormDefaults } = {}) {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState("")
   const [copied, setCopied] = useState(false)
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<ProfileFormDefaults>(initial ?? {
     name: "", age: "", level: "11 класс", year: "2027",
     gpa: "", eng: "", sat: "", apTests: "",
     major: "", prog: "Bachelor", region: "USA",

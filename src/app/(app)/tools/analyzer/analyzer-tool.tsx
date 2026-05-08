@@ -9,12 +9,17 @@ import { Textarea } from "@/components/ui/textarea"
 import { Markdown } from "@/components/markdown"
 import { Sparkles, Loader2, Copy, Check } from "lucide-react"
 
-export function AnalyzerTool() {
+type AnalyzerDefaults = {
+  gpa: string; eng: string; sat: string; apTests: string
+  major: string; prog: string; unis: string; profile: string
+}
+
+export function AnalyzerTool({ initial }: { initial?: AnalyzerDefaults } = {}) {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState("")
   const [copied, setCopied] = useState(false)
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<AnalyzerDefaults>(initial ?? {
     gpa: "", eng: "", sat: "", apTests: "",
     major: "", prog: "Bachelor",
     unis: "", profile: "",

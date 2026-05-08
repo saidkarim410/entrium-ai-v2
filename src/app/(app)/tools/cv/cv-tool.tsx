@@ -25,41 +25,33 @@ const LANGS = [
   { id: "Русский", label: "Русский" },
 ] as const
 
-export function CVTool() {
+type CVDefaults = {
+  name: string; email: string; phone: string; location: string
+  linkedin: string; github: string; portfolio: string
+  targetRole: string; targetCountry: string
+  education: string; experience: string; projects: string
+  skillsTech: string; skillsLang: string
+  awards: string; activities: string; publications: string
+  format: (typeof FORMATS)[number]["id"]
+  length: (typeof LENGTHS)[number]["id"]
+  lang: (typeof LANGS)[number]["id"]
+}
+
+export function CVTool({ initial }: { initial?: CVDefaults } = {}) {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState("")
   const [copied, setCopied] = useState(false)
 
-  const [form, setForm] = useState({
-    // Personal
-    name: "",
-    email: "",
-    phone: "",
-    location: "",
-    linkedin: "",
-    github: "",
-    portfolio: "",
-    // Target
-    targetRole: "",
-    targetCountry: "",
-    // Education
-    education: "",
-    // Experience
-    experience: "",
-    // Projects
-    projects: "",
-    // Skills
-    skillsTech: "",
-    skillsLang: "",
-    // Awards
-    awards: "",
-    // Activities (optional)
-    activities: "",
-    publications: "",
-    // Style
-    format: "us_ats" as (typeof FORMATS)[number]["id"],
-    length: "1page" as (typeof LENGTHS)[number]["id"],
-    lang: "English" as (typeof LANGS)[number]["id"],
+  const [form, setForm] = useState<CVDefaults>(initial ?? {
+    name: "", email: "", phone: "", location: "",
+    linkedin: "", github: "", portfolio: "",
+    targetRole: "", targetCountry: "",
+    education: "", experience: "", projects: "",
+    skillsTech: "", skillsLang: "",
+    awards: "", activities: "", publications: "",
+    format: "us_ats",
+    length: "1page",
+    lang: "English",
   })
 
   const update = (k: string) => (

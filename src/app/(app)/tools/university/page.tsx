@@ -1,6 +1,11 @@
 import { UniversityTool } from "./university-tool"
+import { getApplicantProfile } from "@/lib/applicant/actions"
+import { universityDefaults } from "@/lib/applicant/prefill"
 
-export default function UniversityPage() {
+export const dynamic = "force-dynamic"
+
+export default async function UniversityPage() {
+  const applicant = await getApplicantProfile()
   return (
     <>
       <header className="flex h-16 items-center justify-between border-b border-border/40 px-4 sm:px-6 shrink-0 overflow-hidden">
@@ -9,7 +14,7 @@ export default function UniversityPage() {
           <p className="font-mono-label text-cream-3 mt-0.5 truncate">AI · Подбор универов из QS</p>
         </div>
       </header>
-      <UniversityTool />
+      <UniversityTool initial={universityDefaults(applicant)} />
     </>
   )
 }

@@ -9,12 +9,18 @@ import { Textarea } from "@/components/ui/textarea"
 import { Markdown } from "@/components/markdown"
 import { GraduationCap, Loader2, Sparkles, Copy, Check } from "lucide-react"
 
-export function UniversityTool() {
+type UniversityDefaults = {
+  gpa: string; eng: string; sat: string
+  major: string; prog: string
+  countries: string; budget: string; preferences: string
+}
+
+export function UniversityTool({ initial }: { initial?: UniversityDefaults } = {}) {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState("")
   const [copied, setCopied] = useState(false)
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<UniversityDefaults>(initial ?? {
     gpa: "", eng: "", sat: "",
     major: "", prog: "Bachelor",
     countries: "", budget: "",

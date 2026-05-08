@@ -27,32 +27,29 @@ const LANGS = [
   { id: "O'zbekcha", label: "O'zbekcha" },
 ] as const
 
-export function RecommendationTool() {
+type RecDefaults = {
+  rec_name: string; rec_position: string; rec_institution: string; rec_email: string
+  rec_subject: string; rec_duration: string
+  st_name: string; st_target: string; st_program: string
+  achievements: string; qualities: string; anecdote: string; growth: string
+  lang: (typeof LANGS)[number]["id"]
+  tone: (typeof TONES)[number]["id"]
+  length: (typeof LENGTHS)[number]["id"]
+}
+
+export function RecommendationTool({ initial }: { initial?: RecDefaults } = {}) {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState("")
   const [copied, setCopied] = useState(false)
 
-  const [form, setForm] = useState({
-    // Recommender
-    rec_name: "",
-    rec_position: "",
-    rec_institution: "",
-    rec_email: "",
-    rec_subject: "",
-    rec_duration: "",
-    // Student
-    st_name: "",
-    st_target: "",
-    st_program: "Bachelor",
-    // Substance
-    achievements: "",
-    qualities: "",
-    anecdote: "",
-    growth: "",
-    // Style
-    lang: "Русский" as (typeof LANGS)[number]["id"],
-    tone: "formal" as (typeof TONES)[number]["id"],
-    length: "medium" as (typeof LENGTHS)[number]["id"],
+  const [form, setForm] = useState<RecDefaults>(initial ?? {
+    rec_name: "", rec_position: "", rec_institution: "", rec_email: "",
+    rec_subject: "", rec_duration: "",
+    st_name: "", st_target: "", st_program: "Bachelor",
+    achievements: "", qualities: "", anecdote: "", growth: "",
+    lang: "Русский",
+    tone: "formal",
+    length: "medium",
   })
 
   const update = (k: string) => (

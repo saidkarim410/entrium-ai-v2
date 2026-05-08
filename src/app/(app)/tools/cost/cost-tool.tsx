@@ -18,24 +18,29 @@ const LIFESTYLES = [
 const LEVELS = ["Bachelor", "Master", "PhD", "MBA", "Foundation"] as const
 const LANGS = ["Русский", "English", "O'zbekcha"] as const
 
-export function CostTool() {
+type CostDefaults = {
+  country: string; city: string; university: string
+  level: (typeof LEVELS)[number]
+  duration: string
+  lifestyle: (typeof LIFESTYLES)[number]["id"]
+  scholarship: string; budget: string
+  citizenship: string; field: string; notes: string
+  lang: (typeof LANGS)[number]
+}
+
+export function CostTool({ initial }: { initial?: CostDefaults } = {}) {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState("")
   const [copied, setCopied] = useState(false)
 
-  const [form, setForm] = useState({
-    country: "",
-    city: "",
-    university: "",
-    level: "Bachelor" as (typeof LEVELS)[number],
+  const [form, setForm] = useState<CostDefaults>(initial ?? {
+    country: "", city: "", university: "",
+    level: "Bachelor",
     duration: "4",
-    lifestyle: "standard" as (typeof LIFESTYLES)[number]["id"],
-    scholarship: "",
-    budget: "",
-    citizenship: "Узбекистан",
-    field: "",
-    notes: "",
-    lang: "Русский" as (typeof LANGS)[number],
+    lifestyle: "standard",
+    scholarship: "", budget: "",
+    citizenship: "Узбекистан", field: "", notes: "",
+    lang: "Русский",
   })
 
   const update = (k: string) => (

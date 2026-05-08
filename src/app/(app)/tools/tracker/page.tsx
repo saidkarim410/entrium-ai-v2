@@ -1,6 +1,11 @@
 import { TrackerTool } from "./tracker-tool"
+import { getApplicantProfile } from "@/lib/applicant/actions"
+import { trackerDefaults } from "@/lib/applicant/prefill"
 
-export default function TrackerPage() {
+export const dynamic = "force-dynamic"
+
+export default async function TrackerPage() {
+  const applicant = await getApplicantProfile()
   return (
     <>
       <header className="flex h-16 items-center justify-between border-b border-border/40 px-4 sm:px-6 shrink-0 overflow-hidden">
@@ -9,7 +14,7 @@ export default function TrackerPage() {
           <p className="font-mono-label text-cream-3 mt-0.5 truncate">AI · Персональный план месяц за месяцем</p>
         </div>
       </header>
-      <TrackerTool />
+      <TrackerTool initial={trackerDefaults(applicant)} />
     </>
   )
 }

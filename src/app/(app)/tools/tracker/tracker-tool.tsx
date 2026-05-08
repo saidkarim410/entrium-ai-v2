@@ -41,12 +41,18 @@ const PRIORITY_COLORS: Record<string, string> = {
   high: "border-l-red-500", medium: "border-l-amber-500", low: "border-l-emerald-500",
 }
 
-export function TrackerTool() {
+type TrackerDefaults = {
+  name: string; age: string; level: string; year: string
+  gpa: string; eng: string; sat: string; major: string; prog: string
+  unis: string; extra: string; weak: string
+}
+
+export function TrackerTool({ initial }: { initial?: TrackerDefaults } = {}) {
   const [loading, setLoading] = useState(false)
   const [plan, setPlan] = useState<Plan | null>(null)
   const [done, setDone] = useState<Set<string>>(new Set())
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<TrackerDefaults>(initial ?? {
     name: "", age: "", level: "11 класс", year: "2027",
     gpa: "", eng: "", sat: "", major: "", prog: "Bachelor",
     unis: "", extra: "", weak: "",

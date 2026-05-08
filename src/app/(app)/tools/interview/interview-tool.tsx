@@ -13,17 +13,21 @@ import { cn } from "@/lib/utils"
 type AnswerEntry = { q: string; a: string; feedback: string; score: number | null }
 type Phase = "setup" | "session" | "results"
 
-export function InterviewTool() {
+type InterviewDefaults = {
+  uni: string; major: string; type: string; lang: string; count: string; about: string
+}
+
+export function InterviewTool({ initial }: { initial?: InterviewDefaults } = {}) {
   const [phase, setPhase] = useState<Phase>("setup")
   const [loading, setLoading] = useState(false)
 
   // Setup
-  const [uni, setUni] = useState("")
-  const [major, setMajor] = useState("")
-  const [type, setType] = useState("Alumni interview (US)")
-  const [lang, setLang] = useState("Русский")
-  const [count, setCount] = useState("8")
-  const [about, setAbout] = useState("")
+  const [uni, setUni] = useState(initial?.uni ?? "")
+  const [major, setMajor] = useState(initial?.major ?? "")
+  const [type, setType] = useState(initial?.type ?? "Alumni interview (US)")
+  const [lang, setLang] = useState(initial?.lang ?? "Русский")
+  const [count, setCount] = useState(initial?.count ?? "8")
+  const [about, setAbout] = useState(initial?.about ?? "")
 
   // Session
   const [questions, setQuestions] = useState<string[]>([])

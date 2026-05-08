@@ -28,37 +28,32 @@ const STRICTNESS = [
   { id: "topasia", label: "NUS / NTU / KAIST / HKU" },
 ] as const
 
-export function ReviewerTool() {
+type ReviewerDefaults = {
+  university: string; program: string
+  round: (typeof ROUNDS)[number]
+  deadline: string
+  strictness: (typeof STRICTNESS)[number]["id"]
+  citizenship: string; schoolType: string; gpa: string; tests: string; apIb: string
+  personalStatement: string; supplemental1: string; supplemental2: string; supplemental3: string
+  activities: string; awards: string
+  recommenders: string; demographics: string; constraints: string
+}
+
+export function ReviewerTool({ initial }: { initial?: ReviewerDefaults } = {}) {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState("")
   const [copied, setCopied] = useState(false)
 
-  const [form, setForm] = useState({
-    // Target
-    university: "",
-    program: "",
-    round: "Regular Decision (RD)" as (typeof ROUNDS)[number],
+  const [form, setForm] = useState<ReviewerDefaults>(initial ?? {
+    university: "", program: "",
+    round: "Regular Decision (RD)",
     deadline: "",
-    strictness: "top30" as (typeof STRICTNESS)[number]["id"],
-    // Profile
+    strictness: "top30",
     citizenship: "Узбекистан",
-    schoolType: "",
-    gpa: "",
-    tests: "",
-    apIb: "",
-    // Essays
-    personalStatement: "",
-    supplemental1: "",
-    supplemental2: "",
-    supplemental3: "",
-    // Activities
-    activities: "",
-    awards: "",
-    // Recommenders
-    recommenders: "",
-    // Demographics + Context
-    demographics: "",
-    constraints: "",
+    schoolType: "", gpa: "", tests: "", apIb: "",
+    personalStatement: "", supplemental1: "", supplemental2: "", supplemental3: "",
+    activities: "", awards: "",
+    recommenders: "", demographics: "", constraints: "",
   })
 
   const update = (k: string) => (

@@ -1,5 +1,7 @@
 import Link from "next/link"
+import { redirect } from "next/navigation"
 import { getCurrentProfile } from "@/lib/supabase/server"
+import { getApplicantProfile } from "@/lib/applicant/actions"
 import { checkUsage } from "@/lib/rate-limit"
 import { getT } from "@/lib/i18n/server"
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -23,6 +25,10 @@ const ICONS = {
 export default async function DashboardPage() {
   const profile = await getCurrentProfile()
   if (!profile) return null
+
+  // First-time visitor → onboarding wizard
+  const applicant = await getApplicantProfile()
+  if (!applicant._completed) redirect("/onboarding")
 
   const t = await getT()
   const usage = await checkUsage(profile.id)
