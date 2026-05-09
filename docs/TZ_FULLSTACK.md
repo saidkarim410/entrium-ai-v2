@@ -1,16 +1,21 @@
 # ТЗ — Entrium AI v2 (Full-Stack)
 
 > **Документ для full-stack разработчика, нанятого на доработку проекта.**
-> Дата создания: 2026-05-09 · Версия 1.1 (после авто-прогона wave 1)
+> Дата создания: 2026-05-09 · Версия 1.2 (после авто-прогонов wave 1 + 2)
 > Прод: https://entrium-ai-v2.vercel.app
 >
 > **Wave 1 закрыт автоматически (commit `0110b8d`):**
 > - Безопасность: S-2, S-3, S-4, S-5, S-6, S-8/F-6, S-9, S-10, S-12 ✅
-> - UX: U-1, U-8, U-12 ✅
+> - UX: U-1, U-8 (примитив), U-12 ✅
 > - Фичи: F-4 ✅
 > - Качество: Q-1 (CI), частично S-1 (PAT убран из .git/config)
 >
-> **Остаются на разработчика:** S-1 (отозвать токен в GitHub UI), S-7 (Telegram bot recreate), S-11, S-13, S-14, U-2…U-13 кроме U-1/U-8/U-12, F-1, F-2, F-3, F-5, F-7…F-13, контент-долг, Q-2…Q-5.
+> **Wave 2 закрыт автоматически (commit `5b9393a`):**
+> - UX: U-2 (settings sidebar nav), U-3 (applications bulk actions), U-5 (onboarding step indicator), U-7 (VoiceTextarea wrapper), U-8 применён к applications ✅
+> - Фичи: F-3 (applications timeline) ✅
+> - Качество: Q-2 partial (11 тестов на daysUntil/deadlineUrgency, fixed -0 regression)
+>
+> **Остаются на разработчика:** S-1 финал (отозвать токен в GitHub UI), S-7 (Telegram bot recreate), S-11, S-13 (2FA TOTP), S-14, U-4 (calendar views), U-6 (inline AI comments), U-9 (mobile audit), U-10 (light theme), U-11 (axe a11y), U-13 (forms unify), F-1, F-2, F-5, F-7…F-13, контент-долг, Q-2 expansion, Q-3, Q-4, Q-5.
 
 ---
 
