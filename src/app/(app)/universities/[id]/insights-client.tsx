@@ -1,12 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
   Sparkles, Loader2, Target, AlertTriangle, CheckCircle2, ArrowRight, RotateCw, TrendingUp,
 } from "lucide-react"
+import { AiLoadingSkeleton, AiErrorCard, AiEmptyCta } from "@/components/ai-state"
 import { cn } from "@/lib/utils"
 
 type Insights = {
@@ -34,47 +34,39 @@ const CAT_LABELS: Record<Insights["category"], string> = {
 export function UniInsightsClient({ universityId, universityName }: { universityId: string; universityName: string }) {
   const [data, setData] = useState<Insights | null>(null)
   const [pending, setPending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   async function generate() {
     setPending(true)
+    setError(null)
     try {
       const res = await fetch(`/api/universities/${universityId}/insights`, { method: "POST" })
       const json = await res.json()
       if (!res.ok) {
-        toast.error(json.message ?? json.error ?? "AI не смог")
+        setError(json.message ?? json.error ?? "Сервер вернул ошибку — попробуй ещё раз")
         return
       }
       setData(json.insights)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка")
+      setError(err instanceof Error ? err.message : "Сетевая ошибка")
     } finally {
       setPending(false)
     }
   }
 
+  if (pending && !data) return <AiLoadingSkeleton />
+  if (error && !data) return <AiErrorCard message={error} onRetry={generate} retrying={pending} />
+
   if (!data) {
     return (
-      <section className="rounded-2xl border border-gold/30 bg-gradient-to-br from-gold/10 to-transparent p-5 sm:p-6 space-y-4">
-        <div className="flex items-start gap-3">
-          <div className="grid h-10 w-10 place-items-center rounded-lg bg-gold/20 shrink-0">
-            <Sparkles className="h-5 w-5 text-gold" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="font-display text-lg sm:text-xl">AI fit-анализ</h3>
-            <p className="font-serif text-sm text-cream-2 leading-relaxed mt-0.5">
-              Сравню твой профиль с {universityName}: реалистичную вероятность поступления (reach/match/safety),
-              сильные стороны, конкретные слабости и список действий ДО подачи.
-            </p>
-          </div>
-        </div>
-        <Button onClick={generate} disabled={pending} className="gap-2">
-          {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Target className="h-4 w-4" />}
-          {pending ? "AI анализирует профиль..." : "Получить AI fit-анализ"}
-        </Button>
-        <p className="font-mono-label text-[10px] text-cream-3">
-          Использует профиль из /settings · 1 запрос из дневной квоты
-        </p>
-      </section>
+      <AiEmptyCta
+        icon={Target}
+        title="AI fit-анализ"
+        description={`Сравню твой профиль с ${universityName}: реалистичную вероятность поступления (reach/match/safety), сильные стороны, конкретные слабости и список действий ДО подачи. Использует профиль из /settings · 1 запрос из дневной квоты.`}
+        buttonLabel="Получить AI fit-анализ"
+        onClick={generate}
+        pending={pending}
+      />
     )
   }
 

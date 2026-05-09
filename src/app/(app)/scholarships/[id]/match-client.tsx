@@ -1,12 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
   Sparkles, Loader2, Target, RotateCw, CheckCircle2, AlertTriangle, TrendingUp,
 } from "lucide-react"
+import { AiLoadingSkeleton, AiErrorCard, AiEmptyCta } from "@/components/ai-state"
 import { cn } from "@/lib/utils"
 
 type Match = {
@@ -40,44 +40,39 @@ export function ScholarshipMatchClient({
 }) {
   const [match, setMatch] = useState<Match | null>(null)
   const [pending, setPending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   async function generate() {
     setPending(true)
+    setError(null)
     try {
       const res = await fetch(`/api/scholarships/${scholarshipId}/match`, { method: "POST" })
       const json = await res.json()
       if (!res.ok) {
-        toast.error(json.message ?? json.error ?? "AI не смог")
+        setError(json.message ?? json.error ?? "Сервер вернул ошибку — попробуй ещё раз")
         return
       }
       setMatch(json.match)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка")
+      setError(err instanceof Error ? err.message : "Сетевая ошибка")
     } finally {
       setPending(false)
     }
   }
 
+  if (pending && !match) return <AiLoadingSkeleton />
+  if (error && !match) return <AiErrorCard message={error} onRetry={generate} retrying={pending} />
+
   if (!match) {
     return (
-      <section className="rounded-2xl border border-gold/30 bg-gradient-to-br from-gold/10 to-transparent p-5 sm:p-6 space-y-4">
-        <div className="flex items-start gap-3">
-          <div className="grid h-10 w-10 place-items-center rounded-lg bg-gold/20 shrink-0">
-            <Sparkles className="h-5 w-5 text-gold" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="font-display text-lg sm:text-xl">AI match-анализ</h3>
-            <p className="font-serif text-sm text-cream-2 leading-relaxed mt-0.5">
-              Сравню твой профиль с критериями {scholarshipName}: реалистичные шансы получить
-              стипендию, конкретные fits/gaps, стратегия подачи и список действий до дедлайна.
-            </p>
-          </div>
-        </div>
-        <Button onClick={generate} disabled={pending} className="gap-2">
-          {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Target className="h-4 w-4" />}
-          {pending ? "AI анализирует..." : "Получить AI match"}
-        </Button>
-      </section>
+      <AiEmptyCta
+        icon={Target}
+        title="AI match-анализ"
+        description={`Сравню твой профиль с критериями ${scholarshipName}: реалистичные шансы получить стипендию, конкретные fits/gaps, стратегия подачи и список действий до дедлайна.`}
+        buttonLabel="Получить AI match"
+        onClick={generate}
+        pending={pending}
+      />
     )
   }
 
