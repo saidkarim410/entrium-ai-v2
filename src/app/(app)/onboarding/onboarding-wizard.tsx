@@ -16,6 +16,7 @@ import {
 import { cn } from "@/lib/utils"
 
 const TOTAL_STEPS = 5
+const STEP_LABELS = ["Знакомство", "Академика", "Цели", "Опыт", "Готово"] as const
 
 type AutosaveState = "idle" | "saving" | "saved" | "error"
 
@@ -132,18 +133,56 @@ export function OnboardingWizard({ initial }: { initial: ApplicantProfile }) {
           </p>
         </div>
 
-        {/* Progress */}
-        <div className="flex items-center gap-2 mb-10 px-2">
-          {Array.from({ length: TOTAL_STEPS }, (_, i) => (
-            <div
-              key={i}
-              className={cn(
-                "h-1.5 flex-1 rounded-full transition-all",
-                i < step ? "bg-gold" : "bg-border"
-              )}
-            />
-          ))}
-          <span className="ml-3 font-mono-label text-cream-3 shrink-0">{step} / {TOTAL_STEPS}</span>
+        {/* U-5 (TZ): step indicator with labels.
+            Was: thin progress bar with just "step/total" — easy to lose
+            orientation if user closes tab and returns.
+            Now: numbered circles + labels per step, completed steps get
+            a checkmark, current step is highlighted, the active step's
+            label is bold so it's visually anchored. */}
+        <div className="mb-8 sm:mb-10">
+          <div className="flex items-center justify-between gap-1 sm:gap-2 mb-3">
+            {STEP_LABELS.map((label, i) => {
+              const stepNum = i + 1
+              const isComplete = stepNum < step
+              const isCurrent = stepNum === step
+              return (
+                <div key={i} className="flex-1 flex items-center min-w-0">
+                  <div className="flex flex-col items-center gap-1.5 min-w-0">
+                    <div
+                      className={cn(
+                        "grid h-7 w-7 sm:h-8 sm:w-8 place-items-center rounded-full border-2 font-display text-xs sm:text-sm shrink-0 transition-all",
+                        isComplete && "border-gold bg-gold text-background",
+                        isCurrent && "border-gold text-gold bg-gold/10",
+                        !isComplete && !isCurrent && "border-border text-cream-3 bg-card/40",
+                      )}
+                      aria-current={isCurrent ? "step" : undefined}
+                    >
+                      {isComplete ? "✓" : stepNum}
+                    </div>
+                    <span
+                      className={cn(
+                        "font-mono-label text-[9px] sm:text-[10px] uppercase tracking-wider truncate w-full text-center",
+                        isCurrent ? "text-gold font-bold" : isComplete ? "text-cream-2" : "text-cream-3",
+                      )}
+                    >
+                      {label}
+                    </span>
+                  </div>
+                  {i < TOTAL_STEPS - 1 && (
+                    <div
+                      className={cn(
+                        "flex-1 h-0.5 mx-1 sm:mx-2 -mt-4 transition-colors",
+                        stepNum < step ? "bg-gold" : "bg-border",
+                      )}
+                    />
+                  )}
+                </div>
+              )
+            })}
+          </div>
+          <p className="font-mono-label text-[10px] text-cream-3 text-center">
+            Шаг {step} из {TOTAL_STEPS} · прогресс автосохраняется
+          </p>
         </div>
 
         {/* Step 1: Welcome */}

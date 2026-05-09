@@ -45,6 +45,7 @@ import { BulkAddDialog } from "./bulk-add-dialog"
 import { VoiceInputButton } from "@/components/voice-input-button"
 import { AiLoadingSkeleton, AiErrorCard } from "@/components/ai-state"
 import { DeadlineChip } from "@/components/deadline-chip"
+import { EmptyState } from "@/components/empty-state"
 import { analyzePortfolio, type Verdict } from "@/lib/applications/analytics"
 import { cn } from "@/lib/utils"
 
@@ -93,6 +94,9 @@ export function ApplicationsClient({
   const [editing, setEditing] = useState<FormState | null>(null)
   const [open, setOpen] = useState(false)
   const [pending, startTransition] = useTransition()
+  // U-3 (TZ): bulk selection. Toolbar appears when >0 selected; supports
+  // bulk delete (with undo) and bulk status change.
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
   const stats = summarizeApplications(apps)
 
@@ -189,6 +193,61 @@ export function ApplicationsClient({
         toast.error(res.error ?? "Не удалось обновить")
         // revert: reload from initial via reload
         window.location.reload()
+      }
+    })
+  }
+
+  // U-3 (TZ): bulk selection helpers
+  function toggleSelected(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function selectAll() {
+    setSelectedIds(new Set(apps.map((a) => a.id)))
+  }
+
+  function clearSelection() {
+    setSelectedIds(new Set())
+  }
+
+  function bulkStatus(status: AppStatus) {
+    const ids = Array.from(selectedIds)
+    if (!ids.length) return
+    // Optimistic update
+    setApps((prev) => prev.map((a) => (selectedIds.has(a.id) ? { ...a, status } : a)))
+    clearSelection()
+    startTransition(async () => {
+      const results = await Promise.all(ids.map((id) => updateApplicationStatus(id, status)))
+      const failed = results.filter((r) => !r.ok).length
+      if (failed) {
+        toast.error(`Не удалось обновить ${failed} из ${ids.length} — обнови страницу`)
+      } else {
+        toast.success(`Обновлено: ${ids.length} заявк${ids.length === 1 ? "а" : ids.length < 5 ? "и" : ""}`)
+      }
+    })
+  }
+
+  function bulkDelete() {
+    const ids = Array.from(selectedIds)
+    if (!ids.length) return
+    if (!confirm(`Удалить ${ids.length} ${ids.length === 1 ? "заявку" : "заявки"}? Это нельзя отменить.`)) return
+    const removed = apps.filter((a) => selectedIds.has(a.id))
+    // Optimistic
+    setApps((prev) => prev.filter((a) => !selectedIds.has(a.id)))
+    clearSelection()
+    startTransition(async () => {
+      const results = await Promise.all(ids.map((id) => deleteApplication(id)))
+      const failed = results.filter((r) => !r.ok).length
+      if (failed) {
+        toast.error(`Не удалось удалить ${failed} из ${ids.length} — восстановлено`)
+        setApps((prev) => [...removed, ...prev])
+      } else {
+        toast.success(`Удалено: ${ids.length}`)
       }
     })
   }
@@ -348,32 +407,70 @@ export function ApplicationsClient({
 
         {/* List */}
         {apps.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-border/60 bg-card/20 p-10 text-center space-y-3">
-            <GraduationCap className="h-10 w-10 text-cream-3 mx-auto" />
-            <p className="font-display text-lg">Пока ни одной заявки</p>
-            <p className="font-serif text-sm text-cream-2 max-w-md mx-auto">
-              Добавь первый университет — будем отслеживать дедлайн, статус и список документов.
-              Используй <span className="text-gold">AI Agent → Полный package</span> чтобы быстро подобрать список.
-            </p>
-            <Button onClick={openNew} className="gap-2 mt-2">
-              <Plus className="h-4 w-4" />
-              Добавить заявку
-            </Button>
-          </div>
+          <EmptyState
+            icon={GraduationCap}
+            title="Пока ни одной заявки"
+            description="Добавь первый университет — будем отслеживать дедлайн, статус и список документов. Используй AI Agent → Полный package чтобы быстро подобрать список."
+            action={{ label: "Добавить заявку", onClick: openNew }}
+            secondaryAction={{ label: "Открыть AI Agent", href: "/agent", variant: "outline" }}
+            variant="hero"
+          />
         ) : (
-          <div className="space-y-3">
-            {apps.map((a) => (
-              <ApplicationCard
-                key={a.id}
-                app={a}
-                onEdit={() => openEdit(a)}
-                onDelete={() => remove(a.id)}
-                onStatus={(s) => quickStatus(a.id, s)}
-                onClone={() => clone(a.id)}
-                essays={essaysByApp[a.id] ?? []}
-              />
-            ))}
-          </div>
+          <>
+            {/* U-3 (TZ): bulk actions toolbar — sticky when selection > 0 */}
+            {selectedIds.size > 0 && (
+              <div className="sticky top-2 z-20 rounded-xl border border-gold/40 bg-card/95 backdrop-blur px-4 py-2.5 flex flex-wrap items-center gap-2 shadow-lg">
+                <span className="font-mono-label text-xs text-gold mr-2">
+                  Выделено: {selectedIds.size}
+                </span>
+                <Button variant="outline" size="xs" onClick={selectAll}>
+                  Все ({apps.length})
+                </Button>
+                <Button variant="outline" size="xs" onClick={clearSelection}>
+                  Снять
+                </Button>
+                <span className="hidden sm:inline-block w-px h-5 bg-border mx-1" />
+                <select
+                  className="h-7 rounded-md border border-border bg-card px-2 text-xs font-mono-label text-cream-2"
+                  defaultValue=""
+                  onChange={(e) => {
+                    const v = e.target.value as AppStatus
+                    if (v) bulkStatus(v)
+                    e.target.value = ""
+                  }}
+                  aria-label="Изменить статус для выделенных"
+                >
+                  <option value="" disabled>→ Статус</option>
+                  {Object.entries(STATUS_LABELS).map(([k, label]) => (
+                    <option key={k} value={k}>{label}</option>
+                  ))}
+                </select>
+                <Button
+                  variant="outline"
+                  size="xs"
+                  onClick={bulkDelete}
+                  className="text-rose-300 border-rose-500/40 hover:bg-rose-500/10"
+                >
+                  Удалить
+                </Button>
+              </div>
+            )}
+            <div className="space-y-3">
+              {apps.map((a) => (
+                <ApplicationCard
+                  key={a.id}
+                  app={a}
+                  onEdit={() => openEdit(a)}
+                  onDelete={() => remove(a.id)}
+                  onStatus={(s) => quickStatus(a.id, s)}
+                  onClone={() => clone(a.id)}
+                  essays={essaysByApp[a.id] ?? []}
+                  selected={selectedIds.has(a.id)}
+                  onToggleSelect={() => toggleSelected(a.id)}
+                />
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>
@@ -426,6 +523,8 @@ function ApplicationCard({
   onStatus,
   onClone,
   essays = [],
+  selected = false,
+  onToggleSelect,
 }: {
   app: Application
   onEdit: () => void
@@ -433,6 +532,9 @@ function ApplicationCard({
   onStatus: (s: AppStatus) => void
   onClone: () => void
   essays?: EssayPreview[]
+  /** U-3 (TZ): bulk-selection state */
+  selected?: boolean
+  onToggleSelect?: () => void
 }) {
   const days = daysUntil(app.deadline)
   const urgent = days !== null && days <= 14 && days >= 0 && app.status === "planning"
@@ -509,11 +611,23 @@ function ApplicationCard({
   return (
     <div
       className={cn(
-        "rounded-xl border bg-card/40 p-4 space-y-3",
-        urgent ? "border-rose-500/40" : "border-border"
+        "rounded-xl border bg-card/40 p-4 space-y-3 transition-colors",
+        selected && "border-gold/50 bg-gold/5",
+        !selected && (urgent ? "border-rose-500/40" : "border-border"),
       )}
     >
       <div className="flex items-start justify-between gap-3">
+        {/* U-3 (TZ): selection checkbox */}
+        {onToggleSelect && (
+          <label className="shrink-0 mt-1 cursor-pointer" aria-label="Выделить эту заявку для bulk-действий">
+            <input
+              type="checkbox"
+              checked={selected}
+              onChange={onToggleSelect}
+              className="h-4 w-4 rounded border-border bg-card accent-gold cursor-pointer"
+            />
+          </label>
+        )}
         <div className="flex-1 min-w-0">
           <h3 className="font-display text-base sm:text-lg truncate">{app.university_name}</h3>
           <p className="font-mono-label text-[11px] text-cream-3 truncate mt-0.5">

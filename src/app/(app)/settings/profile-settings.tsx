@@ -10,7 +10,24 @@ import { saveApplicantProfile } from "@/lib/applicant/actions"
 import { profileCompleteness, type ApplicantProfile } from "@/lib/applicant/types"
 import { DocumentUploadCard, mergeProfilePatch } from "@/components/document-upload-card"
 import { VoiceInputButton } from "@/components/voice-input-button"
-import { User, GraduationCap, Target, Trophy, Loader2, Check, Sparkles } from "lucide-react"
+import { SectionNav, type NavSection } from "@/components/section-nav"
+import {
+  User, GraduationCap, Target, Trophy, Loader2, Check, Sparkles,
+  Bell, Mail, Send, Share2, FileText,
+} from "lucide-react"
+
+const NAV_SECTIONS: NavSection[] = [
+  { id: "documents",     label: "Документы",      icon: FileText },
+  { id: "sharing",       label: "Шеринг",         icon: Share2 },
+  { id: "notifications", label: "Оповещения",     icon: Bell },
+  { id: "telegram",      label: "Telegram",       icon: Send },
+  { id: "email",         label: "Email",          icon: Mail },
+  { id: "personal",      label: "Личные данные",  icon: User },
+  { id: "academic",      label: "Академика",      icon: GraduationCap },
+  { id: "goals",         label: "Цели",           icon: Target },
+  { id: "experience",    label: "Опыт",           icon: Trophy },
+  { id: "reflection",    label: "Self-reflection", icon: Sparkles },
+]
 
 const LEVELS = ["Bachelor", "Master", "PhD", "MBA", "Foundation"] as const
 
@@ -69,9 +86,24 @@ export function ProfileSettings({
     })
   }
 
+  // Filter out nav sections that have no slot rendered (e.g. Telegram disabled)
+  const liveSections = NAV_SECTIONS.filter((s) => {
+    if (s.id === "telegram") return Boolean(telegramSlot)
+    if (s.id === "sharing") return Boolean(shareSlot)
+    if (s.id === "notifications") return Boolean(notificationSlot)
+    if (s.id === "email") return Boolean(emailSlot)
+    return true
+  })
+
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="container max-w-4xl mx-auto px-6 py-8 space-y-6">
+      <div className="container max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        {/* U-2 (TZ): two-column layout — sticky section nav on the left,
+            content on the right. Mobile collapses the nav into a horizontal
+            pill bar at the top so users still see "where am I" affordances. */}
+        <div className="grid md:grid-cols-[200px_1fr] lg:grid-cols-[220px_1fr] gap-6">
+          <SectionNav sections={liveSections} className="md:pr-2" />
+          <div className="min-w-0 space-y-6">
         {/* Progress bar */}
         <div className="rounded-xl border border-border bg-card/40 p-5 accent-strip">
           <div className="flex items-center justify-between mb-3">
@@ -94,15 +126,17 @@ export function ProfileSettings({
         </div>
 
         {/* Document upload */}
-        <DocumentUploadCard onApply={(patch) => setProfile((p) => mergeProfilePatch(p, patch))} />
+        <div id="documents" className="scroll-mt-20">
+          <DocumentUploadCard onApply={(patch) => setProfile((p) => mergeProfilePatch(p, patch))} />
+        </div>
 
-        {shareSlot}
-        {notificationSlot}
-        {telegramSlot}
-        {emailSlot}
+        <div id="sharing" className="scroll-mt-20">{shareSlot}</div>
+        <div id="notifications" className="scroll-mt-20">{notificationSlot}</div>
+        <div id="telegram" className="scroll-mt-20">{telegramSlot}</div>
+        <div id="email" className="scroll-mt-20">{emailSlot}</div>
 
         {/* Personal */}
-        <Section icon={<User className="h-4 w-4 text-gold" />} title="Личные данные">
+        <Section id="personal" icon={<User className="h-4 w-4 text-gold" />} title="Личные данные">
           <div className="grid sm:grid-cols-2 gap-4">
             <Field label="Полное имя" value={profile.personal.name ?? ""} onChange={(v) => update("personal", "name", v)} placeholder="Saidkarim Tursunbaev" />
             <Field label="Возраст" value={profile.personal.age ?? ""} onChange={(v) => update("personal", "age", v)} placeholder="17" />
@@ -117,7 +151,7 @@ export function ProfileSettings({
         </Section>
 
         {/* Academic */}
-        <Section icon={<GraduationCap className="h-4 w-4 text-gold" />} title="Академический профиль">
+        <Section id="academic" icon={<GraduationCap className="h-4 w-4 text-gold" />} title="Академический профиль">
           <div className="grid sm:grid-cols-2 gap-4">
             <Field label="Школа / университет" value={profile.academic.school ?? ""} onChange={(v) => update("academic", "school", v)} placeholder="Лицей №2, Tashkent" />
             <Field label="Тип школы" value={profile.academic.schoolType ?? ""} onChange={(v) => update("academic", "schoolType", v)} placeholder="IB / A-level / National / American" />
@@ -137,7 +171,7 @@ export function ProfileSettings({
         </Section>
 
         {/* Goals */}
-        <Section icon={<Target className="h-4 w-4 text-gold" />} title="Цели поступления">
+        <Section id="goals" icon={<Target className="h-4 w-4 text-gold" />} title="Цели поступления">
           <div className="grid sm:grid-cols-2 gap-4">
             <SelectField label="Уровень" value={profile.goals.level ?? "Bachelor"} onChange={(v) => update("goals", "level", v)} options={LEVELS} />
             <Field label="Год поступления" value={profile.goals.year ?? ""} onChange={(v) => update("goals", "year", v)} placeholder="2027" />
@@ -152,7 +186,7 @@ export function ProfileSettings({
         </Section>
 
         {/* Experience & Activities */}
-        <Section icon={<Trophy className="h-4 w-4 text-gold" />} title="Опыт, активности, достижения">
+        <Section id="experience" icon={<Trophy className="h-4 w-4 text-gold" />} title="Опыт, активности, достижения">
           <FieldArea
             label="Опыт работы / стажировки"
             value={profile.experience ?? ""}
@@ -204,7 +238,7 @@ Top-10% scholarship, Лицей №2`}
         </Section>
 
         {/* Self-reflection */}
-        <Section icon={<Sparkles className="h-4 w-4 text-gold" />} title="Self-reflection (для AI)">
+        <Section id="reflection" icon={<Sparkles className="h-4 w-4 text-gold" />} title="Self-reflection (для AI)">
           <FieldArea
             label="Слабые места (своё мнение)"
             value={profile.weak ?? ""}
@@ -236,20 +270,24 @@ Top-10% scholarship, Лицей №2`}
             )}
           </Button>
         </div>
+          </div>
+        </div>
       </div>
     </div>
   )
 }
 
-function Section({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
+function Section({ icon, title, children, id }: { icon: React.ReactNode; title: string; children: React.ReactNode; id?: string }) {
   return (
-    <div className="rounded-xl border border-border bg-card/40 p-6 accent-strip space-y-4">
+    // U-2 (TZ): id is consumed by SectionNav for scroll-spy + jump-to-anchor.
+    // Negative scroll-margin keeps the heading off the top edge after smooth-scroll.
+    <section id={id} className="rounded-xl border border-border bg-card/40 p-6 accent-strip space-y-4 scroll-mt-20">
       <div className="flex items-center gap-2">
         {icon}
         <span className="font-mono-label text-cream-3">{title}</span>
       </div>
       {children}
-    </div>
+    </section>
   )
 }
 

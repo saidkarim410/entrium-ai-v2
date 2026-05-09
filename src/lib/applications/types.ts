@@ -114,13 +114,15 @@ export function summarizeApplications(apps: Application[]) {
   return { total, submitted, accepted, nextDeadline }
 }
 
-/** Days until deadline, negative if past */
+/** Days until deadline, negative if past. Coerces -0 → 0 for stable equality checks. */
 export function daysUntil(iso: string | null): number | null {
   if (!iso) return null
   const target = new Date(iso)
   const today = new Date()
   today.setHours(0, 0, 0, 0)
-  return Math.ceil((target.getTime() - today.getTime()) / 86_400_000)
+  // Math.ceil(-0) returns -0 — break Object.is comparisons in tests/UI.
+  // Adding +0 normalises to canonical 0.
+  return Math.ceil((target.getTime() - today.getTime()) / 86_400_000) + 0
 }
 
 /**
