@@ -171,7 +171,7 @@ export function ActivityBuilder({ initial }: { initial: ActivityEntry[] }) {
           <span className="text-xs font-mono-label text-cream-3 self-center">
             {items.length}/{MAX} слотов
           </span>
-          <Button onClick={save} disabled={pending} className="ml-auto gap-2 min-w-[180px]">
+          <Button onClick={save} disabled={pending} className="ml-auto gap-2 sm:min-w-[180px]">
             {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
             {pending ? "Сохраняю..." : "Сохранить"}
           </Button>

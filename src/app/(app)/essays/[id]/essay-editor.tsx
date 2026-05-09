@@ -12,6 +12,7 @@ import {
   CheckCircle2, AlertTriangle, Lightbulb, Trophy,
 } from "lucide-react"
 import { VoiceInputButton } from "@/components/voice-input-button"
+import { AiLoadingSkeleton, AiErrorCard } from "@/components/ai-state"
 import {
   ESSAY_STATUSES, STATUS_LABELS, STATUS_COLORS, wordCount,
   type Essay, type EssayRevision, type EssayStatus, type EssayAiReview,
@@ -37,6 +38,7 @@ export function EssayEditor({
   const [revisions, setRevisions] = useState(initialRevisions)
   const [autosave, setAutosave] = useState<AutosaveState>("idle")
   const [reviewing, setReviewing] = useState(false)
+  const [reviewError, setReviewError] = useState<string | null>(null)
   const [showRevisions, setShowRevisions] = useState(false)
   const [, startTransition] = useTransition()
 
@@ -87,19 +89,20 @@ export function EssayEditor({
       return
     }
     setReviewing(true)
+    setReviewError(null)
     try {
       // Make sure latest text is saved before AI sees it
       await saveEssayDraft(essay.id, draft)
       const res = await fetch(`/api/essays/${essay.id}/review`, { method: "POST" })
       const json = await res.json()
       if (!res.ok) {
-        toast.error(json.message ?? json.error ?? "AI не ответил")
+        setReviewError(json.message ?? json.error ?? "AI не ответил — попробуй ещё раз")
         return
       }
       setEssay((e) => ({ ...e, ai_review: json.review, ai_review_at: json.generated_at }))
       toast.success(`AI score: ${json.review.score}/10`)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка")
+      setReviewError(err instanceof Error ? err.message : "Сетевая ошибка")
     } finally {
       setReviewing(false)
     }
@@ -279,9 +282,15 @@ export function EssayEditor({
             )}
           </div>
 
-          {/* AI review panel */}
+          {/* AI review panel — 4 states: skeleton (running) / error (retry) / data / empty */}
           <aside className="space-y-3">
-            {!review ? (
+            {reviewing && !review ? (
+              <AiLoadingSkeleton />
+            ) : reviewError && !review ? (
+              <AiErrorCard message={reviewError} onRetry={runReview} retrying={reviewing} />
+            ) : review ? (
+              <ReviewPanel review={review} reviewedAt={essay.ai_review_at} />
+            ) : (
               <div className="rounded-xl border border-dashed border-border bg-card/20 p-5 text-center space-y-2">
                 <Sparkles className="h-6 w-6 text-cream-3 mx-auto" />
                 <p className="font-display text-sm">AI review будет здесь</p>
@@ -289,8 +298,6 @@ export function EssayEditor({
                   Score / strengths / weaknesses / next actions / cliché detection / best line.
                 </p>
               </div>
-            ) : (
-              <ReviewPanel review={review} reviewedAt={essay.ai_review_at} />
             )}
           </aside>
         </div>

@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Sparkles, Loader2, RotateCw, ArrowRight, Lightbulb, ListChecks, Heart } from "lucide-react"
+import { AiLoadingSkeleton, AiErrorCard, AiEmptyCta } from "@/components/ai-state"
 
 type Summary = {
   greeting: string
@@ -20,6 +20,7 @@ export function DailySummaryWidget() {
   const [summary, setSummary] = useState<Summary | null>(null)
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     fetch("/api/daily-summary")
@@ -31,6 +32,7 @@ export function DailySummaryWidget() {
 
   async function generate(force = false) {
     setGenerating(true)
+    setError(null)
     try {
       const res = await fetch("/api/daily-summary", {
         method: "POST",
@@ -39,48 +41,36 @@ export function DailySummaryWidget() {
       })
       const json = await res.json()
       if (!res.ok) {
-        toast.error(json.message ?? json.error ?? "AI не ответил")
+        setError(json.message ?? json.error ?? "AI не ответил — попробуй ещё раз")
         return
       }
       setSummary(json.summary)
-      if (force) toast.success("Обновил дневной фокус")
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка")
+      setError(err instanceof Error ? err.message : "Сетевая ошибка")
     } finally {
       setGenerating(false)
     }
   }
 
-  if (loading) {
-    return (
-      <section className="rounded-2xl border border-border bg-card/40 p-5 sm:p-6 flex items-center gap-3">
-        <Loader2 className="h-4 w-4 animate-spin text-cream-3" />
-        <span className="font-mono-label text-xs text-cream-3">Загружаю фокус дня...</span>
-      </section>
-    )
+  // Initial fetch in flight: show shape-matched skeleton, not a one-liner spinner
+  if (loading) return <AiLoadingSkeleton />
+
+  // First-time generation also uses the shimmer
+  if (generating && !summary) return <AiLoadingSkeleton />
+
+  if (error && !summary) {
+    return <AiErrorCard message={error} onRetry={() => generate(false)} retrying={generating} />
   }
 
   if (!summary) {
     return (
-      <section className="rounded-2xl border border-gold/30 bg-gradient-to-br from-gold/10 to-transparent p-5 sm:p-6 space-y-3">
-        <div className="flex items-start gap-3">
-          <div className="grid h-10 w-10 place-items-center rounded-lg bg-gold/20 shrink-0">
-            <Sparkles className="h-5 w-5 text-gold" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="font-mono-label text-[11px] text-gold uppercase tracking-wider">Daily focus</p>
-            <h3 className="font-display text-lg sm:text-xl mt-0.5">Сгенерировать AI-фокус дня</h3>
-            <p className="font-serif text-sm text-cream-2 leading-relaxed">
-              Каждое утро AI смотрит на твои заявки и профиль и формирует одно главное действие
-              на сегодня + 2-4 поддерживающих. На основе реального состояния, не общие советы.
-            </p>
-          </div>
-        </div>
-        <Button onClick={() => generate(false)} disabled={generating} className="gap-2">
-          {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-          {generating ? "Генерирую..." : "Получить фокус на сегодня"}
-        </Button>
-      </section>
+      <AiEmptyCta
+        title="Сгенерировать AI-фокус дня"
+        description="Каждое утро AI смотрит на твои заявки и профиль и формирует одно главное действие на сегодня + 2-4 поддерживающих. На основе реального состояния, не общие советы."
+        buttonLabel="Получить фокус на сегодня"
+        onClick={() => generate(false)}
+        pending={generating}
+      />
     )
   }
 

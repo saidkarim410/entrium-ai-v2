@@ -222,6 +222,8 @@ export default async function ProfilePrintPage() {
           {/* Applications */}
           {apps.length > 0 && (
             <Section title={`Applications (${apps.length})`}>
+              <div className="overflow-x-auto -mx-4 sm:mx-0">
+                <div className="min-w-[600px] sm:min-w-0 px-4 sm:px-0">
               <table className="w-full text-sm font-serif">
                 <thead>
                   <tr className="border-b border-cream-3/30">
@@ -257,6 +259,8 @@ export default async function ProfilePrintPage() {
                   })}
                 </tbody>
               </table>
+                </div>
+              </div>
             </Section>
           )}
 

@@ -43,6 +43,7 @@ import {
 } from "@/lib/applications/actions"
 import { BulkAddDialog } from "./bulk-add-dialog"
 import { VoiceInputButton } from "@/components/voice-input-button"
+import { AiLoadingSkeleton, AiErrorCard } from "@/components/ai-state"
 import { analyzePortfolio, type Verdict } from "@/lib/applications/analytics"
 import { cn } from "@/lib/utils"
 
@@ -438,6 +439,7 @@ function ApplicationCard({
   const [expanded, setExpanded] = useState(Boolean(app.ai_suggestions || app.checklist.length))
   const [suggestions, setSuggestions] = useState<AppAiSuggestions | null>(app.ai_suggestions ?? null)
   const [suggestPending, setSuggestPending] = useState(false)
+  const [suggestError, setSuggestError] = useState<string | null>(null)
   const [checklist, setChecklist] = useState(app.checklist)
   const [, startTransition] = useTransition()
 
@@ -445,18 +447,21 @@ function ApplicationCard({
 
   async function generateSuggestions() {
     setSuggestPending(true)
+    setSuggestError(null)
     try {
       const res = await fetch(`/api/applications/${app.id}/suggest`, { method: "POST" })
       const json = await res.json()
       if (!res.ok) {
-        toast.error(json.message ?? json.error ?? "AI не ответил")
+        setSuggestError(json.message ?? json.error ?? "AI не ответил — попробуй ещё раз")
+        setExpanded(true)
         return
       }
       setSuggestions(json.suggestions)
       setExpanded(true)
       toast.success("AI разобрал заявку")
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Ошибка")
+      setSuggestError(err instanceof Error ? err.message : "Сетевая ошибка")
+      setExpanded(true)
     } finally {
       setSuggestPending(false)
     }
@@ -632,6 +637,24 @@ function ApplicationCard({
           </Button>
         )}
       </div>
+
+      {/* AI loading skeleton when first generation in flight */}
+      {suggestPending && !suggestions && (
+        <div className="border-t border-border/40 pt-3">
+          <AiLoadingSkeleton />
+        </div>
+      )}
+
+      {/* AI error inline retry */}
+      {suggestError && !suggestions && !suggestPending && (
+        <div className="border-t border-border/40 pt-3">
+          <AiErrorCard
+            message={suggestError}
+            onRetry={generateSuggestions}
+            retrying={suggestPending}
+          />
+        </div>
+      )}
 
       {/* Expanded section: suggestions + checklist */}
       {expanded && (suggestions || checklist.length > 0) && (
