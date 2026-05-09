@@ -1,7 +1,18 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
+import dynamic from "next/dynamic"
 import { getCurrentProfile } from "@/lib/supabase/server"
-import { DailySummaryWidget } from "@/components/daily-summary-widget"
+
+// Daily summary fetches AI-generated content via /api/daily-summary on mount;
+// not critical for first paint, defer the chunk
+const DailySummaryWidget = dynamic(
+  () => import("@/components/daily-summary-widget").then((m) => m.DailySummaryWidget),
+  {
+    loading: () => (
+      <section className="rounded-2xl border border-border bg-card/40 p-5 sm:p-6 h-32 animate-pulse" />
+    ),
+  }
+)
 import { getApplicantProfile } from "@/lib/applicant/actions"
 import { listApplications } from "@/lib/applications/actions"
 import {

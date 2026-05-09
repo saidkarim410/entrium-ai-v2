@@ -3,7 +3,7 @@ import { getTelegramStatus } from "@/lib/telegram-actions"
 import { getSharingStatus } from "@/lib/share/actions"
 import { getEmailPrefs } from "@/lib/email/actions"
 import { getMyNotificationPrefs } from "@/lib/notifications/actions"
-import { telegramEnabled, emailEnabled } from "@/lib/env"
+import { telegramEnabled } from "@/lib/env"
 import { ProfileSettings } from "./profile-settings"
 import { TelegramLinkCard } from "@/components/telegram-link-card"
 import { ShareCard } from "@/components/share-card"
@@ -51,7 +51,7 @@ export default async function SettingsPage() {
         initial={profile}
         telegramSlot={telegramEnabled() ? <TelegramLinkCard initial={telegramStatus} /> : null}
         shareSlot={<ShareCard initial={sharingStatus} />}
-        emailSlot={emailEnabled() ? <EmailPrefsCard initial={emailPrefs} /> : null}
+        emailSlot={<EmailPrefsCard initial={emailPrefs} />}
         notificationSlot={<NotificationPrefsCard initial={notificationPrefs} />}
       />
     </>

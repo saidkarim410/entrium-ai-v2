@@ -229,3 +229,61 @@
 .print-only {
   display: none;
 }
+
+/* ── Accessibility ───────────────────────────────────────────────────── */
+
+/* Skip-to-content link, only visible on keyboard focus */
+.skip-link {
+  position: fixed;
+  top: -100px;
+  left: 16px;
+  z-index: 100;
+  background: var(--gold, #d9b074);
+  color: var(--background, #0e0c08);
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  transition: top 0.15s ease-out;
+}
+.skip-link:focus,
+.skip-link:focus-visible {
+  top: 12px;
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+/* Honor user OS-level reduced-motion preference everywhere */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Visible keyboard focus for interactive elements; click users see nothing */
+:focus-visible {
+  outline: 2px solid var(--gold, #d9b074);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* sr-only is already used by some lucide icons via Radix; provide canonical */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

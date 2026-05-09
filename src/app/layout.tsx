@@ -42,6 +42,7 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col font-sans bg-background text-foreground">
+        <a href="#main" className="skip-link">Skip to content</a>
         <I18nProvider locale={locale}>
           <PostHogProvider>{children}</PostHogProvider>
         </I18nProvider>

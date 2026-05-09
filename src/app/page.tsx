@@ -54,7 +54,7 @@ export default async function LandingPage() {
       </header>
 
       {/* ── Hero ─────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden border-b border-border/40">
+      <section id="main" className="relative overflow-hidden border-b border-border/40">
         <div className="container mx-auto px-4 py-16 sm:py-24 lg:py-28">
           <div className="max-w-3xl mx-auto text-center space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gold/10 border border-gold/20 text-xs font-mono-label text-gold uppercase tracking-wider">

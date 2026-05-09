@@ -6,10 +6,20 @@ import { getT } from "@/lib/i18n/server"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { LangSwitcher } from "@/components/lang-switcher"
-import { CounselorWidget } from "@/components/counselor-widget"
+import dynamic from "next/dynamic"
+// Lazy-load the floating Counselor chat — it's heavy (AI SDK client) and
+// not needed for first paint. Loaded on client after main content renders.
+const CounselorWidget = dynamic(
+  () => import("@/components/counselor-widget").then((m) => m.CounselorWidget),
+  { loading: () => null }
+)
 import { MobileNav } from "@/components/mobile-nav"
 import { NotificationsBell } from "@/components/notifications-bell"
-import { CmdK } from "@/components/cmd-k"
+// CmdK is only needed when user actually presses Ctrl+K — defer chunk
+const CmdK = dynamic(
+  () => import("@/components/cmd-k").then((m) => m.CmdK),
+  { loading: () => null }
+)
 import { CmdKTrigger } from "@/components/cmd-k-trigger"
 import { MobileSearchTrigger } from "@/components/mobile-search-trigger"
 import { unreadCount } from "@/lib/notifications/actions"
@@ -166,7 +176,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </div>
       </aside>
 
-      <main className="flex flex-col h-[calc(100dvh-4rem)] lg:h-screen overflow-hidden">{children}</main>
+      <main
+        id="main"
+        className="flex flex-col h-[calc(100dvh-4rem)] lg:h-screen overflow-hidden"
+      >
+        {children}
+      </main>
 
       {/* Mobile-only floating Search + Bell (top-right) */}
       <div className="fixed top-2.5 right-3 z-30 lg:hidden flex items-center gap-1">

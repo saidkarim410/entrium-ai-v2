@@ -1,13 +1,16 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import Link from "next/link"
 import { toast } from "sonner"
-import { Mail, Check } from "lucide-react"
+import { Mail, Check, Eye, Send, Loader2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { setEmailDigestEnabled, type EmailPrefs } from "@/lib/email/actions"
 import { cn } from "@/lib/utils"
 
 export function EmailPrefsCard({ initial }: { initial: EmailPrefs }) {
   const [enabled, setEnabled] = useState(initial.digestEnabled)
+  const [sending, setSending] = useState(false)
   const [, startTransition] = useTransition()
 
   function toggle() {
@@ -22,6 +25,27 @@ export function EmailPrefsCard({ initial }: { initial: EmailPrefs }) {
       }
       toast.success(next ? "Дайджест включён" : "Дайджест отключён")
     })
+  }
+
+  async function sendTest() {
+    setSending(true)
+    try {
+      const res = await fetch("/api/email/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        toast.error(json.message ?? json.error ?? "Не удалось отправить")
+        return
+      }
+      toast.success(`Отправлено на ${json.to}`)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Ошибка")
+    } finally {
+      setSending(false)
+    }
   }
 
   return (
@@ -42,6 +66,7 @@ export function EmailPrefsCard({ initial }: { initial: EmailPrefs }) {
       <button
         type="button"
         onClick={toggle}
+        aria-label={enabled ? "Отключить email-дайджест" : "Включить email-дайджест"}
         className={cn(
           "w-full flex items-center justify-between rounded-lg border p-3 transition-colors",
           enabled ? "border-emerald-500/30 bg-emerald-500/5" : "border-border bg-card/40 hover:bg-card"
@@ -53,6 +78,7 @@ export function EmailPrefsCard({ initial }: { initial: EmailPrefs }) {
               "grid h-5 w-5 place-items-center rounded border transition-all",
               enabled ? "bg-emerald-500 border-emerald-500" : "border-border"
             )}
+            aria-hidden="true"
           >
             {enabled && <Check className="h-3 w-3 text-background" />}
           </div>
@@ -67,8 +93,27 @@ export function EmailPrefsCard({ initial }: { initial: EmailPrefs }) {
         )}
       </button>
 
+      <div className="flex flex-wrap gap-2 pt-2 border-t border-border/40">
+        <Link href="/admin/email-preview" target="_blank" rel="noopener noreferrer">
+          <Button variant="outline" size="sm" className="gap-2">
+            <Eye className="h-3.5 w-3.5" />
+            Превью письма
+          </Button>
+        </Link>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={sendTest}
+          disabled={sending}
+          className="gap-2"
+        >
+          {sending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+          {sending ? "Отправляю..." : "Тест-письмо"}
+        </Button>
+      </div>
+
       <p className="text-[10px] font-mono-label text-cream-3">
-        Отписаться можно одним кликом из любого письма.
+        Отписаться можно одним кликом из любого письма. Тест-письмо требует RESEND_API_KEY в env.
       </p>
     </div>
   )

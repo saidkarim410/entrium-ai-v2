@@ -98,10 +98,20 @@ export function TelegramLinkCard({ initial }: { initial: TelegramStatus }) {
       </div>
 
       {!generatedCode ? (
-        <Button onClick={generate} disabled={pending} className="gap-2">
-          {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-          Создать код привязки
-        </Button>
+        <div className="space-y-2">
+          <Button onClick={generate} disabled={pending} className="gap-2">
+            {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            Создать код привязки
+          </Button>
+          <a
+            href="/api/telegram/diagnose"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block text-[10px] font-mono-label text-cream-3 hover:text-gold transition-colors ml-2"
+          >
+            Диагностика бота →
+          </a>
+        </div>
       ) : (
         <div className="space-y-3">
           <div className="rounded-lg border border-gold/30 bg-gold/5 p-3">
