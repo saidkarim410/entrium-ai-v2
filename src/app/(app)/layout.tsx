@@ -9,6 +9,9 @@ import { LangSwitcher } from "@/components/lang-switcher"
 import { CounselorWidget } from "@/components/counselor-widget"
 import { MobileNav } from "@/components/mobile-nav"
 import { NotificationsBell } from "@/components/notifications-bell"
+import { CmdK } from "@/components/cmd-k"
+import { CmdKTrigger } from "@/components/cmd-k-trigger"
+import { MobileSearchTrigger } from "@/components/mobile-search-trigger"
 import { unreadCount } from "@/lib/notifications/actions"
 import {
   Sparkles, Brain, Sparkles as SparklesIcon, Map, FileText,
@@ -62,6 +65,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             <NotificationsBell initialUnread={unread} variant="sidebar" />
             <LangSwitcher size="icon" />
           </div>
+        </div>
+
+        {/* Cmd+K search trigger pinned right under header */}
+        <div className="px-3 pt-3">
+          <CmdKTrigger />
         </div>
         <nav className="flex-1 space-y-1 p-3 overflow-y-auto">
           <Link
@@ -158,12 +166,18 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
       <main className="flex flex-col h-[calc(100dvh-4rem)] lg:h-screen overflow-hidden">{children}</main>
 
-      {/* Mobile-only floating bell (top-right) */}
-      <div className="fixed top-2.5 right-3 z-30 lg:hidden">
+      {/* Mobile-only floating Search + Bell (top-right) */}
+      <div className="fixed top-2.5 right-3 z-30 lg:hidden flex items-center gap-1">
+        <MobileSearchTrigger />
         <div className="rounded-lg bg-popover/85 backdrop-blur border border-border/50 p-0.5">
           <NotificationsBell initialUnread={unread} variant="compact" />
         </div>
       </div>
+
+      {/* CmdK dialog rendered once globally — Ctrl+K hotkey works everywhere,
+          sidebar CmdKTrigger and MobileSearchTrigger both fire `cmdk:open`
+          custom event which this single instance listens for */}
+      <CmdK />
 
       <MobileNav
         profile={{ email: profile.email, full_name: profile.full_name, tier: profile.tier }}
