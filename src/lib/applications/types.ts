@@ -123,6 +123,42 @@ export function daysUntil(iso: string | null): number | null {
   return Math.ceil((target.getTime() - today.getTime()) / 86_400_000)
 }
 
+/**
+ * Smart-deadline urgency tier (F-4 from TZ_FULLSTACK.md).
+ * Maps days-until-deadline to a 7-band visual scale so chips/text
+ * can be color-coded consistently across the app.
+ */
+export type DeadlineUrgency =
+  | "overdue"
+  | "critical"     // ≤ 3 days
+  | "soon"         // ≤ 7 days
+  | "approaching"  // ≤ 14 days
+  | "comfortable"  // ≤ 30 days
+  | "far"          // > 30 days
+  | "none"         // no deadline
+
+export function deadlineUrgency(iso: string | null): DeadlineUrgency {
+  const d = daysUntil(iso)
+  if (d === null) return "none"
+  if (d < 0) return "overdue"
+  if (d <= 3) return "critical"
+  if (d <= 7) return "soon"
+  if (d <= 14) return "approaching"
+  if (d <= 30) return "comfortable"
+  return "far"
+}
+
+/** Tailwind class set per urgency tier — text + bg + border + label */
+export const URGENCY_STYLES: Record<DeadlineUrgency, { chip: string; text: string; label: string }> = {
+  overdue:     { chip: "bg-red-500/15 text-red-300 border-red-500/40",        text: "text-red-300",     label: "Просрочено" },
+  critical:    { chip: "bg-red-500/10 text-red-300 border-red-500/30",        text: "text-red-300",     label: "≤3 дн" },
+  soon:        { chip: "bg-orange-500/10 text-orange-300 border-orange-500/30", text: "text-orange-300", label: "≤7 дн" },
+  approaching: { chip: "bg-yellow-500/10 text-yellow-300 border-yellow-500/30", text: "text-yellow-300", label: "≤14 дн" },
+  comfortable: { chip: "bg-blue-500/10 text-blue-300 border-blue-500/30",     text: "text-blue-300",    label: "≤30 дн" },
+  far:         { chip: "bg-emerald-500/10 text-emerald-300 border-emerald-500/30", text: "text-emerald-300", label: "запас" },
+  none:        { chip: "bg-card/40 text-cream-3 border-border",               text: "text-cream-3",     label: "—" },
+}
+
 /** Compact context block for AI tools — list user's applications */
 export function applicationsToContextBlock(apps: Application[]): string {
   if (!apps.length) return ""

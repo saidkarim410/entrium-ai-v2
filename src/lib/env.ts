@@ -51,7 +51,19 @@ export const env = {
     return process.env.RESEND_FROM ?? "Entrium AI <noreply@entrium.ai>"
   },
   get EMAIL_TOKEN_SECRET() {
-    return process.env.EMAIL_TOKEN_SECRET ?? process.env.SUPABASE_SERVICE_ROLE_KEY ?? ""
+    // S-2 (TZ): in production this MUST be a dedicated 64-byte random secret.
+    // Falling back to the service-role key is a defence-in-depth violation:
+    // if either leaks, both are compromised. Dev-only fallback keeps local
+    // setup ergonomic, but in production we hard-fail.
+    const secret = process.env.EMAIL_TOKEN_SECRET
+    if (secret) return secret
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "EMAIL_TOKEN_SECRET is required in production. " +
+        "Generate with: openssl rand -base64 64",
+      )
+    }
+    return process.env.SUPABASE_SERVICE_ROLE_KEY ?? ""
   },
 }
 

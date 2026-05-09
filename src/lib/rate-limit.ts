@@ -11,45 +11,39 @@ export type UsageStatus = {
   reason?: "limit_reached"
 }
 
+/**
+ * Atomic quota check + reservation.
+ * Closes S-4/S-5 from TZ — the previous read-then-write pattern allowed
+ * concurrent burst calls to overshoot the daily limit. The new flow
+ * goes through `entrium.try_consume_quota()` which locks the profile
+ * row, counts today's events, and inserts a reservation in a single
+ * transaction.
+ *
+ * Caller is still expected to call `recordUsage(...)` after the actual
+ * AI call to overwrite the reservation with real token counts.
+ */
 export async function checkUsage(userId: string): Promise<UsageStatus> {
-  const { data: profile } = await supabaseAdmin
-    .from("profiles")
-    .select("tier, pro_until, bonus_credits")
-    .eq("id", userId)
-    .single()
+  const { data, error } = await supabaseAdmin.rpc("try_consume_quota", { uid: userId })
 
-  if (!profile) {
+  if (error || !data || (Array.isArray(data) && data.length === 0)) {
     return { allowed: false, remaining: 0, tier: "free", bonus: 0, reason: "limit_reached" }
   }
 
-  const isProActive =
-    profile.tier === "pro" &&
-    (!profile.pro_until || new Date(profile.pro_until) > new Date())
-
-  if (isProActive) {
-    return { allowed: true, remaining: Infinity, tier: "pro", bonus: profile.bonus_credits ?? 0 }
-  }
-
-  const today = new Date().toISOString().slice(0, 10)
-  const { count } = await supabaseAdmin
-    .from("usage_events")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", userId)
-    .gte("created_at", `${today}T00:00:00Z`)
-    .lte("created_at", `${today}T23:59:59Z`)
-
-  const used = count ?? 0
-  const remaining = FREE_DAILY_LIMIT - used + (profile.bonus_credits ?? 0)
-
+  const row = Array.isArray(data) ? data[0] : data
   return {
-    allowed: remaining > 0,
-    remaining: Math.max(0, remaining),
-    tier: "free",
-    bonus: profile.bonus_credits ?? 0,
-    reason: remaining > 0 ? undefined : "limit_reached",
+    allowed: row.allowed,
+    remaining: row.remaining,
+    tier: row.tier as "free" | "pro",
+    bonus: row.bonus,
+    reason: row.allowed ? undefined : "limit_reached",
   }
 }
 
+/**
+ * Records the *actual* AI call for analytics/billing. The reservation
+ * row from try_consume_quota counts toward today's quota; we insert a
+ * separate event with real token data so the dashboard can show usage.
+ */
 export async function recordUsage(params: {
   userId: string
   tool: string
@@ -68,15 +62,12 @@ export async function recordUsage(params: {
   })
 }
 
-export async function consumeBonus(userId: string) {
-  const { data } = await supabaseAdmin
-    .from("profiles")
-    .select("bonus_credits")
-    .eq("id", userId)
-    .single()
-  if (!data || data.bonus_credits <= 0) return
-  await supabaseAdmin
-    .from("profiles")
-    .update({ bonus_credits: data.bonus_credits - 1 })
-    .eq("id", userId)
+/**
+ * Atomic bonus consumption. Returns the new balance, or null if there
+ * was no bonus to consume (so caller knows to fall back to free quota).
+ */
+export async function consumeBonus(userId: string): Promise<number | null> {
+  const { data, error } = await supabaseAdmin.rpc("try_consume_bonus", { uid: userId })
+  if (error) return null
+  return typeof data === "number" ? data : null
 }

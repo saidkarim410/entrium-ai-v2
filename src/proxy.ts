@@ -22,6 +22,18 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    /*
+     * S-8/F-6 (TZ): the auth-guard skips routes that authenticate via
+     * other means so we don't waste a Supabase round-trip on every cron
+     * tick or unauth callback:
+     *   - api/cron/*            → CRON_SECRET (Vercel-injected)
+     *   - api/stripe/webhook    → Stripe signature
+     *   - api/telegram/webhook  → TELEGRAM_WEBHOOK_SECRET
+     *   - api/calendar.ics      → HMAC token (calendar clients have no cookie)
+     *   - api/email/unsubscribe → HMAC token (mail-client clicks)
+     *   - monitoring            → Sentry tunnel (no auth needed)
+     *   - opengraph-image       → public OG image
+     */
+    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|api/cron|api/stripe/webhook|api/telegram/webhook|api/calendar\\.ics|api/email/unsubscribe|monitoring|opengraph-image|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 }

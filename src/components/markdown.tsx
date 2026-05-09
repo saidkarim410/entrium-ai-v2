@@ -2,13 +2,36 @@
 
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
+import rehypeSanitize, { defaultSchema } from "rehype-sanitize"
 import { cn } from "@/lib/utils"
+
+// S-10 (TZ): sanitization schema. We extend the default by allowing
+// `className` on a few elements (so AI output that includes language
+// hints on code blocks still styles), but we strip everything that
+// could enable script injection — javascript:/data: URLs, on* event
+// handlers, <iframe>, <object>, <embed>, <link>, <meta>, <style>.
+const sanitizeSchema = {
+  ...defaultSchema,
+  attributes: {
+    ...defaultSchema.attributes,
+    code: [...(defaultSchema.attributes?.code ?? []), ["className", /^language-/]],
+    span: [...(defaultSchema.attributes?.span ?? []), "className"],
+    div: [...(defaultSchema.attributes?.div ?? []), "className"],
+  },
+  // Force http(s) and mailto only — no javascript:, data:, file:, etc.
+  protocols: {
+    ...defaultSchema.protocols,
+    href: ["http", "https", "mailto"],
+    src: ["http", "https"],
+  },
+}
 
 export function Markdown({ children, className }: { children: string; className?: string }) {
   return (
     <div className={cn("prose-entrium", className)}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
+        rehypePlugins={[[rehypeSanitize, sanitizeSchema]]}
         components={{
           h1: (p) => <h1 className="font-display text-2xl mt-6 mb-3 first:mt-0" {...p} />,
           h2: (p) => <h2 className="font-display text-xl text-gold mt-6 mb-3 first:mt-0" {...p} />,

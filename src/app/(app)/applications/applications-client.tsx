@@ -44,6 +44,7 @@ import {
 import { BulkAddDialog } from "./bulk-add-dialog"
 import { VoiceInputButton } from "@/components/voice-input-button"
 import { AiLoadingSkeleton, AiErrorCard } from "@/components/ai-state"
+import { DeadlineChip } from "@/components/deadline-chip"
 import { analyzePortfolio, type Verdict } from "@/lib/applications/analytics"
 import { cn } from "@/lib/utils"
 
@@ -562,19 +563,9 @@ function ApplicationCard({
         </Badge>
 
         {app.deadline && (
-          <span
-            className={cn(
-              "inline-flex items-center gap-1 text-xs font-mono-label",
-              urgent ? "text-rose-400" : days !== null && days < 0 ? "text-cream-3 line-through" : "text-cream-2"
-            )}
-          >
-            <CalendarDays className="h-3 w-3" />
-            {formatDate(app.deadline)}
-            {days !== null && (
-              <span className="text-cream-3">
-                {days < 0 ? "прошло" : days === 0 ? "сегодня" : `· ${days} дн.`}
-              </span>
-            )}
+          <span className="inline-flex items-center gap-1 text-xs font-mono-label">
+            <CalendarDays className="h-3 w-3 text-cream-3" />
+            <DeadlineChip iso={app.deadline} size="sm" />
           </span>
         )}
 

@@ -68,19 +68,28 @@ export async function POST(req: Request) {
 
   const siteUrl = env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "")
 
-  const session = await stripe.checkout.sessions.create({
-    mode: "subscription",
-    customer: customerId,
-    line_items: [{ price: priceId, quantity: 1 }],
-    allow_promotion_codes: true,
-    client_reference_id: user.id,
-    metadata: { [STRIPE_METADATA_USER_ID]: user.id, plan: parsed.data.plan },
-    subscription_data: {
+  // S-9 (TZ): idempotency key prevents double-clicks from creating two
+  // checkout sessions. Bucketed per minute so a real retry after
+  // ~minute creates a fresh session, but rapid double-clicks reuse one.
+  const idempotencyBucket = Math.floor(Date.now() / 60_000)
+  const idempotencyKey = `checkout:${user.id}:${parsed.data.plan}:${idempotencyBucket}`
+
+  const session = await stripe.checkout.sessions.create(
+    {
+      mode: "subscription",
+      customer: customerId,
+      line_items: [{ price: priceId, quantity: 1 }],
+      allow_promotion_codes: true,
+      client_reference_id: user.id,
       metadata: { [STRIPE_METADATA_USER_ID]: user.id, plan: parsed.data.plan },
+      subscription_data: {
+        metadata: { [STRIPE_METADATA_USER_ID]: user.id, plan: parsed.data.plan },
+      },
+      success_url: `${siteUrl}/settings?upgraded=1&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${siteUrl}/pricing?canceled=1`,
     },
-    success_url: `${siteUrl}/settings?upgraded=1&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${siteUrl}/pricing?canceled=1`,
-  })
+    { idempotencyKey },
+  )
 
   if (!session.url) {
     return Response.json({ error: "no_session_url" }, { status: 500 })
