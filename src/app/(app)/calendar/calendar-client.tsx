@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react"
 import Link from "next/link"
-import { ChevronLeft, ChevronRight, Calendar as CalIcon, Clock, AlertCircle } from "lucide-react"
+import { toast } from "sonner"
+import { ChevronLeft, ChevronRight, Calendar as CalIcon, Clock, AlertCircle, CalendarPlus, Copy, Check, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   STATUS_LABELS, PRIORITY_COLORS, PRIORITY_LABELS, type AppStatus, type AppPriority,
@@ -24,9 +25,21 @@ const MONTHS_RU = [
 ]
 const WEEKDAYS_RU = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
 
-export function CalendarClient({ events }: { events: CalEvent[] }) {
+type FeedUrls = { https: string; webcal: string } | null
+
+export function CalendarClient({ events, feed }: { events: CalEvent[]; feed?: FeedUrls }) {
   const today = useMemo(() => stripTime(new Date()), [])
   const [cursor, setCursor] = useState(() => firstDayOfMonth(today))
+  const [showSub, setShowSub] = useState(false)
+  const [copied, setCopied] = useState(false)
+
+  function copyFeed() {
+    if (!feed) return
+    navigator.clipboard?.writeText(feed.https)
+    setCopied(true)
+    toast.success("Ссылка скопирована")
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   const grid = useMemo(() => buildGrid(cursor), [cursor])
   const eventsByDate = useMemo(() => {
@@ -72,10 +85,16 @@ export function CalendarClient({ events }: { events: CalEvent[] }) {
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Button variant="outline" size="sm" onClick={jumpToday}>
               Сегодня
             </Button>
+            {feed && (
+              <Button variant="outline" size="sm" onClick={() => setShowSub(!showSub)} className="gap-1.5">
+                <CalendarPlus className="h-3.5 w-3.5" />
+                Подписаться
+              </Button>
+            )}
             <Link href="/applications">
               <Button size="sm" className="gap-1.5">
                 <CalIcon className="h-3.5 w-3.5" />
@@ -84,6 +103,62 @@ export function CalendarClient({ events }: { events: CalEvent[] }) {
             </Link>
           </div>
         </div>
+
+        {showSub && feed && (
+          <div className="rounded-xl border border-gold/30 bg-gradient-to-br from-gold/5 to-transparent p-5 space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-gold/15 shrink-0">
+                <CalendarPlus className="h-5 w-5 text-gold" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-display text-lg">Подпишись на свой календарь</h3>
+                <p className="font-serif text-sm text-cream-2 leading-relaxed">
+                  Все дедлайны заявок появятся в Google Calendar / Apple Calendar / Outlook —
+                  с автонапоминаниями за 7 и 1 день. Календарь обновляется когда меняешь заявки.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-3">
+              <a
+                href={feed.webcal}
+                className="rounded-lg border border-border bg-card/40 hover:bg-card hover:border-gold/40 transition-colors p-3 group"
+              >
+                <p className="font-display text-sm group-hover:text-gold transition-colors">📱 Apple Calendar / iOS</p>
+                <p className="font-mono-label text-[10px] text-cream-3 mt-0.5">Один клик · webcal://</p>
+              </a>
+              <a
+                href={`https://calendar.google.com/calendar/u/0/r?cid=${encodeURIComponent(feed.https)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-lg border border-border bg-card/40 hover:bg-card hover:border-gold/40 transition-colors p-3 group"
+              >
+                <p className="font-display text-sm group-hover:text-gold transition-colors">📅 Google Calendar</p>
+                <p className="font-mono-label text-[10px] text-cream-3 mt-0.5">Открыть → "Добавить календарь"</p>
+              </a>
+            </div>
+
+            <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2">
+              <code className="text-xs font-mono text-cream-3 truncate flex-1 min-w-0">{feed.https}</code>
+              <Button variant="ghost" size="sm" onClick={copyFeed} className="gap-1.5 shrink-0">
+                {copied ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
+                {copied ? "OK" : "Копировать"}
+              </Button>
+              <a
+                href={feed.https}
+                download="entrium-deadlines.ics"
+                className="inline-flex h-8 px-2 items-center gap-1.5 rounded-md hover:bg-accent transition-colors text-xs font-mono-label text-cream-3"
+              >
+                <Download className="h-3 w-3" />
+                .ics
+              </a>
+            </div>
+
+            <p className="text-[10px] font-mono-label text-cream-3">
+              Outlook / другие: добавь URL вручную как «Internet Calendar Subscription». Ссылка включает HMAC-токен — отозвать нельзя, поэтому не делись ей.
+            </p>
+          </div>
+        )}
 
         <div className="grid lg:grid-cols-[1fr_280px] gap-6">
           {/* Month grid */}

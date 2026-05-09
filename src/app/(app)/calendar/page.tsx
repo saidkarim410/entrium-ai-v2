@@ -1,11 +1,15 @@
 import Link from "next/link"
 import { listApplications } from "@/lib/applications/actions"
+import { getCalendarFeedUrl } from "@/lib/calendar-feed/actions"
 import { CalendarClient, type CalEvent } from "./calendar-client"
 
 export const dynamic = "force-dynamic"
 
 export default async function CalendarPage() {
-  const apps = await listApplications()
+  const [apps, feed] = await Promise.all([
+    listApplications(),
+    getCalendarFeedUrl(),
+  ])
 
   const events: CalEvent[] = apps
     .filter((a) => a.deadline)
@@ -31,7 +35,7 @@ export default async function CalendarPage() {
           ← Заявки
         </Link>
       </header>
-      <CalendarClient events={events} />
+      <CalendarClient events={events} feed={feed} />
     </>
   )
 }
