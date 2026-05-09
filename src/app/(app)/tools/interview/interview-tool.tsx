@@ -6,12 +6,14 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Mic, Loader2, Sparkles, ArrowRight, RotateCcw, SkipForward } from "lucide-react"
+import { Mic, Loader2, Sparkles, ArrowRight, RotateCcw, SkipForward, Type, Radio } from "lucide-react"
 import { Markdown } from "@/components/markdown"
 import { cn } from "@/lib/utils"
+import { VoiceSession } from "./voice-session"
 
 type AnswerEntry = { q: string; a: string; feedback: string; score: number | null }
-type Phase = "setup" | "session" | "results"
+type Phase = "setup" | "session" | "results" | "voice"
+type Mode = "text" | "voice"
 
 type InterviewDefaults = {
   uni: string; major: string; type: string; lang: string; count: string; about: string
@@ -19,6 +21,7 @@ type InterviewDefaults = {
 
 export function InterviewTool({ initial }: { initial?: InterviewDefaults } = {}) {
   const [phase, setPhase] = useState<Phase>("setup")
+  const [mode, setMode] = useState<Mode>("text")
   const [loading, setLoading] = useState(false)
 
   // Setup
@@ -122,12 +125,47 @@ export function InterviewTool({ initial }: { initial?: InterviewDefaults } = {})
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="container max-w-3xl mx-auto px-6 py-8">
+        {phase === "voice" && (
+          <VoiceSession
+            uni={uni}
+            major={major}
+            type={type}
+            lang={lang}
+            onExit={() => setPhase("setup")}
+          />
+        )}
         {phase === "setup" && (
           <div className="space-y-5">
+            {/* Mode toggle */}
+            <div className="flex rounded-xl border border-border bg-card/30 p-1">
+              <button
+                onClick={() => setMode("text")}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg font-display text-sm transition-all",
+                  mode === "text" ? "bg-card text-foreground border border-border shadow-sm" : "text-cream-3 hover:text-cream"
+                )}
+              >
+                <Type className="h-4 w-4" />
+                Текстовый режим
+              </button>
+              <button
+                onClick={() => setMode("voice")}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg font-display text-sm transition-all",
+                  mode === "voice" ? "bg-gold text-background shadow-sm" : "text-cream-3 hover:text-cream"
+                )}
+              >
+                <Radio className="h-4 w-4" />
+                Голос · NEW
+              </button>
+            </div>
+
             <div className="rounded-xl border border-border bg-card/40 p-6 accent-strip">
               <div className="flex items-center gap-2 mb-5">
                 <Mic className="h-4 w-4 text-gold" />
-                <span className="font-mono-label text-cream-3">Параметры интервью</span>
+                <span className="font-mono-label text-cream-3">
+                  {mode === "voice" ? "Голосовое admission interview · OpenAI Realtime" : "Параметры интервью"}
+                </span>
               </div>
               <div className="grid sm:grid-cols-2 gap-4">
                 <Field label="Университет" value={uni} onChange={setUni} placeholder="Stanford" />
@@ -147,9 +185,28 @@ export function InterviewTool({ initial }: { initial?: InterviewDefaults } = {})
                 <Textarea value={about} onChange={(e) => setAbout(e.target.value)} rows={3} placeholder="Кратко: GPA, активность, интересы — AI учтёт в вопросах" className="font-serif" />
               </div>
             </div>
-            <Button onClick={start} disabled={loading} className="w-full h-12 bg-gold text-background hover:bg-gold-soft font-cinzel">
-              {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Генерируем вопросы...</> : <><Sparkles className="h-4 w-4 mr-2" /> Начать интервью</>}
-            </Button>
+            {mode === "text" ? (
+              <Button onClick={start} disabled={loading} className="w-full h-12 bg-gold text-background hover:bg-gold-soft font-cinzel">
+                {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Генерируем вопросы...</> : <><Sparkles className="h-4 w-4 mr-2" /> Начать интервью</>}
+              </Button>
+            ) : (
+              <Button
+                onClick={() => {
+                  if (!uni || !major) return toast.error("Укажи университет и специальность")
+                  setPhase("voice")
+                }}
+                className="w-full h-12 bg-gold text-background hover:bg-gold-soft font-cinzel gap-2"
+              >
+                <Radio className="h-4 w-4" />
+                Начать голосовое интервью
+              </Button>
+            )}
+            {mode === "voice" && (
+              <p className="text-[10px] font-mono-label text-cream-3 text-center px-4">
+                Тебе понадобится микрофон. AI заговорит сразу — отвечай голосом, как на настоящем интервью.
+                В конце скажи «обратная связь», получишь разбор.
+              </p>
+            )}
           </div>
         )}
 
