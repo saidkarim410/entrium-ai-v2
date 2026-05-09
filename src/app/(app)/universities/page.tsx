@@ -1,15 +1,20 @@
 import { supabaseAdmin } from "@/lib/supabase/admin"
+import { listFavoriteIds } from "@/lib/favorites/actions"
 import { UniListClient, type UniRow } from "./uni-list-client"
 
 export const dynamic = "force-dynamic"
 
 export default async function UniversitiesPage() {
-  const { data, error } = await supabaseAdmin
-    .from("universities")
-    .select("id, qs_rank, rank_display, name, country, city, region, overall_score, website")
-    .order("qs_rank", { ascending: true, nullsFirst: false })
-    .limit(2000)
+  const [unisRes, favoriteIds] = await Promise.all([
+    supabaseAdmin
+      .from("universities")
+      .select("id, qs_rank, rank_display, name, country, city, region, overall_score, website")
+      .order("qs_rank", { ascending: true, nullsFirst: false })
+      .limit(2000),
+    listFavoriteIds("university"),
+  ])
 
+  const { data, error } = unisRes
   const unis = (data ?? []) as UniRow[]
 
   return (
@@ -28,7 +33,7 @@ export default async function UniversitiesPage() {
           {error.message}
         </div>
       )}
-      <UniListClient unis={unis} />
+      <UniListClient unis={unis} favoriteIds={favoriteIds} />
     </>
   )
 }

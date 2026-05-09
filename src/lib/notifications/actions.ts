@@ -4,6 +4,13 @@ import { revalidatePath } from "next/cache"
 import { supabaseAdmin } from "@/lib/supabase/admin"
 import { getCurrentUser } from "@/lib/supabase/server"
 import type { Notification, NotificationType } from "./types"
+import {
+  DEFAULT_PREFS,
+  mergePrefs,
+  getPrefsForUser,
+  shouldNotify,
+  type NotificationPrefs,
+} from "./prefs"
 
 export async function listNotifications(limit = 20): Promise<Notification[]> {
   const user = await getCurrentUser()
@@ -68,7 +75,9 @@ export async function markAllRead(): Promise<{ ok: boolean }> {
 
 /**
  * Server-side helper for cron + agent flows. Idempotent via data.dedup_key
- * (unique partial index on (user_id, type, dedup_key)).
+ * (unique partial index on (user_id, type, dedup_key)). Honors per-user
+ * notification prefs — silently returns { inserted: false } when the user
+ * has opted out of this notification type.
  */
 export async function createNotification(params: {
   userId: string
@@ -79,6 +88,17 @@ export async function createNotification(params: {
   data?: Record<string, unknown>
   dedupKey?: string
 }): Promise<{ inserted: boolean; id?: string }> {
+  // Respect user prefs — opt-outs make this a no-op without raising
+  try {
+    const prefs = await getPrefsForUser(params.userId)
+    if (!shouldNotify(prefs, params.type)) {
+      return { inserted: false }
+    }
+  } catch (err) {
+    // Don't block notifications on a prefs read failure — fail open
+    console.error("createNotification prefs read failed:", err)
+  }
+
   const data = { ...(params.data ?? {}) }
   if (params.dedupKey) data.dedup_key = params.dedupKey
 
@@ -102,4 +122,42 @@ export async function createNotification(params: {
     return { inserted: false }
   }
   return { inserted: true, id: row.id as string }
+}
+
+// ── Preference management ────────────────────────────────────────────────
+
+export async function getMyNotificationPrefs(): Promise<NotificationPrefs> {
+  const user = await getCurrentUser()
+  if (!user) return DEFAULT_PREFS
+  return getPrefsForUser(user.id)
+}
+
+export async function saveNotificationPrefs(
+  prefs: Partial<NotificationPrefs>
+): Promise<{ ok: boolean; error?: string }> {
+  const user = await getCurrentUser()
+  if (!user) return { ok: false, error: "unauthorized" }
+
+  const { data } = await supabaseAdmin
+    .from("profiles")
+    .select("applicant_data")
+    .eq("id", user.id)
+    .maybeSingle()
+
+  const cur = (data?.applicant_data as Record<string, unknown> | null) ?? {}
+  const next = mergePrefs({
+    ...((cur._notification_prefs as Partial<NotificationPrefs> | undefined) ?? {}),
+    ...prefs,
+  })
+
+  const merged = { ...cur, _notification_prefs: next }
+
+  const { error } = await supabaseAdmin
+    .from("profiles")
+    .update({ applicant_data: merged })
+    .eq("id", user.id)
+
+  if (error) return { ok: false, error: error.message }
+  revalidatePath("/settings")
+  return { ok: true }
 }

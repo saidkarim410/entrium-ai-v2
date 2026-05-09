@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import { getCurrentProfile } from "@/lib/supabase/server"
+import { DailySummaryWidget } from "@/components/daily-summary-widget"
 import { getApplicantProfile } from "@/lib/applicant/actions"
 import { listApplications } from "@/lib/applications/actions"
 import {
@@ -102,6 +103,9 @@ export default async function DashboardPage() {
             )}
           </div>
         </section>
+
+        {/* ── Daily AI summary (cron-prewarmed) ──────────────────────── */}
+        <DailySummaryWidget />
 
         {/* ── Today's focus ───────────────────────────────────────────── */}
         <FocusCard

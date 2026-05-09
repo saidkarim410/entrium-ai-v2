@@ -60,6 +60,45 @@ export async function saveApplicantProfile(profile: ApplicantProfile): Promise<{
 }
 
 /**
+ * Onboarding wizard auto-save: persists in-progress profile data WITHOUT
+ * marking the user as having completed onboarding. So if the user reloads
+ * mid-wizard, their data is preserved but the flow still runs.
+ *
+ * Critical difference from saveApplicantProfile: does NOT set _completed=true.
+ */
+export async function saveOnboardingProgress(
+  profile: ApplicantProfile
+): Promise<{ ok: boolean; error?: string }> {
+  const user = await getCurrentUser()
+  if (!user) return { ok: false, error: "unauthorized" }
+
+  // Preserve any side fields stored under applicant_data (like
+  // _notification_prefs) that aren't part of the wizard form
+  const { data: prior } = await supabaseAdmin
+    .from("profiles")
+    .select("applicant_data")
+    .eq("id", user.id)
+    .maybeSingle()
+  const sideFields = (prior?.applicant_data as Record<string, unknown> | null) ?? {}
+
+  const merged = {
+    ...sideFields,
+    ...profile,
+    // Explicitly NOT setting _completed — wizard finish does that
+    _completed: false,
+    _updated: new Date().toISOString(),
+  }
+
+  const { error } = await supabaseAdmin
+    .from("profiles")
+    .update({ applicant_data: merged })
+    .eq("id", user.id)
+
+  if (error) return { ok: false, error: error.message }
+  return { ok: true }
+}
+
+/**
  * Saves a tool run record (input + output) for history tracking.
  * Called from API routes after AI generation.
  */

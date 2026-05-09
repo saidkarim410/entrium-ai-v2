@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import {
   Search, X, MapPin, Sparkles, Check, Trophy, Filter,
 } from "lucide-react"
+import { FavoriteButton } from "@/components/favorite-button"
 import { cn } from "@/lib/utils"
 
 export type UniRow = {
@@ -25,7 +26,14 @@ export type UniRow = {
 const STORAGE_KEY = "entrium:compare-cart"
 const MAX_COMPARE = 5
 
-export function UniListClient({ unis }: { unis: UniRow[] }) {
+export function UniListClient({
+  unis,
+  favoriteIds = [],
+}: {
+  unis: UniRow[]
+  favoriteIds?: string[]
+}) {
+  const favSet = useMemo(() => new Set(favoriteIds), [favoriteIds])
   const router = useRouter()
   const [search, setSearch] = useState("")
   const [country, setCountry] = useState("")
@@ -187,6 +195,14 @@ export function UniListClient({ unis }: { unis: UniRow[] }) {
                 >
                   {inCart ? <Check className="h-4 w-4" /> : <Trophy className="h-3.5 w-3.5" />}
                 </button>
+                <div className="hidden sm:block">
+                  <FavoriteButton
+                    kind="university"
+                    targetId={u.id}
+                    initial={favSet.has(u.id)}
+                    size="md"
+                  />
+                </div>
                 <Link href={`/universities/${u.id}`} className="block flex-1 min-w-0">
                   <div
                     className={cn(

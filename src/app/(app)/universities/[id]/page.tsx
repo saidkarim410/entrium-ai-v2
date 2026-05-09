@@ -4,6 +4,8 @@ import { supabaseAdmin } from "@/lib/supabase/admin"
 import { getCurrentUser } from "@/lib/supabase/server"
 import { ExternalLink, MapPin, Globe, Trophy, ArrowLeft, GraduationCap } from "lucide-react"
 import { UniInsightsClient } from "./insights-client"
+import { FavoriteButton } from "@/components/favorite-button"
+import { listFavoriteIds } from "@/lib/favorites/actions"
 
 export const dynamic = "force-dynamic"
 
@@ -23,17 +25,19 @@ type UniRow = {
 
 export default async function UniversityDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const [{ data }, user] = await Promise.all([
+  const [{ data }, user, favIds] = await Promise.all([
     supabaseAdmin
       .from("universities")
       .select("id, qs_rank, rank_display, name, country, city, region, overall_score, website, description, metadata")
       .eq("id", id)
       .maybeSingle(),
     getCurrentUser(),
+    listFavoriteIds("university"),
   ])
 
   if (!data) notFound()
   const uni = data as UniRow
+  const isFavorited = favIds.includes(uni.id)
 
   // Pull a few "similar" universities (same country, near rank) for the right-rail
   let similar: UniRow[] = []
@@ -104,14 +108,24 @@ export default async function UniversityDetailPage({ params }: { params: Promise
                   )}
                 </div>
               </div>
-              {uni.qs_rank && (
-                <div className="text-right shrink-0">
-                  <div className="font-mono-label text-[10px] text-cream-3 uppercase tracking-wider">QS World 2026</div>
-                  <div className="font-display text-3xl sm:text-4xl text-gold">
-                    #{uni.rank_display ?? uni.qs_rank}
+              <div className="flex items-start gap-3 shrink-0">
+                {user && (
+                  <FavoriteButton
+                    kind="university"
+                    targetId={uni.id}
+                    initial={isFavorited}
+                    variant="labeled"
+                  />
+                )}
+                {uni.qs_rank && (
+                  <div className="text-right">
+                    <div className="font-mono-label text-[10px] text-cream-3 uppercase tracking-wider">QS World 2026</div>
+                    <div className="font-display text-3xl sm:text-4xl text-gold">
+                      #{uni.rank_display ?? uni.qs_rank}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
 
             {/* QS metric chips */}

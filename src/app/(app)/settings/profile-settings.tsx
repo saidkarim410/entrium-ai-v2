@@ -18,11 +18,13 @@ export function ProfileSettings({
   telegramSlot,
   shareSlot,
   emailSlot,
+  notificationSlot,
 }: {
   initial: ApplicantProfile
   telegramSlot?: React.ReactNode
   shareSlot?: React.ReactNode
   emailSlot?: React.ReactNode
+  notificationSlot?: React.ReactNode
 }) {
   const [profile, setProfile] = useState<ApplicantProfile>(initial)
   const [pending, startTransition] = useTransition()
@@ -94,6 +96,7 @@ export function ProfileSettings({
         <DocumentUploadCard onApply={(patch) => setProfile((p) => mergeProfilePatch(p, patch))} />
 
         {shareSlot}
+        {notificationSlot}
         {telegramSlot}
         {emailSlot}
 

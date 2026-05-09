@@ -1,27 +1,66 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useEffect, useRef, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { saveApplicantProfile } from "@/lib/applicant/actions"
+import { saveApplicantProfile, saveOnboardingProgress } from "@/lib/applicant/actions"
 import { type ApplicantProfile } from "@/lib/applicant/types"
 import {
   Sparkles, ArrowRight, ArrowLeft, Loader2, Check,
-  User, Target, GraduationCap, Trophy,
+  User, Target, GraduationCap, Trophy, Cloud,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const TOTAL_STEPS = 5
+
+type AutosaveState = "idle" | "saving" | "saved" | "error"
 
 export function OnboardingWizard({ initial }: { initial: ApplicantProfile }) {
   const router = useRouter()
   const [step, setStep] = useState(1)
   const [profile, setProfile] = useState<ApplicantProfile>(initial)
   const [pending, startTransition] = useTransition()
+  const [autosave, setAutosave] = useState<AutosaveState>("idle")
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const firstRenderRef = useRef(true)
+
+  // Debounced autosave on every profile mutation. Skips first render so we
+  // don't pointlessly save the initial state. 1s debounce — small enough that
+  // a refresh mid-typing only loses a sentence.
+  useEffect(() => {
+    if (firstRenderRef.current) {
+      firstRenderRef.current = false
+      return
+    }
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(async () => {
+      setAutosave("saving")
+      const r = await saveOnboardingProgress(profile)
+      setAutosave(r.ok ? "saved" : "error")
+      if (r.ok) {
+        setTimeout(() => setAutosave((s) => (s === "saved" ? "idle" : s)), 2000)
+      }
+    }, 1000)
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
+  }, [profile])
+
+  // Force-save before step transition so even if the user closes the tab
+  // immediately after clicking "Next" their progress is durable
+  async function flushSave() {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current)
+      debounceRef.current = null
+    }
+    setAutosave("saving")
+    const r = await saveOnboardingProgress(profile)
+    setAutosave(r.ok ? "saved" : "error")
+  }
 
   function update<K extends keyof ApplicantProfile>(section: K, key: keyof NonNullable<ApplicantProfile[K]>, value: string) {
     setProfile((p) => ({
@@ -37,12 +76,14 @@ export function OnboardingWizard({ initial }: { initial: ApplicantProfile }) {
     setProfile((p) => ({ ...p, [key]: value }))
   }
 
-  function next() {
+  async function next() {
+    await flushSave()
     if (step < TOTAL_STEPS) setStep(step + 1)
     else finish()
   }
 
-  function back() {
+  async function back() {
+    await flushSave()
     if (step > 1) setStep(step - 1)
   }
 
@@ -72,6 +113,11 @@ export function OnboardingWizard({ initial }: { initial: ApplicantProfile }) {
 
   return (
     <div className="flex-1 overflow-y-auto bg-background">
+      {/* Autosave status — fixed top-right */}
+      <div className="fixed top-3 right-4 z-30">
+        <AutosaveBadge state={autosave} />
+      </div>
+
       <div className="container max-w-2xl mx-auto px-6 py-12">
         {/* Header */}
         <div className="mb-10 text-center">
@@ -81,7 +127,8 @@ export function OnboardingWizard({ initial }: { initial: ApplicantProfile }) {
           </div>
           <h1 className="font-display text-3xl mb-2">Заполни профиль один раз</h1>
           <p className="font-serif text-cream-2">
-            Все 11 AI-инструментов будут автозаполняться. Это занимает 2 минуты.
+            Все 11 AI-инструментов будут автозаполняться. Это занимает 2 минуты ·
+            <span className="text-cream-3"> прогресс автосохраняется</span>
           </p>
         </div>
 
@@ -383,6 +430,32 @@ function SelectField<T extends string>({ label, value, onChange, options }: { la
       <select value={value} onChange={(e) => onChange(e.target.value as T)} className="flex h-9 w-full rounded-md border border-border bg-card px-3 text-sm text-cream">
         {options.map((o) => <option key={o} value={o}>{o}</option>)}
       </select>
+    </div>
+  )
+}
+
+function AutosaveBadge({ state }: { state: AutosaveState }) {
+  if (state === "idle") return null
+
+  const cls =
+    state === "saving"
+      ? "bg-cream-3/15 border-cream-3/30 text-cream-2"
+      : state === "saved"
+        ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-300"
+        : "bg-rose-500/15 border-rose-500/30 text-rose-300"
+
+  return (
+    <div className={cn(
+      "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-mono-label",
+      "backdrop-blur transition-all",
+      cls,
+    )}>
+      {state === "saving" && <Loader2 className="h-3 w-3 animate-spin" />}
+      {state === "saved" && <Cloud className="h-3 w-3" />}
+      {state === "error" && <Cloud className="h-3 w-3" />}
+      {state === "saving" && "Сохраняю..."}
+      {state === "saved" && "Сохранено"}
+      {state === "error" && "Не удалось сохранить"}
     </div>
   )
 }

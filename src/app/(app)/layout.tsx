@@ -16,7 +16,7 @@ import { unreadCount } from "@/lib/notifications/actions"
 import {
   Sparkles, Brain, Sparkles as SparklesIcon, Map, FileText,
   MessageSquare, Award, GraduationCap, LogOut, LayoutDashboard, Mail, FileUser, Wallet, ShieldCheck,
-  History, UserCog, Bot, ListChecks, Crown, Gift, CalendarDays, Trophy,
+  History, UserCog, Bot, ListChecks, Crown, Gift, CalendarDays, Trophy, Star,
 } from "lucide-react"
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -39,6 +39,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     { slug: "reviewer", name: t.sidebar.tool_reviewer, icon: ShieldCheck },
   ]
   const browse = [
+    { href: "/shortlist", name: "Shortlist · ⭐", icon: Star },
     { href: "/universities", name: t.sidebar.all_universities, icon: GraduationCap },
     { href: "/scholarships", name: t.sidebar.all_scholarships, icon: Award },
   ]

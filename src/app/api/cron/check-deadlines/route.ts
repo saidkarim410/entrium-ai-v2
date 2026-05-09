@@ -2,6 +2,7 @@ import { supabaseAdmin } from "@/lib/supabase/admin"
 import { createNotification } from "@/lib/notifications/actions"
 import { sendTelegramMessage } from "@/lib/telegram"
 import { telegramEnabled } from "@/lib/env"
+import { getPrefsForUser, shouldPushTelegramNow } from "@/lib/notifications/prefs"
 import type { Application } from "@/lib/applications/types"
 
 export const runtime = "nodejs"
@@ -94,22 +95,25 @@ export async function GET(req: Request) {
       }
     }
 
-    // Push to Telegram if linked
+    // Push to Telegram if linked AND user prefs allow
     if (tgPushes.length && telegramEnabled()) {
-      const { data: profile } = await supabaseAdmin
-        .from("profiles")
-        .select("telegram_chat_id")
-        .eq("id", userId)
-        .maybeSingle()
+      const prefs = await getPrefsForUser(userId)
+      if (shouldPushTelegramNow(prefs)) {
+        const { data: profile } = await supabaseAdmin
+          .from("profiles")
+          .select("telegram_chat_id")
+          .eq("id", userId)
+          .maybeSingle()
 
-      if (profile?.telegram_chat_id) {
-        const text =
-          tgPushes.length === 1
-            ? tgPushes[0]
-            : "<b>Напоминание о заявках</b>\n\n" + tgPushes.join("\n\n")
-        const res = await sendTelegramMessage(profile.telegram_chat_id, text + "\n\n→ https://entrium-ai-v2.vercel.app/applications")
-        if (res.ok) stats.telegram++
-        else stats.errors++
+        if (profile?.telegram_chat_id) {
+          const text =
+            tgPushes.length === 1
+              ? tgPushes[0]
+              : "<b>Напоминание о заявках</b>\n\n" + tgPushes.join("\n\n")
+          const res = await sendTelegramMessage(profile.telegram_chat_id, text + "\n\n→ https://entrium-ai-v2.vercel.app/applications")
+          if (res.ok) stats.telegram++
+          else stats.errors++
+        }
       }
     }
   }
