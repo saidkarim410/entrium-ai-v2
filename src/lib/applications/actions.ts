@@ -116,6 +116,28 @@ export async function upsertApplication(
   return { ok: true, id: data.id as string }
 }
 
+export async function bulkInsertApplications(
+  inputs: AppInput[]
+): Promise<{ ok: boolean; inserted: number; error?: string }> {
+  const user = await getCurrentUser()
+  if (!user) return { ok: false, inserted: 0, error: "unauthorized" }
+
+  const valid = inputs.filter((i) => i.university_name?.trim()).slice(0, 20)
+  if (valid.length === 0) return { ok: true, inserted: 0 }
+
+  const rows = valid.map((i) => ({ ...clean(i), user_id: user.id }))
+  const { data, error } = await supabaseAdmin
+    .from("applications")
+    .insert(rows)
+    .select("id")
+
+  if (error) return { ok: false, inserted: 0, error: error.message }
+  revalidatePath("/applications")
+  revalidatePath("/calendar")
+  revalidatePath("/dashboard")
+  return { ok: true, inserted: data?.length ?? 0 }
+}
+
 export async function cloneApplication(id: string): Promise<{ ok: boolean; error?: string; id?: string }> {
   const user = await getCurrentUser()
   if (!user) return { ok: false, error: "unauthorized" }

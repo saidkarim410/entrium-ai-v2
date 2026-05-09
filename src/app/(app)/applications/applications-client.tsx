@@ -40,6 +40,7 @@ import {
   toggleChecklistItem,
   cloneApplication,
 } from "@/lib/applications/actions"
+import { BulkAddDialog } from "./bulk-add-dialog"
 import { cn } from "@/lib/utils"
 
 type FormState = {
@@ -189,17 +190,26 @@ export function ApplicationsClient({ initial }: { initial: Application[] }) {
           />
         </div>
 
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
           <h2 className="font-display text-xl">Мои заявки</h2>
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger
-              render={
-                <Button onClick={openNew} className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  Добавить
+          <div className="flex items-center gap-2">
+            <BulkAddDialog
+              trigger={
+                <Button variant="outline" className="gap-2">
+                  <Sparkles className="h-4 w-4 text-gold" />
+                  Bulk add · AI
                 </Button>
               }
             />
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger
+                render={
+                  <Button onClick={openNew} className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    Добавить
+                  </Button>
+                }
+              />
             {editing && (
               <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
@@ -293,7 +303,8 @@ export function ApplicationsClient({ initial }: { initial: Application[] }) {
                 </DialogFooter>
               </DialogContent>
             )}
-          </Dialog>
+            </Dialog>
+          </div>
         </div>
 
         {/* List */}
