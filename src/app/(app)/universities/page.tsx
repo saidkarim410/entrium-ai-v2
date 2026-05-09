@@ -1,20 +1,7 @@
-import Link from "next/link"
 import { supabaseAdmin } from "@/lib/supabase/admin"
-import { ExternalLink, MapPin, Sparkles } from "lucide-react"
+import { UniListClient, type UniRow } from "./uni-list-client"
 
 export const dynamic = "force-dynamic"
-
-type UniRow = {
-  id: string
-  qs_rank: number | null
-  rank_display: string | null
-  name: string
-  country: string
-  city: string | null
-  region: string | null
-  overall_score: number | null
-  website: string | null
-}
 
 export default async function UniversitiesPage() {
   const { data, error } = await supabaseAdmin
@@ -27,52 +14,21 @@ export default async function UniversitiesPage() {
 
   return (
     <>
-      <header className="flex h-16 items-center justify-between border-b border-border/40 px-6 shrink-0">
-        <div>
-          <h1 className="font-semibold tracking-tight">QS World Rankings 2026</h1>
-          <p className="text-xs text-muted-foreground">
-            {unis.length} университетов · данные с topuniversities.com
+      <header className="flex h-16 items-center justify-between border-b border-border/40 px-4 sm:px-6 shrink-0 overflow-hidden">
+        <div className="min-w-0 flex-1">
+          <h1 className="font-display text-base sm:text-lg tracking-tight truncate">QS World Rankings 2026</h1>
+          <p className="font-mono-label text-cream-3 mt-0.5 truncate">
+            {unis.length} университетов · отметь до 5 для сравнения с AI
           </p>
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto">
-        <div className="container max-w-5xl mx-auto px-6 py-8">
-          {error && (
-            <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-              {error.message}
-            </div>
-          )}
-          <div className="space-y-2">
-            {unis.map((u) => (
-              <Link key={u.id} href={`/universities/${u.id}`} className="block">
-                <div className="group flex items-center gap-4 rounded-xl border border-border/60 bg-card/50 p-4 transition-all hover:border-gold/40 hover:bg-card cursor-pointer">
-                  <div className="grid h-12 w-14 shrink-0 place-items-center rounded-lg bg-accent font-mono text-sm font-medium tabular-nums">
-                    {u.rank_display ?? u.qs_rank ?? "—"}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-medium tracking-tight truncate group-hover:text-gold transition-colors">
-                      {u.name}
-                    </h3>
-                    <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <MapPin className="h-3 w-3" />
-                      {u.city ? `${u.city}, ` : ""}{u.country}
-                      {u.region && <span className="text-muted-foreground/50">· {u.region}</span>}
-                    </p>
-                  </div>
-                  {u.overall_score !== null && (
-                    <div className="hidden sm:block text-right shrink-0">
-                      <div className="font-mono text-sm tabular-nums">{Number(u.overall_score).toFixed(1)}</div>
-                      <div className="text-[10px] text-muted-foreground uppercase tracking-wider">overall</div>
-                    </div>
-                  )}
-                  <Sparkles className="h-4 w-4 text-cream-3 group-hover:text-gold shrink-0 transition-colors" />
-                </div>
-              </Link>
-            ))}
-          </div>
+      {error && (
+        <div className="px-6 py-3 bg-destructive/10 text-sm text-destructive border-b border-destructive/40">
+          {error.message}
         </div>
-      </div>
+      )}
+      <UniListClient unis={unis} />
     </>
   )
 }
