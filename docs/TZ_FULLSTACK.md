@@ -1,21 +1,18 @@
 # ТЗ — Entrium AI v2 (Full-Stack)
 
 > **Документ для full-stack разработчика, нанятого на доработку проекта.**
-> Дата создания: 2026-05-09 · Версия 1.2 (после авто-прогонов wave 1 + 2)
+> Дата создания: 2026-05-09 · Версия 1.3 (после авто-прогонов wave 1 + 2 + 3)
 > Прод: https://entrium-ai-v2.vercel.app
 >
-> **Wave 1 закрыт автоматически (commit `0110b8d`):**
-> - Безопасность: S-2, S-3, S-4, S-5, S-6, S-8/F-6, S-9, S-10, S-12 ✅
-> - UX: U-1, U-8 (примитив), U-12 ✅
-> - Фичи: F-4 ✅
-> - Качество: Q-1 (CI), частично S-1 (PAT убран из .git/config)
+> **Wave 1 закрыт (commit `0110b8d`):** S-2, S-3, S-4, S-5, S-6, S-8/F-6, S-9, S-10, S-12, U-1, U-8 (primitive), U-12, F-4, Q-1 base, S-1 partial.
 >
-> **Wave 2 закрыт автоматически (commit `5b9393a`):**
-> - UX: U-2 (settings sidebar nav), U-3 (applications bulk actions), U-5 (onboarding step indicator), U-7 (VoiceTextarea wrapper), U-8 применён к applications ✅
-> - Фичи: F-3 (applications timeline) ✅
-> - Качество: Q-2 partial (11 тестов на daysUntil/deadlineUrgency, fixed -0 regression)
+> **Wave 2 закрыт (commit `5b9393a`):** U-2, U-3, U-5, U-7, U-8 applied, F-3, Q-2 partial.
 >
-> **Остаются на разработчика:** S-1 финал (отозвать токен в GitHub UI), S-7 (Telegram bot recreate), S-11, S-13 (2FA TOTP), S-14, U-4 (calendar views), U-6 (inline AI comments), U-9 (mobile audit), U-10 (light theme), U-11 (axe a11y), U-13 (forms unify), F-1, F-2, F-5, F-7…F-13, контент-долг, Q-2 expansion, Q-3, Q-4, Q-5.
+> **Wave 3 закрыт (commit `ae348ae`):** U-4 (calendar views), F-10 (CSV import), Q-1 expansion (Playwright base + 10 smoke tests), Q-2 expansion (7 new tests).
+>
+> **Прогресс:** ~50% автоматически за 3 wave'а (20 из 41 ID closed).
+>
+> **Остаются на разработчика:** S-1 финал (revoke token в GitHub UI), S-7 (Telegram bot), S-11, S-13 (2FA TOTP), S-14, U-6 (inline AI comments), U-9 (mobile audit), U-10 (light theme), U-11 (axe a11y), U-13 (forms unify), F-1, F-2, F-5, F-7, F-8, F-9, F-11, F-12, F-13, контент-долг, Q-3 (Storybook), Q-4 (credits split), Q-5 (sourcemaps).
 
 ---
 
