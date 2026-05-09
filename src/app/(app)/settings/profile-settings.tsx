@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useEffect, useState, useTransition } from "react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -27,6 +27,16 @@ export function ProfileSettings({
   const [profile, setProfile] = useState<ApplicantProfile>(initial)
   const [pending, startTransition] = useTransition()
   const [savedAt, setSavedAt] = useState<number | null>(null)
+  const [justSaved, setJustSaved] = useState(false)
+
+  // Flip "Сохранено" badge for 3s after each successful save, then revert
+  useEffect(() => {
+    if (savedAt === null) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setJustSaved(true)
+    const handle = setTimeout(() => setJustSaved(false), 3000)
+    return () => clearTimeout(handle)
+  }, [savedAt])
 
   const completeness = profileCompleteness(profile)
 
@@ -213,11 +223,13 @@ Top-10% scholarship, Лицей №2`}
             disabled={pending}
             className="w-full h-12 bg-gold text-background hover:bg-gold-soft font-cinzel shadow-lg"
           >
-            {pending
-              ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Сохраняем...</>
-              : savedAt && Date.now() - savedAt < 3000
-                ? <><Check className="h-4 w-4 mr-2" /> Сохранено</>
-                : <><Check className="h-4 w-4 mr-2" /> Сохранить профиль</>}
+            {pending ? (
+              <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Сохраняем...</>
+            ) : justSaved ? (
+              <><Check className="h-4 w-4 mr-2" /> Сохранено</>
+            ) : (
+              <><Check className="h-4 w-4 mr-2" /> Сохранить профиль</>
+            )}
           </Button>
         </div>
       </div>

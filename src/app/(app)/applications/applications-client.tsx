@@ -85,6 +85,7 @@ export function ApplicationsClient({ initial }: { initial: Application[] }) {
   useEffect(() => {
     const addName = searchParams.get("add")
     if (addName && addName.trim()) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setEditing({ ...EMPTY, university_name: addName.trim() })
       setOpen(true)
       // Clean URL so refresh doesn't re-trigger

@@ -13,7 +13,6 @@ import {
 import {
   type ActivityEntry,
   type ActivityType,
-  type GradeLevel,
   ACTIVITY_TYPES,
   GRADE_LEVELS,
   COMMON_APP_LIMITS,

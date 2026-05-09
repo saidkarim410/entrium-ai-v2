@@ -435,7 +435,7 @@ function FocusCard({
             </p>
             <h3 className="font-display text-lg sm:text-xl">Подбери университеты</h3>
             <p className="font-serif text-sm text-cream-2 mt-1">
-              Запусти AI Agent → "Полный admission package" — за 5 минут получишь шорт-лист универов под профиль и стипендии.
+              Запусти AI Agent → «Полный admission package» — за 5 минут получишь шорт-лист универов под профиль и стипендии.
             </p>
           </div>
         </div>

@@ -300,7 +300,7 @@ export function SetupClient({ userEmail }: { userEmail: string }) {
       </Button>
 
       <p className="text-[10px] font-mono-label text-cream-3 text-center leading-relaxed">
-        Токены передаются один раз и не сохраняются. После работы wizard'a удали их
+        Токены передаются один раз и не сохраняются. После работы wizard&apos;a удали их
         в Supabase / Vercel дашбордах если переживаешь за безопасность.
         Аккаунт: <span className="text-cream-2">{userEmail}</span>
       </p>

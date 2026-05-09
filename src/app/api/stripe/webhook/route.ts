@@ -48,7 +48,7 @@ export async function POST(req: Request) {
       case "customer.subscription.created":
       case "customer.subscription.updated": {
         const sub = event.data.object
-        await syncSubscription(sub, stripe)
+        await syncSubscription(sub)
         break
       }
       case "customer.subscription.deleted": {
@@ -121,11 +121,11 @@ async function handleCheckoutCompleted(
   const subId = typeof session.subscription === "string" ? session.subscription : session.subscription?.id
   if (subId) {
     const sub = await stripe.subscriptions.retrieve(subId)
-    await syncSubscription(sub, stripe)
+    await syncSubscription(sub)
   }
 }
 
-async function syncSubscription(sub: Stripe.Subscription, _stripe: Stripe) {
+async function syncSubscription(sub: Stripe.Subscription) {
   const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer.id
   const userId = await findUserId({ metadata: sub.metadata, customerId })
   if (!userId) {

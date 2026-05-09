@@ -134,7 +134,7 @@ export function CalendarClient({ events, feed }: { events: CalEvent[]; feed?: Fe
                 className="rounded-lg border border-border bg-card/40 hover:bg-card hover:border-gold/40 transition-colors p-3 group"
               >
                 <p className="font-display text-sm group-hover:text-gold transition-colors">📅 Google Calendar</p>
-                <p className="font-mono-label text-[10px] text-cream-3 mt-0.5">Открыть → "Добавить календарь"</p>
+                <p className="font-mono-label text-[10px] text-cream-3 mt-0.5">Открыть → «Добавить календарь»</p>
               </a>
             </div>
 

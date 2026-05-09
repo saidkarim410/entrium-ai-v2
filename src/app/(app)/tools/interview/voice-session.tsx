@@ -64,7 +64,6 @@ export function VoiceSession({
     return () => {
       hardStop()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   async function start() {

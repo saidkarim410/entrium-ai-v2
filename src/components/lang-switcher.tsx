@@ -21,6 +21,7 @@ export function LangSwitcher({ size = "sm" }: { size?: "sm" | "default" | "icon"
   const [pending, startTransition] = useTransition()
 
   function setLang(l: Locale) {
+    // eslint-disable-next-line react-hooks/immutability -- intentional cookie write in click handler
     document.cookie = `lang=${l}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`
     // Best-effort: persist to profile so Telegram bot + email use the same lang
     persistUserLanguage(l).catch(() => null)

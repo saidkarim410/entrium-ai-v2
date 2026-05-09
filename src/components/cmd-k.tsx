@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
   Search, Loader2, GraduationCap, Award, ListChecks, History, Sparkles,
@@ -90,11 +89,14 @@ export function CmdK() {
     }
   }, [])
 
-  // Debounced search
+  // Debounced search — clears results synchronously when query is too short,
+  // then debounces the actual fetch. Setting state in this effect is the
+  // intended pattern for input-driven async fetches.
   useEffect(() => {
     if (!open) return
     const trimmed = q.trim()
     if (trimmed.length < 2) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setResults(null)
       return
     }
@@ -120,9 +122,10 @@ export function CmdK() {
     }
   }, [q, open])
 
-  // Reset on open
+  // Reset state each time dialog opens — legitimate side-effect pattern
   useEffect(() => {
     if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setQ("")
       setResults(null)
       setActiveIdx(0)
@@ -150,8 +153,9 @@ export function CmdK() {
     ...((results ?? []).map((r) => ({ kind: "result" as const, key: r.type + ":" + r.id, result: r }))),
   ]
 
-  // Keep activeIdx in bounds
+  // Keep activeIdx in bounds whenever the flat list shrinks below current index
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (activeIdx >= flat.length) setActiveIdx(0)
   }, [flat.length, activeIdx])
 

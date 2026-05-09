@@ -2,7 +2,6 @@ import { notFound } from "next/navigation"
 import Link from "next/link"
 import { supabaseAdmin } from "@/lib/supabase/admin"
 import { getCurrentUser } from "@/lib/supabase/server"
-import { Badge } from "@/components/ui/badge"
 import { ExternalLink, MapPin, Globe, Trophy, ArrowLeft, GraduationCap } from "lucide-react"
 import { UniInsightsClient } from "./insights-client"
 

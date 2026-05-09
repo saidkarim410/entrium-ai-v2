@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter,
 } from "@/components/ui/dialog"
-import { Sparkles, Loader2, Trash2, Plus, Check } from "lucide-react"
+import { Sparkles, Loader2, Trash2, Check } from "lucide-react"
 import { bulkInsertApplications } from "@/lib/applications/actions"
 import { APP_LEVELS, type AppLevel } from "@/lib/applications/types"
 import { cn } from "@/lib/utils"

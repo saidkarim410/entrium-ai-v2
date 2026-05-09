@@ -32,12 +32,14 @@ export function UniListClient({ unis }: { unis: UniRow[] }) {
   const [cart, setCart] = useState<Set<string>>(new Set())
   const [region, setRegion] = useState("")
 
-  // Restore cart from localStorage
+  // Restore cart from localStorage on mount — set state once based on
+  // cross-render persisted data; intentional side effect
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY)
       if (raw) {
         const ids = JSON.parse(raw) as string[]
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setCart(new Set(ids.filter((id) => unis.some((u) => u.id === id))))
       }
     } catch {}

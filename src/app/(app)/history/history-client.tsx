@@ -65,12 +65,18 @@ export function HistoryClient({ runs }: { runs: Run[] }) {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
+    // Snapshot wall-clock at filter recompute. Re-derives only when one of
+    // useMemo's deps changes, so the value is stable per filter session.
+    // eslint-disable-next-line react-hooks/purity
     const now = Date.now()
     const cutoff =
-      dateFilter === "today" ? new Date().setHours(0, 0, 0, 0)
-      : dateFilter === "week" ? now - 7 * 86_400_000
-      : dateFilter === "month" ? now - 30 * 86_400_000
-      : 0
+      dateFilter === "today"
+        ? new Date().setHours(0, 0, 0, 0)
+        : dateFilter === "week"
+          ? now - 7 * 86_400_000
+          : dateFilter === "month"
+            ? now - 30 * 86_400_000
+            : 0
 
     return runs.filter((r) => {
       if (activeTools.size > 0 && !activeTools.has(r.tool)) return false

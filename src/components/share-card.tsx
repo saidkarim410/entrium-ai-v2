@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import {
-  Share2, Copy, Check, Eye, EyeOff, Globe, Lock, Unlock, ExternalLink, Loader2,
+  Share2, Copy, Check, Eye, EyeOff, Globe, Lock, ExternalLink, Loader2,
 } from "lucide-react"
 import {
   enableSharing, disableSharing, type SharingStatus,
