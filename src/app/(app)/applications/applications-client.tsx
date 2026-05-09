@@ -46,6 +46,7 @@ import { VoiceInputButton } from "@/components/voice-input-button"
 import { AiLoadingSkeleton, AiErrorCard } from "@/components/ai-state"
 import { DeadlineChip } from "@/components/deadline-chip"
 import { EmptyState } from "@/components/empty-state"
+import { CsvImportDialog } from "./csv-import-dialog"
 import { analyzePortfolio, type Verdict } from "@/lib/applications/analytics"
 import { cn } from "@/lib/utils"
 
@@ -283,6 +284,8 @@ export function ApplicationsClient({
                 </Button>
               }
             />
+            <CsvImportDialog />
+
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger
                 render={

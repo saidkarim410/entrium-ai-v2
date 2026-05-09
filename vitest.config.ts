@@ -6,7 +6,10 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["tests/**/*.test.ts"],
-    exclude: ["node_modules", ".next"],
+    // Exclude Playwright e2e dir explicitly — vitest's default would pick
+    // up *.spec.ts and try to run them as unit tests, which fails on
+    // Playwright's `test()` import.
+    exclude: ["node_modules", ".next", "e2e"],
     // Don't try to load Next.js-specific modules (server cache, etc.) in tests
     // — we test pure helpers only.
     globals: false,

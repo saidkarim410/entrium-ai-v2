@@ -27,9 +27,12 @@ const WEEKDAYS_RU = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
 
 type FeedUrls = { https: string; webcal: string } | null
 
+type ViewMode = "month" | "week" | "list"
+
 export function CalendarClient({ events, feed }: { events: CalEvent[]; feed?: FeedUrls }) {
   const today = useMemo(() => stripTime(new Date()), [])
   const [cursor, setCursor] = useState(() => firstDayOfMonth(today))
+  const [view, setView] = useState<ViewMode>("month") // U-4 (TZ): Month / Week / List
   const [showSub, setShowSub] = useState(false)
   const [copied, setCopied] = useState(false)
 
@@ -63,11 +66,55 @@ export function CalendarClient({ events, feed }: { events: CalEvent[]; feed?: Fe
   const monthLabel = `${MONTHS_RU[cursor.getMonth()]} ${cursor.getFullYear()}`
 
   function nav(delta: number) {
+    if (view === "week") {
+      setCursor((c) => new Date(c.getFullYear(), c.getMonth(), c.getDate() + delta * 7))
+      return
+    }
+    if (view === "month") {
+      setCursor((c) => new Date(c.getFullYear(), c.getMonth() + delta, 1))
+      return
+    }
+    // List view: scroll by month
     setCursor((c) => new Date(c.getFullYear(), c.getMonth() + delta, 1))
   }
   function jumpToday() {
     setCursor(firstDayOfMonth(today))
   }
+
+  // U-4 (TZ): week view computes 7 consecutive days starting on the Monday
+  // of the cursor week. Cursor switches to the cursor's Monday when entering
+  // week mode — keeps visible focus on "the week the user was looking at".
+  const weekDays = useMemo(() => {
+    const dow = (cursor.getDay() + 6) % 7
+    const monday = new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate() - dow)
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i)
+      return { date: d, iso: toIso(d) }
+    })
+  }, [cursor])
+
+  // U-4 list view: chronological future-first events grouped by month
+  const listGroups = useMemo(() => {
+    const future = events
+      .filter((e) => new Date(e.date) >= today)
+      .sort((a, b) => (a.date < b.date ? -1 : 1))
+    const groups = new Map<string, CalEvent[]>()
+    for (const e of future) {
+      const d = new Date(e.date)
+      const key = `${d.getFullYear()}-${String(d.getMonth()).padStart(2, "0")}`
+      const arr = groups.get(key) ?? []
+      arr.push(e)
+      groups.set(key, arr)
+    }
+    return Array.from(groups.entries()).map(([key, items]) => {
+      const [y, m] = key.split("-").map(Number)
+      return {
+        key,
+        label: `${MONTHS_RU[m]} ${y}`,
+        items,
+      }
+    })
+  }, [events, today])
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -86,6 +133,24 @@ export function CalendarClient({ events, feed }: { events: CalEvent[]; feed?: Fe
             </Button>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
+            {/* U-4 (TZ): view toggle — Month / Week / List */}
+            <div role="tablist" aria-label="Режим отображения" className="inline-flex rounded-lg border border-border bg-card/40 p-0.5">
+              {(["month", "week", "list"] as const).map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  role="tab"
+                  aria-selected={view === v}
+                  onClick={() => setView(v)}
+                  className={cn(
+                    "px-2.5 py-1 text-[11px] font-mono-label uppercase tracking-wider rounded-md transition-colors",
+                    view === v ? "bg-gold/15 text-gold" : "text-cream-3 hover:text-cream-2",
+                  )}
+                >
+                  {v === "month" ? "Месяц" : v === "week" ? "Неделя" : "Список"}
+                </button>
+              ))}
+            </div>
             <Button variant="outline" size="sm" onClick={jumpToday}>
               Сегодня
             </Button>
@@ -161,7 +226,8 @@ export function CalendarClient({ events, feed }: { events: CalEvent[]; feed?: Fe
         )}
 
         <div className="grid lg:grid-cols-[1fr_280px] gap-6">
-          {/* Month grid */}
+          {/* Main view — switches between Month / Week / List based on `view` */}
+          {view === "month" && (
           <div className="rounded-xl border border-border bg-card/40 overflow-hidden">
             <div className="grid grid-cols-7 border-b border-border/60 bg-card/60">
               {WEEKDAYS_RU.map((d) => (
@@ -234,6 +300,141 @@ export function CalendarClient({ events, feed }: { events: CalEvent[]; feed?: Fe
               })}
             </div>
           </div>
+          )}
+
+          {/* U-4: Week view — 7 day-columns of the cursor's week */}
+          {view === "week" && (
+            <div className="rounded-xl border border-border bg-card/40 overflow-hidden">
+              <div className="grid grid-cols-7 border-b border-border/60 bg-card/60">
+                {weekDays.map((d) => {
+                  const isToday = isSameDay(d.date, today)
+                  return (
+                    <div
+                      key={d.iso}
+                      className={cn(
+                        "px-2 py-2 text-center",
+                        isToday && "bg-gold/10",
+                      )}
+                    >
+                      <p className="text-[10px] font-mono-label text-cream-3 uppercase tracking-wider">
+                        {WEEKDAYS_RU[(d.date.getDay() + 6) % 7]}
+                      </p>
+                      <p className={cn(
+                        "font-display text-base mt-0.5",
+                        isToday ? "text-gold" : "text-cream-2",
+                      )}>
+                        {d.date.getDate()}
+                      </p>
+                    </div>
+                  )
+                })}
+              </div>
+              <div className="grid grid-cols-7 min-h-[420px]">
+                {weekDays.map((d) => {
+                  const dayEvents = eventsByDate.get(d.iso) ?? []
+                  const isPast = d.date < today
+                  return (
+                    <div
+                      key={d.iso}
+                      className="border-r border-border/40 last:border-r-0 p-2 space-y-1.5"
+                    >
+                      {dayEvents.length === 0 ? (
+                        <div className="h-full grid place-items-center text-[10px] font-mono-label text-cream-3/40">
+                          —
+                        </div>
+                      ) : (
+                        dayEvents.map((e) => (
+                          <Link
+                            key={e.id}
+                            href="/applications"
+                            className={cn(
+                              "block rounded-md border p-1.5 text-[11px] transition-colors",
+                              isPast
+                                ? "bg-cream-3/10 text-cream-3/60 border-cream-3/20"
+                                : e.priority === "reach"
+                                  ? "bg-rose-500/15 text-rose-300 border-rose-500/30 hover:bg-rose-500/25"
+                                  : e.priority === "match"
+                                    ? "bg-gold/15 text-gold border-gold/30 hover:bg-gold/25"
+                                    : "bg-emerald-500/15 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/25"
+                            )}
+                            title={e.title}
+                          >
+                            <p className="font-display truncate">{e.title}</p>
+                            {e.subtitle && (
+                              <p className="font-mono-label text-[9px] opacity-80 truncate">{e.subtitle}</p>
+                            )}
+                          </Link>
+                        ))
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* U-4: List view — chronological events grouped by month */}
+          {view === "list" && (
+            <div className="rounded-xl border border-border bg-card/40 p-4 sm:p-5">
+              {listGroups.length === 0 ? (
+                <div className="text-center py-10 space-y-2">
+                  <CalIcon className="h-8 w-8 text-cream-3 mx-auto" />
+                  <p className="font-display text-base">Нет грядущих дедлайнов</p>
+                  <Link href="/applications" className="font-mono-label text-xs text-gold hover:underline">
+                    Добавить заявку →
+                  </Link>
+                </div>
+              ) : (
+                <ol className="space-y-5">
+                  {listGroups.map((g) => (
+                    <li key={g.key}>
+                      <h3 className="font-mono-label text-[10px] text-gold uppercase tracking-[0.2em] mb-2 pb-1 border-b border-gold/20">
+                        {g.label} · {g.items.length}
+                      </h3>
+                      <ul className="space-y-1.5">
+                        {g.items.map((e) => {
+                          const days = daysBetween(today, new Date(e.date))
+                          const urgent = days <= 7
+                          return (
+                            <li key={e.id}>
+                              <Link
+                                href="/applications"
+                                className={cn(
+                                  "flex items-center gap-3 rounded-lg border px-3 py-2 transition-colors hover:border-gold/30",
+                                  urgent ? "border-rose-500/30 bg-rose-500/5" : "border-border bg-card/30",
+                                )}
+                              >
+                                <div className="grid place-items-center h-9 w-9 rounded-md bg-card/60 shrink-0">
+                                  <span className="font-display text-base text-cream-2">
+                                    {new Date(e.date).getDate()}
+                                  </span>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-display text-sm truncate">{e.title}</p>
+                                  <p className="font-mono-label text-[10px] text-cream-3 truncate">
+                                    {STATUS_LABELS[e.status]} · {PRIORITY_LABELS[e.priority]}
+                                    {e.subtitle ? ` · ${e.subtitle}` : ""}
+                                  </p>
+                                </div>
+                                <span
+                                  className={cn(
+                                    "font-mono-label text-[10px] shrink-0",
+                                    urgent ? "text-rose-400" : "text-cream-3",
+                                  )}
+                                >
+                                  {days === 0 ? "сегодня" : days === 1 ? "завтра" : `${days} дн`}
+                                </span>
+                              </Link>
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </div>
+          )}
 
           {/* Side: upcoming */}
           <aside className="space-y-3">
