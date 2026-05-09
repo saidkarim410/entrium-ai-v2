@@ -17,7 +17,19 @@ export async function getApplicantProfile(): Promise<ApplicantProfile> {
     .eq("id", user.id)
     .maybeSingle()
 
-  return (data?.applicant_data as ApplicantProfile) ?? EMPTY_PROFILE
+  // Defensive merge against EMPTY_PROFILE — fixes /onboarding crash for
+  // brand-new Google-OAuth users. Their `applicant_data` row can be {},
+  // null, or a partial object missing `personal` / `academic` / `goals`,
+  // which made `profile.personal.name` throw "Cannot read properties of
+  // undefined (reading 'name')" on first render.
+  const stored = (data?.applicant_data as Partial<ApplicantProfile> | null) ?? null
+  if (!stored) return EMPTY_PROFILE
+  return {
+    ...stored,
+    personal: { ...EMPTY_PROFILE.personal, ...(stored.personal ?? {}) },
+    academic: { ...EMPTY_PROFILE.academic, ...(stored.academic ?? {}) },
+    goals: { ...EMPTY_PROFILE.goals, ...(stored.goals ?? {}) },
+  } as ApplicantProfile
 }
 
 export async function saveApplicantProfile(profile: ApplicantProfile): Promise<{ ok: boolean; error?: string }> {
