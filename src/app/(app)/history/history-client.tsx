@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
   Search, X, Copy, Check, Calendar, Filter,
-  Brain, Sparkles, Map, FileText, MessageSquare, Award, GraduationCap, Mail, FileUser, Wallet, ShieldCheck, Wand2, Bot,
+  Brain, Sparkles, Map as MapIcon, FileText, MessageSquare, Award, GraduationCap, Mail, FileUser, Wallet, ShieldCheck, Wand2, Bot,
   type LucideIcon,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -24,7 +24,7 @@ export type Run = {
 const TOOL_META: Record<string, { label: string; icon: LucideIcon }> = {
   profile: { label: "Профиль", icon: Brain },
   analyzer: { label: "Шансы", icon: Sparkles },
-  tracker: { label: "Roadmap", icon: Map },
+  tracker: { label: "Roadmap", icon: MapIcon },
   university: { label: "Универы", icon: GraduationCap },
   scholarship: { label: "Стипендии", icon: Award },
   essay: { label: "Эссе", icon: FileText },
