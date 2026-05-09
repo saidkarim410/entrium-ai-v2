@@ -1,5 +1,6 @@
+import Link from "next/link"
 import { supabaseAdmin } from "@/lib/supabase/admin"
-import { ExternalLink, MapPin } from "lucide-react"
+import { ExternalLink, MapPin, Sparkles } from "lucide-react"
 
 export const dynamic = "force-dynamic"
 
@@ -43,14 +44,14 @@ export default async function UniversitiesPage() {
             </div>
           )}
           <div className="space-y-2">
-            {unis.map((u) => {
-              const card = (
-                <div className="group flex items-center gap-4 rounded-xl border border-border/60 bg-card/50 p-4 transition-all hover:border-foreground/30 hover:bg-card cursor-pointer">
+            {unis.map((u) => (
+              <Link key={u.id} href={`/universities/${u.id}`} className="block">
+                <div className="group flex items-center gap-4 rounded-xl border border-border/60 bg-card/50 p-4 transition-all hover:border-gold/40 hover:bg-card cursor-pointer">
                   <div className="grid h-12 w-14 shrink-0 place-items-center rounded-lg bg-accent font-mono text-sm font-medium tabular-nums">
                     {u.rank_display ?? u.qs_rank ?? "—"}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-medium tracking-tight truncate group-hover:underline">
+                    <h3 className="font-medium tracking-tight truncate group-hover:text-gold transition-colors">
                       {u.name}
                     </h3>
                     <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -65,18 +66,10 @@ export default async function UniversitiesPage() {
                       <div className="text-[10px] text-muted-foreground uppercase tracking-wider">overall</div>
                     </div>
                   )}
-                  <ExternalLink className="h-4 w-4 text-muted-foreground/50 group-hover:text-foreground shrink-0" />
+                  <Sparkles className="h-4 w-4 text-cream-3 group-hover:text-gold shrink-0 transition-colors" />
                 </div>
-              )
-
-              return u.website ? (
-                <a key={u.id} href={u.website} target="_blank" rel="noopener noreferrer" className="block">
-                  {card}
-                </a>
-              ) : (
-                <div key={u.id}>{card}</div>
-              )
-            })}
+              </Link>
+            ))}
           </div>
         </div>
       </div>
