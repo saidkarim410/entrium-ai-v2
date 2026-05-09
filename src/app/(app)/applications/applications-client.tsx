@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useState, useTransition, useEffect } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -13,6 +14,7 @@ import {
 import {
   Plus, Trash2, Edit2, CalendarDays, GraduationCap, Trophy,
   Sparkles, Loader2, ChevronDown, ChevronUp, Check, Square as SquareIcon, Plus as PlusIcon, ListChecks,
+  Copy as CopyIcon,
 } from "lucide-react"
 import {
   type Application,
@@ -36,6 +38,7 @@ import {
   updateApplicationStatus,
   addChecklistItems,
   toggleChecklistItem,
+  cloneApplication,
 } from "@/lib/applications/actions"
 import { cn } from "@/lib/utils"
 
@@ -74,9 +77,36 @@ export function ApplicationsClient({ initial }: { initial: Application[] }) {
 
   const stats = summarizeApplications(apps)
 
+  // Auto-open Add dialog with prefilled university name from ?add= URL param
+  // (used by /universities/[id] "Add to applications" CTA)
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  useEffect(() => {
+    const addName = searchParams.get("add")
+    if (addName && addName.trim()) {
+      setEditing({ ...EMPTY, university_name: addName.trim() })
+      setOpen(true)
+      // Clean URL so refresh doesn't re-trigger
+      router.replace("/applications", { scroll: false })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   function openNew() {
     setEditing({ ...EMPTY })
     setOpen(true)
+  }
+
+  function clone(id: string) {
+    startTransition(async () => {
+      const r = await cloneApplication(id)
+      if (!r.ok) {
+        toast.error(r.error ?? "Не удалось дублировать")
+        return
+      }
+      toast.success("Заявка скопирована — поправь раунд и дедлайн")
+      window.location.reload()
+    })
   }
 
   function openEdit(a: Application) {
@@ -289,6 +319,7 @@ export function ApplicationsClient({ initial }: { initial: Application[] }) {
                 onEdit={() => openEdit(a)}
                 onDelete={() => remove(a.id)}
                 onStatus={(s) => quickStatus(a.id, s)}
+                onClone={() => clone(a.id)}
               />
             ))}
           </div>
@@ -342,11 +373,13 @@ function ApplicationCard({
   onEdit,
   onDelete,
   onStatus,
+  onClone,
 }: {
   app: Application
   onEdit: () => void
   onDelete: () => void
   onStatus: (s: AppStatus) => void
+  onClone: () => void
 }) {
   const days = daysUntil(app.deadline)
   const urgent = days !== null && days <= 14 && days >= 0 && app.status === "planning"
@@ -431,6 +464,9 @@ function ApplicationCard({
           </p>
         </div>
         <div className="flex gap-1 shrink-0">
+          <Button variant="ghost" size="icon-sm" onClick={onClone} aria-label="Дублировать (для другого раунда)" title="Дублировать">
+            <CopyIcon className="h-3.5 w-3.5" />
+          </Button>
           <Button variant="ghost" size="icon-sm" onClick={onEdit} aria-label="Редактировать">
             <Edit2 className="h-3.5 w-3.5" />
           </Button>

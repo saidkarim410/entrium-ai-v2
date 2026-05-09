@@ -116,6 +116,50 @@ export async function upsertApplication(
   return { ok: true, id: data.id as string }
 }
 
+export async function cloneApplication(id: string): Promise<{ ok: boolean; error?: string; id?: string }> {
+  const user = await getCurrentUser()
+  if (!user) return { ok: false, error: "unauthorized" }
+
+  const { data: src, error: fetchErr } = await supabaseAdmin
+    .from("applications")
+    .select("*")
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .maybeSingle()
+
+  if (fetchErr || !src) return { ok: false, error: fetchErr?.message ?? "not_found" }
+
+  // Strip unique / state fields, keep the structural data
+  const payload = {
+    user_id: user.id,
+    university_name: `${src.university_name} (copy)`,
+    university_country: src.university_country,
+    program: src.program,
+    level: src.level,
+    round: null, // round + deadline often differ between rounds
+    deadline: null,
+    status: "planning",
+    priority: src.priority,
+    application_fee_usd: src.application_fee_usd,
+    notes: src.notes,
+    checklist: [], // start with a fresh checklist (no progress carryover)
+    result_decision: null,
+    ai_suggestions: null,
+    ai_suggestions_at: null,
+  }
+
+  const { data: created, error } = await supabaseAdmin
+    .from("applications")
+    .insert(payload)
+    .select("id")
+    .single()
+
+  if (error) return { ok: false, error: error.message }
+  revalidatePath("/applications")
+  revalidatePath("/calendar")
+  return { ok: true, id: created.id as string }
+}
+
 export async function deleteApplication(id: string): Promise<{ ok: boolean; error?: string }> {
   const user = await getCurrentUser()
   if (!user) return { ok: false, error: "unauthorized" }
