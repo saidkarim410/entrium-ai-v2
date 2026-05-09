@@ -6,6 +6,7 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Markdown } from "@/components/markdown"
 import { MISSIONS, type Mission, type MissionId } from "@/lib/agent/missions"
+import { parseTracker, TrackerView, TrackerStreaming } from "./tracker-view"
 import {
   Bot, Zap, Briefcase, ShieldCheck, Calendar,
   Loader2, CheckCircle2, AlertCircle, Square, Play, Sparkles,
@@ -404,7 +405,7 @@ function StepCard({ step }: { step: StepState }) {
 
       {step.text ? (
         <div className="border-t border-border/40 pt-3">
-          <Markdown>{step.text}</Markdown>
+          <ToolOutput tool={step.tool} text={step.text} streaming={step.status === "running"} />
         </div>
       ) : step.status === "running" ? (
         <p className="font-mono-label text-[11px] text-cream-3 italic border-t border-border/40 pt-3">
@@ -413,4 +414,25 @@ function StepCard({ step }: { step: StepState }) {
       ) : null}
     </div>
   )
+}
+
+/**
+ * Dispatch the right renderer per tool. The agent's universal "stream
+ * markdown" approach worked for prose tools, but `tracker` returns
+ * strict JSON — rendering it as Markdown shows a raw `{...}` blob.
+ * Here we detect the tool and route to the structured view.
+ */
+function ToolOutput({ tool, text, streaming }: { tool: string; text: string; streaming: boolean }) {
+  if (tool === "tracker") {
+    const parsed = parseTracker(text)
+    if (parsed && parsed.months.length > 0) {
+      return <TrackerView data={parsed} />
+    }
+    // Mid-stream or malformed JSON — show progress hint, not the raw blob
+    if (streaming) return <TrackerStreaming partial={text} />
+    // Final but unparseable — fall back to Markdown so the user can at
+    // least read the AI's output, but in a code block (since it's JSON-ish).
+    return <Markdown>{"```json\n" + text + "\n```"}</Markdown>
+  }
+  return <Markdown>{text}</Markdown>
 }
