@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { saveApplicantProfile } from "@/lib/applicant/actions"
 import { profileCompleteness, type ApplicantProfile } from "@/lib/applicant/types"
 import { DocumentUploadCard, mergeProfilePatch } from "@/components/document-upload-card"
+import { VoiceInputButton } from "@/components/voice-input-button"
 import { User, GraduationCap, Target, Trophy, Loader2, Check, Sparkles } from "lucide-react"
 
 const LEVELS = ["Bachelor", "Master", "PhD", "MBA", "Foundation"] as const
@@ -264,7 +265,16 @@ function Field({ label, value, onChange, placeholder }: { label: string; value: 
 function FieldArea({ label, value, onChange, placeholder, rows = 3 }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; rows?: number }) {
   return (
     <div className="space-y-1.5">
-      <Label className="font-mono-label text-cream-3">{label}</Label>
+      <div className="flex items-center justify-between gap-2">
+        <Label className="font-mono-label text-cream-3">{label}</Label>
+        <VoiceInputButton
+          size="sm"
+          hint={label}
+          onTranscript={(text) =>
+            onChange(value.trim() ? `${value.trim()} ${text}` : text)
+          }
+        />
+      </div>
       <Textarea value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} rows={rows} className="font-serif" />
     </div>
   )

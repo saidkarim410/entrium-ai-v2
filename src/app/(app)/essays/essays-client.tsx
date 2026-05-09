@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useEffect, useState, useTransition } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -28,12 +28,30 @@ export function EssaysClient({
   apps: Application[]
 }) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState("")
   const [prompt, setPrompt] = useState("")
   const [wordLimit, setWordLimit] = useState("")
   const [appId, setAppId] = useState<string>("")
   const [pending, startTransition] = useTransition()
+
+  // Deep-link from /applications: ?new=1&app=<id>&title=<uni> auto-opens
+  // the create dialog with a pre-filled title and pre-selected application.
+  useEffect(() => {
+    if (searchParams.get("new") !== "1") return
+    const appParam = searchParams.get("app") ?? ""
+    const titleParam = searchParams.get("title") ?? ""
+    if (titleParam) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setTitle(`${titleParam} · Common App essay`)
+    }
+    if (appParam) setAppId(appParam)
+    setOpen(true)
+    // Clean the URL so refresh doesn't re-open
+    router.replace("/essays", { scroll: false })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   function reset() {
     setTitle("")

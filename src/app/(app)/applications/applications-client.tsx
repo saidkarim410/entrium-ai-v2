@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useTransition, useEffect } from "react"
+import Link from "next/link"
 import { useSearchParams, useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -14,7 +15,7 @@ import {
 import {
   Plus, Trash2, Edit2, CalendarDays, GraduationCap, Trophy,
   Sparkles, Loader2, ChevronDown, ChevronUp, Check, Square as SquareIcon, Plus as PlusIcon, ListChecks,
-  Copy as CopyIcon,
+  Copy as CopyIcon, FileText,
 } from "lucide-react"
 import {
   type Application,
@@ -72,7 +73,20 @@ const EMPTY: FormState = {
   notes: "",
 }
 
-export function ApplicationsClient({ initial }: { initial: Application[] }) {
+type EssayPreview = {
+  id: string
+  title: string
+  status: "draft" | "reviewing" | "final" | "submitted"
+  draft_text: string
+}
+
+export function ApplicationsClient({
+  initial,
+  essaysByApp = {},
+}: {
+  initial: Application[]
+  essaysByApp?: Record<string, EssayPreview[]>
+}) {
   const [apps, setApps] = useState<Application[]>(initial)
   const [editing, setEditing] = useState<FormState | null>(null)
   const [open, setOpen] = useState(false)
@@ -354,6 +368,7 @@ export function ApplicationsClient({ initial }: { initial: Application[] }) {
                 onDelete={() => remove(a.id)}
                 onStatus={(s) => quickStatus(a.id, s)}
                 onClone={() => clone(a.id)}
+                essays={essaysByApp[a.id] ?? []}
               />
             ))}
           </div>
@@ -408,12 +423,14 @@ function ApplicationCard({
   onDelete,
   onStatus,
   onClone,
+  essays = [],
 }: {
   app: Application
   onEdit: () => void
   onDelete: () => void
   onStatus: (s: AppStatus) => void
   onClone: () => void
+  essays?: EssayPreview[]
 }) {
   const days = daysUntil(app.deadline)
   const urgent = days !== null && days <= 14 && days >= 0 && app.status === "planning"
@@ -573,6 +590,9 @@ function ApplicationCard({
           {app.notes}
         </p>
       )}
+
+      {/* Essays panel */}
+      <EssaysForApp essays={essays} app={app} />
 
       {/* AI suggestions + checklist toggle */}
       <div className="flex flex-wrap gap-2 pt-2 border-t border-border/40">
@@ -783,6 +803,72 @@ function Select({
 function formatDate(iso: string): string {
   const d = new Date(iso)
   return d.toLocaleDateString("ru-RU", { day: "2-digit", month: "short", year: "numeric" })
+}
+
+function EssaysForApp({ essays, app }: { essays: EssayPreview[]; app: Application }) {
+  if (essays.length === 0) {
+    return (
+      <div className="border-t border-border/40 pt-2 flex items-center justify-between gap-2 flex-wrap">
+        <span className="text-[10px] font-mono-label text-cream-3 inline-flex items-center gap-1.5">
+          <FileText className="h-3 w-3" />
+          Эссе для этой заявки не созданы
+        </span>
+        <Link
+          href={`/essays?new=1&app=${app.id}&title=${encodeURIComponent(app.university_name)}`}
+          className="inline-flex items-center gap-1 text-[10px] font-mono-label text-gold hover:underline"
+        >
+          + Создать эссе
+        </Link>
+      </div>
+    )
+  }
+
+  return (
+    <div className="border-t border-border/40 pt-2 space-y-1.5">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[10px] font-mono-label text-cream-3 inline-flex items-center gap-1.5">
+          <FileText className="h-3 w-3" />
+          Эссе ({essays.length})
+        </span>
+        <Link
+          href={`/essays?new=1&app=${app.id}&title=${encodeURIComponent(app.university_name)}`}
+          className="text-[10px] font-mono-label text-cream-3 hover:text-gold transition-colors"
+        >
+          + ещё
+        </Link>
+      </div>
+      <ul className="space-y-1">
+        {essays.map((e) => {
+          const wc = e.draft_text.trim() ? e.draft_text.trim().split(/\s+/).length : 0
+          const statusColor =
+            e.status === "submitted"
+              ? "text-emerald-400"
+              : e.status === "final"
+                ? "text-gold"
+                : e.status === "reviewing"
+                  ? "text-blue-300"
+                  : "text-cream-3"
+          return (
+            <li key={e.id}>
+              <Link
+                href={`/essays/${e.id}`}
+                className="flex items-center gap-2.5 rounded-md border border-border bg-card/30 hover:bg-card hover:border-gold/30 transition-colors p-2"
+              >
+                <FileText className="h-3 w-3 text-cream-3 shrink-0" />
+                <span className="font-display text-xs flex-1 min-w-0 truncate">{e.title}</span>
+                <span className={cn("text-[10px] font-mono-label uppercase tracking-wider shrink-0", statusColor)}>
+                  {e.status}
+                </span>
+                <span className="text-[10px] font-mono-label text-cream-3 tabular-nums shrink-0">
+                  {wc}w
+                </span>
+              </Link>
+            </li>
+          )
+        })}
+      </ul>
+    </div>
+  )
 }
 
 function PortfolioPanel({

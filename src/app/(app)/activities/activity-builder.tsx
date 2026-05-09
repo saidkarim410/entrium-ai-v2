@@ -20,6 +20,7 @@ import {
   activityCharCount,
 } from "@/lib/activities/types"
 import { saveActivities } from "@/lib/activities/actions"
+import { VoiceInputButton } from "@/components/voice-input-button"
 import { cn } from "@/lib/utils"
 
 const MAX = 10
@@ -353,7 +354,20 @@ function ActivityCard({
           <Label className="font-mono-label text-[11px] text-cream-3">
             Description (Common App: ≤{COMMON_APP_LIMITS.description} chars)
           </Label>
-          <CharBadge {...descCount} />
+          <div className="flex items-center gap-2">
+            <VoiceInputButton
+              size="sm"
+              hint={`${item.position} ${item.organization}`.trim() || "activity description"}
+              onTranscript={(text) =>
+                onChange({
+                  description: item.description.trim()
+                    ? `${item.description.trim()} ${text}`
+                    : text,
+                })
+              }
+            />
+            <CharBadge {...descCount} />
+          </div>
         </div>
         <Textarea
           value={item.description}

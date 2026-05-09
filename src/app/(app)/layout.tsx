@@ -20,6 +20,11 @@ const CmdK = dynamic(
   () => import("@/components/cmd-k").then((m) => m.CmdK),
   { loading: () => null }
 )
+// Ctrl+/ keyboard shortcuts cheat sheet — same defer treatment
+const KbdOverlay = dynamic(
+  () => import("@/components/kbd-overlay").then((m) => m.KbdOverlay),
+  { loading: () => null }
+)
 import { CmdKTrigger } from "@/components/cmd-k-trigger"
 import { MobileSearchTrigger } from "@/components/mobile-search-trigger"
 import { unreadCount } from "@/lib/notifications/actions"
@@ -195,6 +200,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           sidebar CmdKTrigger and MobileSearchTrigger both fire `cmdk:open`
           custom event which this single instance listens for */}
       <CmdK />
+      <KbdOverlay />
 
       <MobileNav
         profile={{ email: profile.email, full_name: profile.full_name, tier: profile.tier }}

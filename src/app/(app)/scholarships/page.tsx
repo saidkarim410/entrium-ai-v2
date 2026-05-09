@@ -1,6 +1,7 @@
+import Link from "next/link"
 import { supabaseAdmin } from "@/lib/supabase/admin"
 import { Badge } from "@/components/ui/badge"
-import { ExternalLink, MapPin, GraduationCap, Wallet } from "lucide-react"
+import { MapPin, GraduationCap, Wallet, Sparkles } from "lucide-react"
 
 export const dynamic = "force-dynamic"
 
@@ -52,13 +53,14 @@ export default async function ScholarshipsPage() {
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {scholarships.map((s) => (
-              <div
+              <Link
                 key={s.id}
-                className="rounded-xl border border-border/60 bg-card/50 p-5 transition-all hover:border-border hover:bg-card"
+                href={`/scholarships/${s.id}`}
+                className="group rounded-xl border border-border/60 bg-card/50 p-5 transition-all hover:border-gold/40 hover:bg-card block"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-medium tracking-tight">{s.name}</h3>
+                    <h3 className="font-medium tracking-tight group-hover:text-gold transition-colors">{s.name}</h3>
                     {s.provider && (
                       <p className="mt-0.5 text-xs text-muted-foreground">{s.provider}</p>
                     )}
@@ -94,18 +96,11 @@ export default async function ScholarshipsPage() {
                     {s.description}
                   </p>
                 )}
-                {s.url && (
-                  <a
-                    href={s.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-3 inline-flex items-center gap-1 text-xs text-foreground hover:underline"
-                  >
-                    <ExternalLink className="h-3 w-3" />
-                    Подробнее
-                  </a>
-                )}
-              </div>
+                <div className="mt-3 flex items-center gap-2 text-[10px] font-mono-label text-cream-3">
+                  <Sparkles className="h-3 w-3 text-gold" />
+                  AI match · детали
+                </div>
+              </Link>
             ))}
           </div>
         </div>
