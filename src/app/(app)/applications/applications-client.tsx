@@ -41,6 +41,8 @@ import {
   cloneApplication,
 } from "@/lib/applications/actions"
 import { BulkAddDialog } from "./bulk-add-dialog"
+import { VoiceInputButton } from "@/components/voice-input-button"
+import { analyzePortfolio, type Verdict } from "@/lib/applications/analytics"
 import { cn } from "@/lib/utils"
 
 type FormState = {
@@ -175,6 +177,8 @@ export function ApplicationsClient({ initial }: { initial: Application[] }) {
     })
   }
 
+  const analytics = analyzePortfolio(apps)
+
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
@@ -190,6 +194,8 @@ export function ApplicationsClient({ initial }: { initial: Application[] }) {
             small
           />
         </div>
+
+        {apps.length > 0 && <PortfolioPanel analytics={analytics} />}
 
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <h2 className="font-display text-xl">Мои заявки</h2>
@@ -285,12 +291,28 @@ export function ApplicationsClient({ initial }: { initial: Application[] }) {
                     />
                   </FormField>
                   <FormField label="Заметки" wide>
-                    <Textarea
-                      value={editing.notes}
-                      onChange={(e) => setEditing({ ...editing, notes: e.target.value })}
-                      placeholder="Эссе, рекомендации, спец. требования..."
-                      rows={3}
-                    />
+                    <div className="space-y-1.5">
+                      <Textarea
+                        value={editing.notes}
+                        onChange={(e) => setEditing({ ...editing, notes: e.target.value })}
+                        placeholder="Эссе, рекомендации, спец. требования..."
+                        rows={3}
+                      />
+                      <div className="flex items-center justify-end">
+                        <VoiceInputButton
+                          size="sm"
+                          hint={editing.university_name}
+                          onTranscript={(text) =>
+                            setEditing({
+                              ...editing,
+                              notes: editing.notes.trim()
+                                ? `${editing.notes.trim()} ${text}`
+                                : text,
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
                   </FormField>
                 </div>
 
@@ -761,4 +783,92 @@ function Select({
 function formatDate(iso: string): string {
   const d = new Date(iso)
   return d.toLocaleDateString("ru-RU", { day: "2-digit", month: "short", year: "numeric" })
+}
+
+function PortfolioPanel({
+  analytics,
+}: {
+  analytics: ReturnType<typeof analyzePortfolio>
+}) {
+  const { total, byPriority, uniqueCountries, verdicts } = analytics
+  const reachPct = total ? Math.round((byPriority.reach / total) * 100) : 0
+  const matchPct = total ? Math.round((byPriority.match / total) * 100) : 0
+  const safetyPct = total ? Math.round((byPriority.safety / total) * 100) : 0
+
+  return (
+    <section className="rounded-xl border border-border bg-card/40 p-4 sm:p-5 space-y-4">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <p className="font-mono-label text-[10px] text-cream-3 uppercase tracking-wider">
+            Аналитика стека
+          </p>
+          <p className="font-display text-base mt-0.5">
+            {total} {total === 1 ? "заявка" : "заявок"} · {uniqueCountries} {uniqueCountries === 1 ? "страна" : "страны"}
+          </p>
+        </div>
+      </div>
+
+      {/* Reach/Match/Safety bar */}
+      <div className="space-y-1.5">
+        <div className="flex h-3 w-full rounded-full overflow-hidden border border-border">
+          {byPriority.reach > 0 && (
+            <div
+              className="bg-rose-500/40 border-r border-rose-500/30"
+              style={{ width: `${reachPct}%` }}
+              title={`${byPriority.reach} reach`}
+            />
+          )}
+          {byPriority.match > 0 && (
+            <div
+              className="bg-gold/40 border-r border-gold/30"
+              style={{ width: `${matchPct}%` }}
+              title={`${byPriority.match} match`}
+            />
+          )}
+          {byPriority.safety > 0 && (
+            <div
+              className="bg-emerald-500/40"
+              style={{ width: `${safetyPct}%` }}
+              title={`${byPriority.safety} safety`}
+            />
+          )}
+        </div>
+        <div className="flex items-center justify-between text-[10px] font-mono-label flex-wrap gap-x-3">
+          <span className="text-rose-300">Reach {byPriority.reach} · {reachPct}%</span>
+          <span className="text-gold">Match {byPriority.match} · {matchPct}%</span>
+          <span className="text-emerald-300">Safety {byPriority.safety} · {safetyPct}%</span>
+        </div>
+      </div>
+
+      {/* Verdicts */}
+      {verdicts.length > 0 && (
+        <ul className="space-y-1.5">
+          {verdicts.map((v: Verdict, i: number) => (
+            <li
+              key={i}
+              className={cn(
+                "rounded-lg border p-2.5 flex items-start gap-2.5",
+                v.level === "ok" && "border-emerald-500/20 bg-emerald-500/5",
+                v.level === "warn" && "border-amber-500/20 bg-amber-500/5",
+                v.level === "alert" && "border-rose-500/30 bg-rose-500/5",
+              )}
+            >
+              <span className={cn(
+                "mt-0.5 text-[10px] font-mono-label uppercase tracking-wider shrink-0",
+                v.level === "ok" && "text-emerald-300",
+                v.level === "warn" && "text-amber-300",
+                v.level === "alert" && "text-rose-300",
+              )}>
+                {v.level === "ok" ? "✓" : v.level === "warn" ? "⚠" : "!!"}
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="font-display text-sm">{v.title}</p>
+                <p className="font-serif text-xs text-cream-2 mt-0.5">{v.detail}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  )
 }

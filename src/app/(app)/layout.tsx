@@ -46,6 +46,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const account = [
     { href: "/settings", name: "Профиль абитуриента", icon: UserCog },
     { href: "/activities", name: "Activities (Common App)", icon: Trophy },
+    { href: "/essays", name: "Эссе", icon: FileText },
     { href: "/applications", name: "Мои заявки", icon: ListChecks },
     { href: "/calendar", name: "Календарь", icon: CalendarDays },
     { href: "/history", name: "История", icon: History },

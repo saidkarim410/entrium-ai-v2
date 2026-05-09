@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 import { supabaseAdmin } from "@/lib/supabase/admin"
 import { getCurrentUser } from "@/lib/supabase/server"
 import { awardReferralOnCompletion } from "@/lib/referrals/actions"
+import { captureSnapshot } from "@/lib/profile-snapshots/actions"
 import { EMPTY_PROFILE, type ApplicantProfile } from "./types"
 
 export async function getApplicantProfile(): Promise<ApplicantProfile> {
@@ -53,6 +54,11 @@ export async function saveApplicantProfile(profile: ApplicantProfile): Promise<{
     )
   }
 
+  // Best-effort: snapshot today's profile for /profile/history. Never blocks.
+  captureSnapshot(user.id, merged).catch((e) =>
+    console.error("captureSnapshot failed:", e)
+  )
+
   revalidatePath("/dashboard")
   revalidatePath("/settings")
   revalidatePath("/refer")
@@ -95,6 +101,12 @@ export async function saveOnboardingProgress(
     .eq("id", user.id)
 
   if (error) return { ok: false, error: error.message }
+
+  // Best-effort snapshot here too so onboarding progress shows up in /profile/history
+  captureSnapshot(user.id, merged as ApplicantProfile).catch((e) =>
+    console.error("captureSnapshot (onboarding) failed:", e)
+  )
+
   return { ok: true }
 }
 
