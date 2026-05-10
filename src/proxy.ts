@@ -34,6 +34,6 @@ export const config = {
      *   - monitoring            → Sentry tunnel (no auth needed)
      *   - opengraph-image       → public OG image
      */
-    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|api/cron|api/stripe/webhook|api/telegram/webhook|api/calendar\\.ics|api/email/unsubscribe|monitoring|opengraph-image|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|api/cron|api/stripe/webhook|api/telegram/webhook|api/calendar\\.ics|api/email/unsubscribe|monitoring|opengraph-image|r/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 }

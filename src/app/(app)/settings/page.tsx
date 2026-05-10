@@ -3,22 +3,28 @@ import { getTelegramStatus } from "@/lib/telegram-actions"
 import { getSharingStatus } from "@/lib/share/actions"
 import { getEmailPrefs } from "@/lib/email/actions"
 import { getMyNotificationPrefs } from "@/lib/notifications/actions"
+import { listDocuments } from "@/lib/documents/actions"
+import { listRecommenderInvites } from "@/lib/recommenders/actions"
 import { telegramEnabled } from "@/lib/env"
 import { ProfileSettings } from "./profile-settings"
 import { TelegramLinkCard } from "@/components/telegram-link-card"
 import { ShareCard } from "@/components/share-card"
 import { EmailPrefsCard } from "@/components/email-prefs-card"
 import { NotificationPrefsCard } from "@/components/notification-prefs-card"
+import { DocumentsManager } from "@/components/documents-manager"
+import { RecommendersManager } from "@/components/recommenders-manager"
 
 export const dynamic = "force-dynamic"
 
 export default async function SettingsPage() {
-  const [profile, telegramStatus, sharingStatus, emailPrefs, notificationPrefs] = await Promise.all([
+  const [profile, telegramStatus, sharingStatus, emailPrefs, notificationPrefs, documents, recommenders] = await Promise.all([
     getApplicantProfile(),
     getTelegramStatus(),
     getSharingStatus(),
     getEmailPrefs(),
     getMyNotificationPrefs(),
+    listDocuments(),
+    listRecommenderInvites(),
   ])
 
   return (
@@ -53,6 +59,8 @@ export default async function SettingsPage() {
         shareSlot={<ShareCard initial={sharingStatus} />}
         emailSlot={<EmailPrefsCard initial={emailPrefs} />}
         notificationSlot={<NotificationPrefsCard initial={notificationPrefs} />}
+        documentsSlot={<DocumentsManager initial={documents} />}
+        recommendersSlot={<RecommendersManager initial={recommenders} />}
       />
     </>
   )

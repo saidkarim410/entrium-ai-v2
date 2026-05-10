@@ -90,6 +90,53 @@
   --sidebar-ring: #c9a84c;
 }
 
+/* U-10 (TZ): Light theme — "cream paper, sepia ink, gold accents".
+   Inverts the dark editorial palette while keeping the gold (#c9a84c)
+   brand accent which works equally well on both surfaces.
+   Activated by adding `class="light"` to <html>; the ThemeProvider
+   wraps next-themes and toggles between root, .dark, .light. */
+:root.light {
+  /* Background: warm cream paper, not pure white — keeps the editorial feel */
+  --background: #f9f4e3;
+  --foreground: #1a1408;
+  /* Card surfaces sit slightly above the background; a hair lighter
+     than bg gives elevation without harsh white */
+  --card: #fffbed;
+  --card-foreground: #1a1408;
+  --popover: #fffdf2;
+  --popover-foreground: #1a1408;
+  /* Primary remains gold but a stop darker for AA contrast on cream */
+  --primary: #b08820;
+  --primary-foreground: #fffbed;
+  --secondary: #f0e8c8;
+  --secondary-foreground: #1a1408;
+  --muted: #f0e8c8;
+  --muted-foreground: rgba(26, 20, 8, 0.55);
+  --accent: #f0e0a8;
+  --accent-foreground: #1a1408;
+  --destructive: #b8312f;
+  --border: rgba(26, 20, 8, 0.12);
+  --input: rgba(26, 20, 8, 0.15);
+  --ring: #b08820;
+  /* Brand-named tokens — inverted but staying within the gold/cream family.
+     `--cream` becomes the original sepia ink (replaces the cream-on-black
+     role), keeping all `text-cream` classes still meaningful semantically
+     ("the primary text colour"). */
+  --gold: #b08820;
+  --gold-soft: #c9a84c;
+  --cream: #1a1408;
+  --cream-2: #4a3f1f;
+  --cream-3: rgba(26, 20, 8, 0.6);
+  --sidebar: #f4ecd0;
+  --sidebar-foreground: #1a1408;
+  --sidebar-primary: #b08820;
+  --sidebar-primary-foreground: #fffbed;
+  --sidebar-accent: #f0e0a8;
+  --sidebar-accent-foreground: #1a1408;
+  --sidebar-border: rgba(26, 20, 8, 0.1);
+  --sidebar-ring: #b08820;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

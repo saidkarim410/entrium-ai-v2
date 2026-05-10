@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/sonner"
 import { I18nProvider } from "@/lib/i18n/client"
 import { getLocale } from "@/lib/i18n/server"
 import { PostHogProvider } from "@/lib/analytics"
+import { ThemeProvider } from "@/components/theme-provider"
 import "./globals.css"
 
 export const dynamic = "force-dynamic"
@@ -43,10 +44,13 @@ export default async function RootLayout({
     >
       <body className="min-h-full flex flex-col font-sans bg-background text-foreground">
         <a href="#main" className="skip-link">Skip to content</a>
-        <I18nProvider locale={locale}>
-          <PostHogProvider>{children}</PostHogProvider>
-        </I18nProvider>
-        <Toaster richColors position="top-center" theme="dark" />
+        <ThemeProvider>
+          <I18nProvider locale={locale}>
+            <PostHogProvider>{children}</PostHogProvider>
+          </I18nProvider>
+          {/* Toaster theme is "system" so light/dark theming flows through */}
+          <Toaster richColors position="top-center" theme="system" />
+        </ThemeProvider>
       </body>
     </html>
   )

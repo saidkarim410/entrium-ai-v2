@@ -11,22 +11,25 @@ import { profileCompleteness, type ApplicantProfile } from "@/lib/applicant/type
 import { DocumentUploadCard, mergeProfilePatch } from "@/components/document-upload-card"
 import { VoiceInputButton } from "@/components/voice-input-button"
 import { SectionNav, type NavSection } from "@/components/section-nav"
+import { ThemeToggle } from "@/components/theme-toggle"
 import {
   User, GraduationCap, Target, Trophy, Loader2, Check, Sparkles,
-  Bell, Mail, Send, Share2, FileText,
+  Bell, Mail, Send, Share2, FileText, Users2, FileUp,
 } from "lucide-react"
 
 const NAV_SECTIONS: NavSection[] = [
-  { id: "documents",     label: "Документы",      icon: FileText },
-  { id: "sharing",       label: "Шеринг",         icon: Share2 },
-  { id: "notifications", label: "Оповещения",     icon: Bell },
-  { id: "telegram",      label: "Telegram",       icon: Send },
-  { id: "email",         label: "Email",          icon: Mail },
-  { id: "personal",      label: "Личные данные",  icon: User },
-  { id: "academic",      label: "Академика",      icon: GraduationCap },
-  { id: "goals",         label: "Цели",           icon: Target },
-  { id: "experience",    label: "Опыт",           icon: Trophy },
-  { id: "reflection",    label: "Self-reflection", icon: Sparkles },
+  { id: "documents-extract", label: "AI-extract",      icon: Sparkles },
+  { id: "documents",         label: "Документы",       icon: FileText },
+  { id: "recommenders",      label: "Рекомендатели",   icon: Users2 },
+  { id: "sharing",           label: "Шеринг",          icon: Share2 },
+  { id: "notifications",     label: "Оповещения",      icon: Bell },
+  { id: "telegram",          label: "Telegram",        icon: Send },
+  { id: "email",             label: "Email",           icon: Mail },
+  { id: "personal",          label: "Личные данные",   icon: User },
+  { id: "academic",          label: "Академика",       icon: GraduationCap },
+  { id: "goals",             label: "Цели",            icon: Target },
+  { id: "experience",        label: "Опыт",            icon: Trophy },
+  { id: "reflection",        label: "Self-reflection", icon: FileUp },
 ]
 
 const LEVELS = ["Bachelor", "Master", "PhD", "MBA", "Foundation"] as const
@@ -37,12 +40,16 @@ export function ProfileSettings({
   shareSlot,
   emailSlot,
   notificationSlot,
+  documentsSlot,
+  recommendersSlot,
 }: {
   initial: ApplicantProfile
   telegramSlot?: React.ReactNode
   shareSlot?: React.ReactNode
   emailSlot?: React.ReactNode
   notificationSlot?: React.ReactNode
+  documentsSlot?: React.ReactNode
+  recommendersSlot?: React.ReactNode
 }) {
   const [profile, setProfile] = useState<ApplicantProfile>(initial)
   const [pending, startTransition] = useTransition()
@@ -92,6 +99,8 @@ export function ProfileSettings({
     if (s.id === "sharing") return Boolean(shareSlot)
     if (s.id === "notifications") return Boolean(notificationSlot)
     if (s.id === "email") return Boolean(emailSlot)
+    if (s.id === "documents") return Boolean(documentsSlot)
+    if (s.id === "recommenders") return Boolean(recommendersSlot)
     return true
   })
 
@@ -104,6 +113,17 @@ export function ProfileSettings({
         <div className="grid md:grid-cols-[200px_1fr] lg:grid-cols-[220px_1fr] gap-6">
           <SectionNav sections={liveSections} className="md:pr-2" />
           <div className="min-w-0 space-y-6">
+        {/* U-10 (TZ): theme toggle row — minimal pill bar, sits above the
+            profile completeness card so it's discoverable without bloating
+            the main content area. */}
+        <div className="flex items-center justify-between rounded-xl border border-border bg-card/40 px-4 py-2.5">
+          <div className="min-w-0">
+            <p className="font-mono-label text-[10px] text-cream-3 uppercase tracking-wider">Тема</p>
+            <p className="font-serif text-sm text-cream-2">Светлая · Тёмная · Авто</p>
+          </div>
+          <ThemeToggle />
+        </div>
+
         {/* Progress bar */}
         <div className="rounded-xl border border-border bg-card/40 p-5 accent-strip">
           <div className="flex items-center justify-between mb-3">
@@ -125,10 +145,16 @@ export function ProfileSettings({
           </p>
         </div>
 
-        {/* Document upload */}
-        <div id="documents" className="scroll-mt-20">
+        {/* Smart-extract from a single doc (existing AI-powered card) */}
+        <div id="documents-extract" className="scroll-mt-20">
           <DocumentUploadCard onApply={(patch) => setProfile((p) => mergeProfilePatch(p, patch))} />
         </div>
+
+        {/* F-1 (TZ): persistent document storage */}
+        <div id="documents" className="scroll-mt-20">{documentsSlot}</div>
+
+        {/* F-2 (TZ): recommender invites — student sends email, rec uploads PDF */}
+        <div id="recommenders" className="scroll-mt-20">{recommendersSlot}</div>
 
         <div id="sharing" className="scroll-mt-20">{shareSlot}</div>
         <div id="notifications" className="scroll-mt-20">{notificationSlot}</div>
