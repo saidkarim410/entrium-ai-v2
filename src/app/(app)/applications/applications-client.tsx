@@ -275,7 +275,9 @@ export function ApplicationsClient({
 
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <h2 className="font-display text-xl">Мои заявки</h2>
-          <div className="flex items-center gap-2">
+          {/* U-9 (TZ): button row needs flex-wrap on mobile — three buttons
+              (Bulk add · AI, Import CSV, Добавить) overflow 375px viewport */}
+          <div className="flex items-center gap-2 flex-wrap">
             <BulkAddDialog
               trigger={
                 <Button variant="outline" className="gap-2">

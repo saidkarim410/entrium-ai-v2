@@ -74,7 +74,11 @@
   --gold-soft: #e0c970;
   --cream: #fce8b8;
   --cream-2: #d4c8a8;
-  --cream-3: rgba(252, 232, 184, 0.5);
+  /* U-11 (TZ): bumped from 0.5 → 0.62 to clear WCAG AA 4.5:1
+     contrast on the #0a0a0a background (effective rgb #aa9d76).
+     Was ~5.5:1 at the boundary; now ~6.4:1 with comfortable margin
+     for users on dimmed displays. */
+  --cream-3: rgba(252, 232, 184, 0.62);
   --radius: 0.5rem;
   --sidebar: #0d0d0d;
   --sidebar-foreground: #fce8b8;

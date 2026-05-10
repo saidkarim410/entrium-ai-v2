@@ -70,7 +70,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="grid h-screen lg:grid-cols-[260px_1fr]">
-      <aside className="hidden lg:flex flex-col border-r border-border/40 bg-card/30">
+      {/* U-11 (TZ): keyboard-only "skip to content" — first focusable
+          element on every page so screen-reader / keyboard users can
+          bypass the sidebar nav. The .skip-link CSS in globals.css
+          hides it off-screen until it receives focus. */}
+      <a href="#main" className="skip-link">
+        К содержимому
+      </a>
+      <aside className="hidden lg:flex flex-col border-r border-border/40 bg-card/30" aria-label="Главная навигация">
         <div className="flex h-16 items-center justify-between px-6 border-b border-border/40">
           <Link href="/dashboard" className="flex items-center gap-2 font-semibold tracking-tight">
             <span className="grid h-8 w-8 place-items-center rounded-lg bg-foreground text-background">

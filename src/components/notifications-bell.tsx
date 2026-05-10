@@ -177,6 +177,14 @@ export function NotificationsBell({
         )}
 
         <div className="border-t border-border/40 p-4 mt-2">
+          {/* F-11 (TZ): link to the new full-page inbox with filters + bulk read */}
+          <Link
+            href="/notifications"
+            onClick={() => setOpen(false)}
+            className="block text-xs font-mono-label text-gold hover:underline transition-colors mb-2"
+          >
+            Открыть Inbox с фильтрами →
+          </Link>
           <Link
             href="/applications"
             onClick={() => setOpen(false)}

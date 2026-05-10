@@ -11,7 +11,8 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
-    "test:e2e:install": "playwright install --with-deps chromium"
+    "test:e2e:install": "playwright install --with-deps chromium",
+    "test:rpc-smoke": "node scripts/smoke-rpc.mjs"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.75",

@@ -7,6 +7,7 @@ import { checkUsage, recordUsage } from "@/lib/rate-limit"
 import { profileToContextBlock, EMPTY_PROFILE, type ApplicantProfile } from "@/lib/applicant/types"
 import { applicationsToContextBlock, daysUntil, type Application } from "@/lib/applications/types"
 import { getLanguageInstruction } from "@/lib/ai/language"
+import { withApiError } from "@/lib/api-error"
 
 export const runtime = "nodejs"
 export const maxDuration = 30
@@ -34,15 +35,18 @@ const SummarySchema = z.object({
  *
  * Cache is in tool_runs with tool='daily_summary'. Looking up by user+date.
  */
-export async function GET() {
+// S-14 (TZ): wrapped in withApiError so an uncaught throw (DB outage,
+// AI provider 500, malformed JSON from model) returns a clean
+// 500 + scrubbed message instead of leaking a stack trace.
+export const GET = withApiError(async () => {
   const user = await getCurrentUser()
   if (!user) return Response.json({ error: "unauthorized" }, { status: 401 })
 
   const cached = await readToday(user.id)
   return Response.json({ summary: cached })
-}
+})
 
-export async function POST(req: Request) {
+export const POST = withApiError(async (req: Request) => {
   const user = await getCurrentUser()
   if (!user) return Response.json({ error: "unauthorized" }, { status: 401 })
 
@@ -64,7 +68,7 @@ export async function POST(req: Request) {
     return Response.json({ error: "no_data", message: "Заполни профиль и добавь хоть одну заявку" }, { status: 400 })
   }
   return Response.json({ summary, cached: false })
-}
+})
 
 // ── Internals ────────────────────────────────────────────────────────────
 
