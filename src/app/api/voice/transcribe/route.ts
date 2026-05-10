@@ -2,6 +2,7 @@ import { getCurrentUser } from "@/lib/supabase/server"
 import { checkUsage, recordUsage } from "@/lib/rate-limit"
 import { env } from "@/lib/env"
 import { getLocale } from "@/lib/i18n/server"
+import { withApiError } from "@/lib/api-error"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
@@ -25,7 +26,7 @@ const SUPPORTED_TYPES = new Set([
  * Proxies the audio to OpenAI Whisper and returns { text }.
  * Server-side only — OPENAI_API_KEY never reaches the client.
  */
-export async function POST(req: Request) {
+export const POST = withApiError(async (req: Request) => {
   if (!env.OPENAI_API_KEY) {
     return Response.json({ error: "openai_not_configured" }, { status: 503 })
   }
@@ -111,4 +112,4 @@ export async function POST(req: Request) {
   })
 
   return Response.json({ text })
-}
+})

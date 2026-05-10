@@ -91,5 +91,13 @@ export default withSentryConfig(nextConfig, {
   tunnelRoute: "/monitoring",
   disableLogger: true,
   automaticVercelMonitors: true,
-  sourcemaps: { disable: true },
+  // Q-5 (TZ): enable Sentry source-maps in production builds only.
+  // Was disabled everywhere — stack traces in Sentry showed minified
+  // names like `ay`, `oJ`, `iu`, making prod debugging painful (we hit
+  // this exact problem during the onboarding crash investigation).
+  // CI sets SENTRY_AUTH_TOKEN; local dev skips upload silently.
+  sourcemaps: {
+    disable: process.env.NODE_ENV !== "production",
+    deleteSourcemapsAfterUpload: true,
+  },
 })

@@ -116,7 +116,32 @@ function InviteForm({
         toast.error(res.error ?? "Не удалось создать приглашение")
         return
       }
-      toast.success("Приглашение отправлено")
+      // Branch on emailDelivery — Resend in restricted mode (free tier without
+      // verified domain) means the student needs to share the link by hand.
+      if (res.emailDelivery === "sent") {
+        toast.success(`Приглашение отправлено на ${email.trim()}`)
+      } else if (res.emailDelivery === "restricted") {
+        toast.warning("Email не отправлен — сервер в тестовом режиме", {
+          description: "Скопируй ссылку из карточки и отправь рекомендателю сам в WhatsApp/Telegram",
+          duration: 8000,
+          action: res.link
+            ? {
+                label: "Скопировать",
+                onClick: () => {
+                  navigator.clipboard?.writeText(res.link!)
+                  toast.success("Ссылка скопирована")
+                },
+              }
+            : undefined,
+        })
+      } else if (res.emailDelivery === "failed") {
+        toast.warning("Email не доставлен", {
+          description: "Приглашение создано — поделись ссылкой с рекомендателем вручную.",
+          duration: 8000,
+        })
+      } else {
+        toast.success("Приглашение создано — поделись ссылкой с рекомендателем")
+      }
       // Build a synthetic row — page will refresh on next focus, but
       // for the optimistic insert we keep the user-typed data.
       onCreated({

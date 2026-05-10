@@ -42,7 +42,22 @@ export async function createRecommenderInvite(params: {
   recommenderEmail: string
   recommenderRole?: string
   message?: string
-}): Promise<{ ok: boolean; id?: string; token?: string; error?: string }> {
+}): Promise<{
+  ok: boolean
+  id?: string
+  token?: string
+  error?: string
+  link?: string
+  /**
+   * Tells the UI what to say to the user about email status:
+   *   - sent: email delivered to the recommender's inbox
+   *   - skipped: email not configured (RESEND_API_KEY missing)
+   *   - restricted: Resend in test-mode — recipient must be verified;
+   *     student needs to share the link manually
+   *   - failed: transient delivery error; student can retry or share link
+   */
+  emailDelivery?: "sent" | "skipped" | "failed" | "restricted"
+}> {
   const user = await getCurrentUser()
   if (!user) return { ok: false, error: "unauthorized" }
 
@@ -71,13 +86,16 @@ export async function createRecommenderInvite(params: {
 
   if (error) return { ok: false, error: error.message }
 
-  // Fire-and-forget email — student sees "appointment created" even if
-  // email service is down; they can copy the link manually as fallback.
-  if (emailEnabled()) {
-    const site = env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "")
-    const link = `${site}/r/${token}`
+  // Build link before email attempt — we'll always return it so the
+  // student can copy/share manually if email delivery fails or is in
+  // restricted mode (Resend free tier sends only to verified email
+  // until the user verifies a domain).
+  const site = env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "")
+  const link = `${site}/r/${token}`
 
-    // Profile name for "from {studentName}"
+  let emailDelivery: "sent" | "skipped" | "failed" | "restricted" = "skipped"
+
+  if (emailEnabled()) {
     const { data: profile } = await supabaseAdmin
       .from("profiles")
       .select("full_name, email")
@@ -85,20 +103,42 @@ export async function createRecommenderInvite(params: {
       .maybeSingle()
     const studentName = profile?.full_name ?? user.email ?? "студент Entrium"
 
-    sendEmail({
-      to: params.recommenderEmail,
-      subject: `${studentName} просит рекомендательное письмо`,
-      html: buildInviteEmail({
-        recommenderName: params.recommenderName,
-        studentName,
-        message: params.message,
-        link,
-      }),
-    }).catch((err) => console.error("Recommender email send failed:", err))
+    try {
+      const result = await sendEmail({
+        to: params.recommenderEmail,
+        subject: `${studentName} просит рекомендательное письмо`,
+        html: buildInviteEmail({
+          recommenderName: params.recommenderName,
+          studentName,
+          message: params.message,
+          link,
+        }),
+      })
+      if (result.ok) {
+        emailDelivery = "sent"
+      } else if (result.error?.toLowerCase().includes("verify a domain") ||
+                 result.error?.toLowerCase().includes("testing emails")) {
+        // Resend free tier — recipient outside verified addresses
+        emailDelivery = "restricted"
+        console.warn("Resend restricted-mode for", params.recommenderEmail, "— student will share link manually")
+      } else {
+        emailDelivery = "failed"
+        console.error("Resend send failed:", result.error)
+      }
+    } catch (err) {
+      emailDelivery = "failed"
+      console.error("Recommender email send threw:", err)
+    }
   }
 
   revalidatePath("/settings")
-  return { ok: true, id: data.id as string, token: data.token as string }
+  return {
+    ok: true,
+    id: data.id as string,
+    token: data.token as string,
+    link,
+    emailDelivery,
+  }
 }
 
 export async function revokeRecommenderInvite(id: string): Promise<{ ok: boolean; error?: string }> {

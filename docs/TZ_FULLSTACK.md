@@ -10,8 +10,9 @@
 > **Хотфиксы:** onboarding crash fix, rate-limit double-counting fix (0016), ambiguous-column fix (0017), tracker JSON → roadmap UI.
 > **Wave 4 (`d8a09b0`):** Q-6 (RPC smoke-script), Q-7 (mocked-DB tests), S-14 (withApiError), U-11 partial, U-9 partial, F-11.
 > **Wave 5 (`2ebd40c`):** U-10 (light theme + ThemeToggle), F-1 (document upload via Supabase Storage), F-2 (recommender invites + /r/[token] public flow).
+> **Wave 6 (`6+ commits` ending in deploy):** RESEND_API_KEY активирован (email_resend=true), recommender flow fallback на restricted-mode, Q-5 (Sentry sourcemaps prod-only), withApiError на voice/transcribe, +43 scholarship deadlines (93→136, 47% coverage), `docs/RESEND_SETUP.md` — гайд на верификацию домена.
 >
-> **Прогресс:** ~85% автоматически за 5 wave'ов (33+ ID closed).
+> **Прогресс:** ~88% автоматически за 6 wave'ов.
 >
 > **Остаются на разработчика:** S-1 финал (revoke токена в GitHub UI — done?), S-7 (Telegram bot — done?), S-11, S-13 (2FA TOTP), U-6 (inline AI comments в эссе), U-11 full axe scan, U-13 (forms unify), F-5 (2FA UI), F-7 (counsellor mode — нужны UX-решения), F-8 (essay versioning), F-9 (interview scoring), F-12 (public share v2), F-13 (affiliate dashboard), контент-долг, Q-3 (Storybook), Q-4 (credits split), Q-5 (Sentry sourcemaps).
 
