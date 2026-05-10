@@ -40,8 +40,15 @@ export default async function LandingPage() {
             <a href="#how" className="hover:text-cream transition-colors">{t.navHow}</a>
             <a href="#faq" className="hover:text-cream transition-colors">{t.navFaq}</a>
           </nav>
-          <div className="flex items-center gap-2">
-            <LangSwitcher size="sm" />
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {/* On mobile show only the icon variant — saves ~70px next to
+                the auth CTAs which are the primary call-to-action. */}
+            <span className="hidden sm:block">
+              <LangSwitcher size="sm" />
+            </span>
+            <span className="sm:hidden">
+              <LangSwitcher size="icon" />
+            </span>
             <Link href="/login" className={buttonVariants({ variant: "ghost", size: "sm" })}>
               {t.cta.signin}
             </Link>

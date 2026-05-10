@@ -85,10 +85,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             </span>
             <span>Entrium AI</span>
           </Link>
-          <div className="flex items-center gap-1">
-            <NotificationsBell initialUnread={unread} variant="sidebar" />
-            <LangSwitcher size="icon" />
-          </div>
+          {/* Only the bell stays next to the logo — language switcher moved
+              to the user-card footer below so the brand area isn't crowded. */}
+          <NotificationsBell initialUnread={unread} variant="sidebar" />
         </div>
 
         {/* Cmd+K search trigger pinned right under header */}
@@ -184,6 +183,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                 {t.nav.logout}
               </Button>
             </form>
+          </div>
+          {/* Language switcher — sits at the bottom of the sidebar
+              alongside the user card, less prominent than the logo,
+              still discoverable. */}
+          <div className="flex items-center justify-between gap-2 mt-3 pt-3 border-t border-border/40">
+            <span className="font-mono-label text-[10px] text-cream-3 uppercase tracking-wider">
+              Язык
+            </span>
+            <LangSwitcher size="sm" />
           </div>
         </div>
       </aside>

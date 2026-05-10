@@ -7,18 +7,26 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
   const t = await getT()
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
-      <div className="flex flex-col p-8 lg:p-12">
-        <div className="flex items-center justify-between">
+      <div className="flex flex-col p-6 sm:p-8 lg:p-12">
+        {/* Logo gets full top-row attention — language switcher moved to
+            footer of the auth column where it's discoverable but not
+            competing with the brand. */}
+        <div className="flex items-center">
           <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
             <span className="grid h-8 w-8 place-items-center rounded-lg bg-foreground text-background">
               <Sparkles className="h-4 w-4" />
             </span>
             <span>Entrium AI</span>
           </Link>
-          <LangSwitcher />
         </div>
-        <div className="flex flex-1 items-center justify-center">
+        <div className="flex flex-1 items-center justify-center py-8">
           <div className="w-full max-w-sm">{children}</div>
+        </div>
+        <div className="flex items-center justify-between gap-4 pt-4 border-t border-border/40">
+          <p className="font-mono-label text-[10px] text-cream-3 uppercase tracking-wider">
+            © Entrium AI
+          </p>
+          <LangSwitcher size="sm" />
         </div>
       </div>
       <div className="hidden lg:block relative bg-muted overflow-hidden">
