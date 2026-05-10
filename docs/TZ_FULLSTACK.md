@@ -8,11 +8,12 @@
 > **Wave 2 (`5b9393a`):** U-2, U-3, U-5, U-7, U-8 applied, F-3.
 > **Wave 3 (`ae348ae`):** U-4, F-10, Q-1+Q-2 expansion, Playwright base.
 > **Хотфиксы:** onboarding crash fix, rate-limit double-counting fix (0016), ambiguous-column fix (0017), tracker JSON → roadmap UI.
-> **Wave 4 (`d8a09b0`):** Q-6 (RPC smoke-script), Q-7 (mocked-DB tests for getApplicantProfile + rate-limit wrapper), S-14 (withApiError + ApiError), U-11 partial (skip-link, ARIA, contrast), U-9 partial (mobile flex-wrap), F-11 (notifications inbox v2).
+> **Wave 4 (`d8a09b0`):** Q-6 (RPC smoke-script), Q-7 (mocked-DB tests), S-14 (withApiError), U-11 partial, U-9 partial, F-11.
+> **Wave 5 (`2ebd40c`):** U-10 (light theme + ThemeToggle), F-1 (document upload via Supabase Storage), F-2 (recommender invites + /r/[token] public flow).
 >
-> **Прогресс:** ~70% автоматически за 4 wave'а (29+ ID closed). 89 unit-тестов + 10 Playwright smoke + RPC smoke.
+> **Прогресс:** ~85% автоматически за 5 wave'ов (33+ ID closed).
 >
-> **Остаются на разработчика:** S-1 финал (revoke в GitHub UI), S-7 (Telegram bot recreate), S-11, S-13 (2FA TOTP), U-6 (inline AI comments), U-10 (light theme), U-11 финал (full axe scan), U-13 (forms unify), F-1, F-2, F-5, F-7, F-8, F-9, F-12, F-13, контент-долг, Q-3 (Storybook), Q-4 (credits split), Q-5 (sourcemaps).
+> **Остаются на разработчика:** S-1 финал (revoke токена в GitHub UI — done?), S-7 (Telegram bot — done?), S-11, S-13 (2FA TOTP), U-6 (inline AI comments в эссе), U-11 full axe scan, U-13 (forms unify), F-5 (2FA UI), F-7 (counsellor mode — нужны UX-решения), F-8 (essay versioning), F-9 (interview scoring), F-12 (public share v2), F-13 (affiliate dashboard), контент-долг, Q-3 (Storybook), Q-4 (credits split), Q-5 (Sentry sourcemaps).
 
 ---
 
