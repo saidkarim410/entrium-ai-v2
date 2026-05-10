@@ -1,18 +1,18 @@
 # ТЗ — Entrium AI v2 (Full-Stack)
 
 > **Документ для full-stack разработчика, нанятого на доработку проекта.**
-> Дата создания: 2026-05-09 · Версия 1.3 (после авто-прогонов wave 1 + 2 + 3)
+> Дата создания: 2026-05-09 · Версия 1.4 (после авто-прогонов wave 1-4)
 > Прод: https://entrium-ai-v2.vercel.app
 >
-> **Wave 1 закрыт (commit `0110b8d`):** S-2, S-3, S-4, S-5, S-6, S-8/F-6, S-9, S-10, S-12, U-1, U-8 (primitive), U-12, F-4, Q-1 base, S-1 partial.
+> **Wave 1 (`0110b8d`):** S-2..S-6, S-8/F-6, S-9, S-10, S-12, U-1, U-8 primitive, U-12, F-4, Q-1 base.
+> **Wave 2 (`5b9393a`):** U-2, U-3, U-5, U-7, U-8 applied, F-3.
+> **Wave 3 (`ae348ae`):** U-4, F-10, Q-1+Q-2 expansion, Playwright base.
+> **Хотфиксы:** onboarding crash fix, rate-limit double-counting fix (0016), ambiguous-column fix (0017), tracker JSON → roadmap UI.
+> **Wave 4 (`d8a09b0`):** Q-6 (RPC smoke-script), Q-7 (mocked-DB tests for getApplicantProfile + rate-limit wrapper), S-14 (withApiError + ApiError), U-11 partial (skip-link, ARIA, contrast), U-9 partial (mobile flex-wrap), F-11 (notifications inbox v2).
 >
-> **Wave 2 закрыт (commit `5b9393a`):** U-2, U-3, U-5, U-7, U-8 applied, F-3, Q-2 partial.
+> **Прогресс:** ~70% автоматически за 4 wave'а (29+ ID closed). 89 unit-тестов + 10 Playwright smoke + RPC smoke.
 >
-> **Wave 3 закрыт (commit `ae348ae`):** U-4 (calendar views), F-10 (CSV import), Q-1 expansion (Playwright base + 10 smoke tests), Q-2 expansion (7 new tests).
->
-> **Прогресс:** ~50% автоматически за 3 wave'а (20 из 41 ID closed).
->
-> **Остаются на разработчика:** S-1 финал (revoke token в GitHub UI), S-7 (Telegram bot), S-11, S-13 (2FA TOTP), S-14, U-6 (inline AI comments), U-9 (mobile audit), U-10 (light theme), U-11 (axe a11y), U-13 (forms unify), F-1, F-2, F-5, F-7, F-8, F-9, F-11, F-12, F-13, контент-долг, Q-3 (Storybook), Q-4 (credits split), Q-5 (sourcemaps).
+> **Остаются на разработчика:** S-1 финал (revoke в GitHub UI), S-7 (Telegram bot recreate), S-11, S-13 (2FA TOTP), U-6 (inline AI comments), U-10 (light theme), U-11 финал (full axe scan), U-13 (forms unify), F-1, F-2, F-5, F-7, F-8, F-9, F-12, F-13, контент-долг, Q-3 (Storybook), Q-4 (credits split), Q-5 (sourcemaps).
 
 ---
 
