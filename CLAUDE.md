@@ -457,72 +457,105 @@ For Telegram Login Widget to work, run `/setdomain` in `@BotFather` → `entrium
 
 ---
 
-## 7.5. Design System (from production entrium.ai)
+## 7.5. Design System (v2 — Editorial × AI)
 
-The original entrium.ai brand uses a distinctive **dark editorial aesthetic** — gold + cream on near-black, serif typography for emphasis, mono labels for taxonomy. Adopt these tokens when polishing v2 UI.
+**Status: 2026-05 redesign.** The previous "dark editorial gold/cream" look (Playfair + Cinzel + EB Garamond on near-black) was **replaced** because it clashed with the actual printed brand identity (logo + marketing posts). The new system below matches the Entrium brand book exactly. See `src/app/globals.css` and `src/app/layout.tsx` for the live tokens.
+
+### Brand DNA
+The brand is **editorial × AI × accessible**: thinks like a high-end university report (heavy condensed headlines, mono metadata, dotted-map textures), reads like a smart tech product (typewriter, aurora, soft elevation), and speaks like a big brother ("Твой большой брат по поступлению"). It is **NOT** a luxury / winery / parfumerie aesthetic.
+
+The logo wordmark: `Entr` in ink, `ium` in red, with a heart ❤ over the "i". Keep this chromatic split — half the headline word ink, half red — in landing headlines too.
 
 ### Typography
 ```
-Display / Headings:  Playfair Display (serif) or Cinzel (uppercase, letter-spaced)
-Body / Reading:      EB Garamond (serif, generous line-height ~1.85)
-UI / Buttons:        Inter (or system sans)
-Labels / Tags:       DM Mono (uppercase, letter-spacing 0.12-0.15em, 9-11px)
+Display / Headings:  Manrope, weight 800 (--font-display), tracking -0.025em, often uppercase
+Body / UI:           Manrope, weight 400–600 (--font-sans), latin + cyrillic
+Mono labels:         JetBrains Mono, weight 400–500 (--font-mono), uppercase,
+                     letter-spacing 0.12em, 10-11px — used for eyebrows like
+                     "TOP 2027 · QS WORLD RANKING · AI ADMISSIONS COPILOT"
+Legacy aliases:      --font-serif and --font-cinzel still exist, both pointing
+                     at Manrope, so older (app) code does not break.
 ```
 
-Italic serif is used for emphasis on university names (e.g., *Harvard, Oxford, MIT*).
+No serif italic anywhere. The "italic" emphasis pattern from the old design is replaced by the **chromatic split** (one part of the phrase in `--brand-red`).
 
 ### Color palette
 ```
-Backgrounds:
-  --bg            #0a0a0a   (page bg)
-  --bg1           #121212   (card bg)
-  --border        rgba(255,255,255,0.08)
-  --border2       rgba(255,255,255,0.16)
+Brand primitives:
+  --paper            #f5f5f5    page background (light brand)
+  --ink              #0a0a0a    primary text + headlines
+  --brand-red        #ED1C24    signature accent — logo "ium", CTAs, rules
+  --brand-red-soft   #fee7e8    icon backgrounds, tag fills
+  --brand-red-glow   rgba(237,28,36,0.18)   used by .card-hover shadow
 
-Text:
-  --cream         #fce8b8   (primary text on dark)
-  --cream2        #d4c8a8   (secondary)
-  --cream3        rgba(252,232,184,0.5)  (muted)
+Theme aliases (light, default):
+  --background       = paper
+  --foreground       = ink
+  --card             #ffffff
+  --primary          = brand-red          (CTAs use this)
+  --primary-foreground  #ffffff
+  --secondary        #ececec              (alternating section bg)
+  --muted-foreground rgba(10,10,10,0.6)
+  --border           rgba(10,10,10,0.1)
 
-Accent / state:
-  --gold          #c9a84c   (primary accent — buttons, highlights)
-  --gold3         #e0c970   (lighter gold for hovers)
-  --green         #5aaa78   (success, ≥8/10 scores)
-  --amber         #c9a84c   (warning, ≥6/10 scores)
-  --red           #e05050   (error, <6/10 scores)
-  --purple        #9b6fc4   (Humanizer accent)
-  --blue          #4a9ec4   (Universities accent)
+Theme aliases (dark, opt-in via class="dark"):
+  --background       #0a0a0a
+  --foreground       #fafafa
+  --primary          = brand-red          (red stays the same in both modes)
 
-Score color logic:
-  score >= 8  → #5aaa78  (green)
-  score >= 6  → #c9a84c  (amber/gold)
-  score <  6  → #e05050  (red)
+Legacy aliases — kept so existing tools code does not need a sweep:
+  --gold             → brand-red
+  --cream            → foreground
+  --cream-2/3        → foreground @ 78% / 60%
 ```
 
-### Card pattern (used everywhere)
-- Background: `var(--bg1)`
-- Border: `1px solid var(--border)`
-- Top accent stripe: `linear-gradient(90deg, transparent, {accent}, transparent)` height 2px
-- Padding: 20-28px
-- Headers in mono uppercase: «● AI ЖИВОЙ ПОИСК», «✦ РЕЗУЛЬТАТ ТРЕНЕРА»
+Tool scores keep semantic colors but anchor on the red accent:
+- score ≥ 8 → `#10b981` (green)
+- score ≥ 6 → `#c9a84c` (amber, only place gold survives — for amber semantics)
+- score < 6 → `--brand-red`
 
-### Button styles
-- Primary: gold gradient `linear-gradient(135deg,#5a2d8a,#9b6fc4)` (purple-pink for AI actions) OR solid gold for primary CTAs
-- Secondary: transparent with `border: 1px solid var(--border)`
-- Mono uppercase text, letter-spacing 0.15em, 11px
+### Layout primitives
+- **Red rule**: `<div class="h-1 brand-rule" />` — the thin red bar at the top/bottom of every printed post. Use to bookend the page and major sections.
+- **Brand eyebrow**: `class="brand-eyebrow font-mono-label"` — adds a 2px vertical red tick to the left of small uppercase metadata. Used for section eyebrows like "ПЛАТФОРМА · ENTRIUM".
+- **Dotted map**: `class="dotted-map"` — subtle dot grid background, mirrors the world map texture on the printed posts.
+
+### Card pattern
+- Background: `bg-card` (white in light, `#141414` in dark)
+- Border: `border border-border` (`rgba(10,10,10,0.1)`)
+- Radius: `rounded-2xl` (16px)
+- Hover: `.card-hover` utility — lifts -4px and adds `box-shadow + 1px red border-glow`
+- Icon plate: 40-44px square, `bg-[var(--brand-red-soft)]`, icon in `text-[var(--brand-red)]`
+
+### Hero pattern
+- Chromatic split headline (uppercase, weight 800, leading-[0.92], up to 8xl)
+- Dual-column on lg+: copy on the left, live `<Typewriter>` card on the right (mimics a Claude streaming output)
+- `<Aurora>` red mesh behind, `.dotted-map` overlay
+- CTAs wrapped in `<MagneticButton>` (cursor-aware translation)
+
+### Animation primitives (in `src/components/landing/animations.tsx`)
+- `<Aurora>` — three blurred red orbs drifting on an 18s keyframe loop; pure CSS, GPU-friendly
+- `<Reveal delay={ms}>` — fades+lifts children on intersection (IntersectionObserver, fires once)
+- `<CountUp value="1500+">` — animates from 0 with cubic easing, preserves suffix
+- `<Typewriter lines={[]}>` — types/erases/cycles strings with a red blinking caret
+- `<MagneticButton strength={0.25}>` — translates a CTA toward the cursor on hover, disabled on touch
+- All respect `prefers-reduced-motion: reduce` (see globals.css)
 
 ### Section labels
-Each section uses small mono caps as eyebrow: «● AI · АНАЛИЗ», «● ПОСТУПЛЕНИЕ · 2026», «ЦЕНЫ», «КАК ЭТО РАБОТАЕТ»
+Each section opens with a red-ticked mono eyebrow + a huge uppercase Manrope-800 headline. Example pattern:
+```tsx
+<p className="brand-eyebrow font-mono-label text-[var(--brand-red)] mb-4">11 AI ИНСТРУМЕНТОВ</p>
+<h2 className="font-display font-extrabold uppercase text-5xl lg:text-6xl leading-[0.95]">
+  На каждый этап admission funnel
+</h2>
+```
 
-### Mockup card pattern
-Throughout the landing: each tool feature has a mini "live mockup" card showing what the AI output looks like (e.g., score 7.6/10 with strengths list, essay draft with feedback, interview question with score). Cards have:
-- mono label top-left (e.g., "AI · Результат")
-- numeric score top-right with /10 suffix
-- 3-4 list items with check/cross icons
-- thin colored top border per category
-
-### Hero animation
-The original landing rotates through "MIT · Stanford · Cambridge · ETH" with italic serif. Adopt similar rotation in v2 hero.
+### What changed (migration notes for AI editing landing code)
+- `text-gold` / `bg-gold` → `text-[var(--brand-red)]` / `bg-[var(--brand-red)]` (or `text-primary` / `bg-primary`)
+- `text-cream` / `text-cream-2` / `text-cream-3` → `text-foreground` / `text-foreground/75` / `text-foreground/60`
+- `bg-background` (dark) → still works; now resolves to light paper
+- `font-display` still works; now Manrope 800, not Playfair
+- Italic emphasis (`italic text-gold`) → chromatic split: wrap the emphasized phrase in `<span className="text-[var(--brand-red)]">...</span>` (no italic)
+- "Hero rotation through MIT · Stanford · Cambridge" is now done via `<Typewriter>` showing Claude outputs, not university names
 
 ---
 

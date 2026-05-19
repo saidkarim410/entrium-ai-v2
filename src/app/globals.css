@@ -41,6 +41,11 @@
   --color-cream: var(--cream);
   --color-cream-2: var(--cream-2);
   --color-cream-3: var(--cream-3);
+  --color-brand-red: var(--brand-red);
+  --color-brand-red-soft: var(--brand-red-soft);
+  --color-brand-red-glow: var(--brand-red-glow);
+  --color-ink: var(--ink);
+  --color-paper: var(--paper);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -50,91 +55,98 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* Entrium dark editorial — gold + cream on near-black */
+/* ──────────────────────────────────────────────────────────────────────────
+   Entrium Brand v2 — Editorial × AI
+   Palette derived from official brand: white paper, ink-black, signature red.
+   Logo accent: ❤ above the "i" in Entrium. Display type is heavy condensed sans.
+   ────────────────────────────────────────────────────────────────────────── */
 :root {
-  --background: #0a0a0a;
-  --foreground: #fce8b8;
-  --card: #121212;
-  --card-foreground: #fce8b8;
-  --popover: #161616;
-  --popover-foreground: #fce8b8;
-  --primary: #c9a84c;
-  --primary-foreground: #0a0a0a;
-  --secondary: #1a1a1a;
-  --secondary-foreground: #fce8b8;
-  --muted: #1a1a1a;
-  --muted-foreground: rgba(252, 232, 184, 0.5);
-  --accent: #1f1d18;
-  --accent-foreground: #fce8b8;
-  --destructive: #e05050;
-  --border: rgba(252, 232, 184, 0.1);
-  --input: rgba(252, 232, 184, 0.12);
-  --ring: #c9a84c;
-  --gold: #c9a84c;
-  --gold-soft: #e0c970;
-  --cream: #fce8b8;
-  --cream-2: #d4c8a8;
-  /* U-11 (TZ): bumped from 0.5 → 0.62 to clear WCAG AA 4.5:1
-     contrast on the #0a0a0a background (effective rgb #aa9d76).
-     Was ~5.5:1 at the boundary; now ~6.4:1 with comfortable margin
-     for users on dimmed displays. */
-  --cream-3: rgba(252, 232, 184, 0.62);
-  --radius: 0.5rem;
-  --sidebar: #0d0d0d;
-  --sidebar-foreground: #fce8b8;
-  --sidebar-primary: #c9a84c;
-  --sidebar-primary-foreground: #0a0a0a;
-  --sidebar-accent: #1a1a1a;
-  --sidebar-accent-foreground: #fce8b8;
-  --sidebar-border: rgba(252, 232, 184, 0.08);
-  --sidebar-ring: #c9a84c;
+  /* Brand-named primitives */
+  --paper: #f5f5f5;
+  --ink: #0a0a0a;
+  --brand-red: #ed1c24;
+  --brand-red-soft: #fee7e8;
+  --brand-red-glow: rgba(237, 28, 36, 0.18);
+
+  /* Light theme = brand default (matches printed posts) */
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: #ffffff;
+  --card-foreground: var(--ink);
+  --popover: #ffffff;
+  --popover-foreground: var(--ink);
+  --primary: var(--brand-red);
+  --primary-foreground: #ffffff;
+  --secondary: #ececec;
+  --secondary-foreground: var(--ink);
+  --muted: #ececec;
+  --muted-foreground: rgba(10, 10, 10, 0.6);
+  --accent: var(--brand-red-soft);
+  --accent-foreground: var(--brand-red);
+  --destructive: #b8312f;
+  --border: rgba(10, 10, 10, 0.1);
+  --input: rgba(10, 10, 10, 0.14);
+  --ring: var(--brand-red);
+
+  /* Legacy aliases — kept so existing (app) zone code does not break.
+     They now resolve to brand-compatible values instead of gold/cream. */
+  --gold: var(--brand-red);
+  --gold-soft: #ffb3b6;
+  --cream: var(--ink);
+  --cream-2: rgba(10, 10, 10, 0.78);
+  --cream-3: rgba(10, 10, 10, 0.6);
+
+  --radius: 0.625rem;
+  --sidebar: #ffffff;
+  --sidebar-foreground: var(--ink);
+  --sidebar-primary: var(--brand-red);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #ececec;
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: rgba(10, 10, 10, 0.08);
+  --sidebar-ring: var(--brand-red);
 }
 
-/* U-10 (TZ): Light theme — "cream paper, sepia ink, gold accents".
-   Inverts the dark editorial palette while keeping the gold (#c9a84c)
-   brand accent which works equally well on both surfaces.
-   Activated by adding `class="light"` to <html>; the ThemeProvider
-   wraps next-themes and toggles between root, .dark, .light. */
+/* Dark mode — inverted brand. Red stays the same; paper flips to deep ink. */
+:root.dark {
+  --background: #0a0a0a;
+  --foreground: #fafafa;
+  --card: #141414;
+  --card-foreground: #fafafa;
+  --popover: #141414;
+  --popover-foreground: #fafafa;
+  --primary: var(--brand-red);
+  --primary-foreground: #ffffff;
+  --secondary: #1d1d1d;
+  --secondary-foreground: #fafafa;
+  --muted: #1d1d1d;
+  --muted-foreground: rgba(250, 250, 250, 0.6);
+  --accent: rgba(237, 28, 36, 0.12);
+  --accent-foreground: #ff5a5f;
+  --destructive: #ff5a5f;
+  --border: rgba(250, 250, 250, 0.1);
+  --input: rgba(250, 250, 250, 0.14);
+  --ring: var(--brand-red);
+
+  --gold: var(--brand-red);
+  --gold-soft: #ff8084;
+  --cream: #fafafa;
+  --cream-2: rgba(250, 250, 250, 0.78);
+  --cream-3: rgba(250, 250, 250, 0.6);
+
+  --sidebar: #0d0d0d;
+  --sidebar-foreground: #fafafa;
+  --sidebar-primary: var(--brand-red);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1d1d1d;
+  --sidebar-accent-foreground: #fafafa;
+  --sidebar-border: rgba(250, 250, 250, 0.08);
+  --sidebar-ring: var(--brand-red);
+}
+
+/* Light override kept for explicit class="light" (no-op vs :root — same brand). */
 :root.light {
-  /* Background: warm cream paper, not pure white — keeps the editorial feel */
-  --background: #f9f4e3;
-  --foreground: #1a1408;
-  /* Card surfaces sit slightly above the background; a hair lighter
-     than bg gives elevation without harsh white */
-  --card: #fffbed;
-  --card-foreground: #1a1408;
-  --popover: #fffdf2;
-  --popover-foreground: #1a1408;
-  /* Primary remains gold but a stop darker for AA contrast on cream */
-  --primary: #b08820;
-  --primary-foreground: #fffbed;
-  --secondary: #f0e8c8;
-  --secondary-foreground: #1a1408;
-  --muted: #f0e8c8;
-  --muted-foreground: rgba(26, 20, 8, 0.55);
-  --accent: #f0e0a8;
-  --accent-foreground: #1a1408;
-  --destructive: #b8312f;
-  --border: rgba(26, 20, 8, 0.12);
-  --input: rgba(26, 20, 8, 0.15);
-  --ring: #b08820;
-  /* Brand-named tokens — inverted but staying within the gold/cream family.
-     `--cream` becomes the original sepia ink (replaces the cream-on-black
-     role), keeping all `text-cream` classes still meaningful semantically
-     ("the primary text colour"). */
-  --gold: #b08820;
-  --gold-soft: #c9a84c;
-  --cream: #1a1408;
-  --cream-2: #4a3f1f;
-  --cream-3: rgba(26, 20, 8, 0.6);
-  --sidebar: #f4ecd0;
-  --sidebar-foreground: #1a1408;
-  --sidebar-primary: #b08820;
-  --sidebar-primary-foreground: #fffbed;
-  --sidebar-accent: #f0e0a8;
-  --sidebar-accent-foreground: #1a1408;
-  --sidebar-border: rgba(26, 20, 8, 0.1);
-  --sidebar-ring: #b08820;
+  /* intentionally identical to :root — brand default IS light */
 }
 
 @layer base {
@@ -148,37 +160,84 @@
     @apply bg-background text-foreground antialiased;
   }
   h1, h2, h3, h4 {
-    font-family: var(--font-serif), Georgia, serif;
-    letter-spacing: -0.01em;
+    font-family: var(--font-display), var(--font-sans), system-ui, sans-serif;
+    letter-spacing: -0.025em;
+    font-weight: 800;
   }
 }
 
-/* Brand utilities */
+/* ──────────────────────────────────────────────────────────────────────────
+   Brand utilities
+   ────────────────────────────────────────────────────────────────────────── */
+
+/* Heavy display — used for huge editorial headlines ("TOP UNIVERSITIES 2027"). */
 .font-display {
-  font-family: var(--font-display), serif;
-  letter-spacing: -0.02em;
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 0.95;
 }
+
+/* Cinzel removed from active brand; alias to display so legacy classes
+   in the (app) zone still render in the new heavy sans. */
 .font-cinzel {
-  font-family: var(--font-cinzel), serif;
-  letter-spacing: 0.15em;
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
+
+/* Mono labels — TOP 2027 · QS WORLD RANKING · GLOBAL EDUCATION REPORT */
 .font-mono-label {
-  font-family: var(--font-mono), monospace;
+  font-family: var(--font-mono), ui-monospace, monospace;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   font-size: 10px;
-}
-.font-serif {
-  font-family: var(--font-serif), Georgia, serif;
-}
-.italic-emphasis {
-  font-family: var(--font-display), serif;
-  font-style: italic;
-  color: var(--gold);
+  font-weight: 500;
 }
 
-/* Gold gradient accent strip on cards */
+/* Body — was EB Garamond, now resolves to the main sans so it does not look
+   out of place. The font-serif var still points to Garamond if a page wants it. */
+.font-serif {
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-weight: 400;
+}
+
+/* Chromatic split — the brand's signature pattern: half the word in ink,
+   half in red. Used in the logo (Entr·ium) and in hero headlines. */
+.brand-split-red {
+  color: var(--brand-red);
+}
+
+.italic-emphasis {
+  color: var(--brand-red);
+  font-style: normal;
+  font-weight: 800;
+}
+
+/* Red rule — the thin red bar that anchors editorial layouts (top + bottom
+   of the posts). */
+.brand-rule {
+  background: var(--brand-red);
+}
+
+/* Vertical red tick used next to small mono-labels in the posts. */
+.brand-eyebrow {
+  position: relative;
+  padding-left: 12px;
+  display: inline-block;
+}
+.brand-eyebrow::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 2px;
+  background: var(--brand-red);
+}
+
+/* Accent strip — kept for back-compat with cards in the (app) zone. */
 .accent-strip {
   position: relative;
 }
@@ -189,20 +248,108 @@
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  background: linear-gradient(90deg, transparent, var(--brand-red), transparent);
   pointer-events: none;
 }
 
+/* ──────────────────────────────────────────────────────────────────────────
+   Animations
+   ────────────────────────────────────────────────────────────────────────── */
+
+/* Aurora — slow red mesh that drifts behind the hero. CSS-only, no JS. */
+@keyframes aurora-drift {
+  0%   { transform: translate3d(-10%, -5%, 0) scale(1);   opacity: 0.55; }
+  33%  { transform: translate3d(15%, 8%, 0)   scale(1.15); opacity: 0.75; }
+  66%  { transform: translate3d(-8%, 12%, 0)  scale(1.05); opacity: 0.6;  }
+  100% { transform: translate3d(-10%, -5%, 0) scale(1);   opacity: 0.55; }
+}
+
+.aurora-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(80px);
+  pointer-events: none;
+  will-change: transform, opacity;
+  animation: aurora-drift 18s ease-in-out infinite;
+}
+
+/* Reveal — element fades in and slides up when it enters the viewport.
+   The base state is hidden; the .is-visible class (toggled by IntersectionObserver
+   in the Reveal component) reveals it. */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Caret — blinking red cursor for the typewriter. */
+@keyframes brand-caret {
+  0%, 49%   { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+.brand-caret {
+  display: inline-block;
+  width: 0.55ch;
+  background: var(--brand-red);
+  margin-left: 2px;
+  animation: brand-caret 1s steps(1) infinite;
+}
+
+/* Heartbeat — gentle pulse for the heart over the "i" in the logo. */
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  10%      { transform: scale(1.18); }
+  20%      { transform: scale(0.98); }
+  30%      { transform: scale(1.1);  }
+  40%      { transform: scale(1);    }
+}
+.heartbeat {
+  animation: heartbeat 2.2s ease-in-out infinite;
+  transform-origin: center;
+}
+
+/* Shimmer — kept for back-compat. */
 @keyframes shimmer {
   0%, 100% { opacity: 0.7; }
   50% { opacity: 1; }
 }
-
 .shimmer {
   animation: shimmer 2.4s ease-in-out infinite;
 }
 
-/* ── Print mode ───────────────────────────────────────────────────────── */
+/* Card hover — subtle lift + red glow. Used by the 11 AI-tools grid. */
+.card-hover {
+  transition:
+    transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.35s ease;
+}
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 12px 32px -12px var(--brand-red-glow),
+    0 0 0 1px var(--brand-red);
+  border-color: var(--brand-red);
+}
+
+/* Dotted world map — decorative background pattern echoing the printed posts. */
+.dotted-map {
+  background-image: radial-gradient(rgba(10, 10, 10, 0.18) 1px, transparent 1px);
+  background-size: 14px 14px;
+}
+:root.dark .dotted-map {
+  background-image: radial-gradient(rgba(250, 250, 250, 0.14) 1px, transparent 1px);
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Print mode — unchanged
+   ────────────────────────────────────────────────────────────────────────── */
 @media print {
   @page {
     size: A4;
@@ -214,7 +361,6 @@
     color: #111 !important;
   }
 
-  /* Hide all chrome */
   aside, nav, footer, header.no-print,
   .print-hide,
   button,
@@ -225,7 +371,6 @@
     display: none !important;
   }
 
-  /* Force the print region full-width */
   main {
     height: auto !important;
     overflow: visible !important;
@@ -235,7 +380,6 @@
     display: block !important;
   }
 
-  /* Light printable styling — applies to print-area or .prose-entrium content */
   .print-area, .prose-entrium {
     background: #fff !important;
     color: #111 !important;
@@ -281,16 +425,17 @@
   display: none;
 }
 
-/* ── Accessibility ───────────────────────────────────────────────────── */
+/* ──────────────────────────────────────────────────────────────────────────
+   Accessibility
+   ────────────────────────────────────────────────────────────────────────── */
 
-/* Skip-to-content link, only visible on keyboard focus */
 .skip-link {
   position: fixed;
   top: -100px;
   left: 16px;
   z-index: 100;
-  background: var(--gold, #d9b074);
-  color: var(--background, #0e0c08);
+  background: var(--brand-red);
+  color: #ffffff;
   padding: 10px 14px;
   border-radius: 8px;
   font-family: var(--font-mono, monospace);
@@ -303,11 +448,10 @@
 .skip-link:focus,
 .skip-link:focus-visible {
   top: 12px;
-  outline: 2px solid #fff;
+  outline: 2px solid #ffffff;
   outline-offset: 2px;
 }
 
-/* Honor user OS-level reduced-motion preference everywhere */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -317,16 +461,15 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+  .reveal { opacity: 1; transform: none; }
 }
 
-/* Visible keyboard focus for interactive elements; click users see nothing */
 :focus-visible {
-  outline: 2px solid var(--gold, #d9b074);
+  outline: 2px solid var(--brand-red);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
-/* sr-only is already used by some lucide icons via Radix; provide canonical */
 .sr-only {
   position: absolute;
   width: 1px;
