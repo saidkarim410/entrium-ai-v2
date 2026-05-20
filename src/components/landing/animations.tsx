@@ -91,6 +91,19 @@ export function Reveal({
       setVisible(true)
       return
     }
+
+    // Fallback: if the element is already inside (or above) the current
+    // viewport at mount time, reveal immediately. Handles two failure modes
+    // of the IO-only approach: (1) elements above the fold whose initial IO
+    // callback is missed because the observer attaches slightly too late,
+    // (2) fast scrolls where an element flashes through the intersection
+    // zone in a single frame.
+    const rect = el.getBoundingClientRect()
+    if (rect.top < window.innerHeight) {
+      setVisible(true)
+      return
+    }
+
     const io = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
@@ -101,13 +114,13 @@ export function Reveal({
           }
         }
       },
-      { rootMargin: "0px 0px -10% 0px", threshold: 0.1 },
+      { rootMargin: "0px 0px 0px 0px", threshold: 0 },
     )
     io.observe(el)
     return () => io.disconnect()
   }, [])
 
-  const style: CSSProperties = { transitionDelay: `${delay}ms` }
+  const style: CSSProperties = { animationDelay: `${delay}ms` }
 
   // The polymorphic `as` prop with refs is awkward in strict TS — cast once.
   const Comp = Tag as React.ElementType
