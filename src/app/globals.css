@@ -336,6 +336,22 @@
   animation: shimmer 2.4s ease-in-out infinite;
 }
 
+/* Alumni marquee — endless horizontal scroll of admit names. The track
+   holds two copies of the same list, total width 200%, animated by -50%
+   so the second copy slides into the first's exit spot. Pause on hover so
+   users can actually read someone's name. */
+@keyframes alumni-scroll {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-50%, 0, 0); }
+}
+.alumni-marquee {
+  animation: alumni-scroll 38s linear infinite;
+  will-change: transform;
+}
+.alumni-marquee:hover {
+  animation-play-state: paused;
+}
+
 /* Card hover — subtle lift + red glow. Used by the 11 AI-tools grid. */
 .card-hover {
   transition:

@@ -4,6 +4,7 @@ import { LangSwitcher } from "@/components/lang-switcher"
 import { getLocale } from "@/lib/i18n/server"
 import { LANDING } from "./landing-content"
 import { EntriumLogo } from "@/components/landing/entrium-logo"
+import { AlumniRail } from "@/components/landing/alumni-rail"
 import {
   Aurora,
   CountUp,
@@ -15,7 +16,7 @@ import {
   ArrowRight, Sparkles, Bot, MessageCircle, Map, Award,
   GraduationCap, FileText, ShieldCheck, FileUser, Wallet, Brain, Mail,
   ListChecks, CalendarDays, Send, Upload, Globe, Gift, Share2, Zap,
-  ArrowUpRight,
+  ArrowUpRight, Star,
   type LucideIcon,
 } from "lucide-react"
 
@@ -28,35 +29,24 @@ const PLATFORM_ICONS: LucideIcon[] = [Bot, MessageCircle, ListChecks, Upload, Ca
 const HOW_ICONS: LucideIcon[] = [Brain, Bot, ListChecks]
 const REASON_ICONS: LucideIcon[] = [Brain, Globe, Send, Share2, Gift, Zap]
 
-/* AI-demo typewriter copy — short Claude outputs that cycle in the hero
-   mock terminal. Russian, because that is the primary locale of the landing. */
 const TYPEWRITER_LINES = [
-  "Шанс на MIT: 6.4/10 — нужен +90 SAT и одна сильная активность.",
+  "Шанс на LSE: 6.4/10 — нужен +0.5 GPA и одна сильная активность.",
   "Найдено 14 стипендий под твой профиль. Топ-3 на экран.",
-  "Roadmap готов: 12 месяцев, 47 задач, дедлайн ближе всего — Common App 1 ноября.",
+  "Roadmap готов: 12 месяцев, 47 задач. Ближайший дедлайн — UCAS 15 января.",
 ]
 
-/* Mini-preview snippets shown inside each of the 11 tool cards. One line each,
-   imitating real AI output so the card feels like a peek into the product. */
 const TOOL_PREVIEWS: string[] = [
-  "Profile · GPA 4.5 · SAT 1480",
+  "Profile · GPA 4.5 · IELTS 7.5",
   "Reach 3 · Match 5 · Safety 4",
   "Roadmap · 47 задач · 12 мес",
-  "MIT · QS #1 · acceptance 4%",
-  "STEM · $30K+ · 12 матчей",
+  "LSE · QS #50 · acceptance 9%",
+  "STEM · €10K+ · 12 матчей",
   "Hook 7 · Body 8 · Final 9",
   "Q1 ✓ · score 8/10 · STAR",
-  "Prof. P. · Math · 4 абзаца",
+  "Prof. R. · Math · 4 абзаца",
   "ATS-score 88 · keywords 12",
   "$59-69K + 4 канала помощи",
   "Pre-flight ✓ · red flags 0",
-]
-
-/* Universities that have actually accepted Entrium-prepared students — used as
-   a social-proof rail under the hero. Pure text marquee, no logos needed. */
-const SOCIAL_PROOF_UNIS = [
-  "MIT", "Stanford", "Cambridge", "ETH Zürich",
-  "Oxford", "Harvard", "Yale", "Princeton",
 ]
 
 export default async function LandingPage() {
@@ -65,7 +55,6 @@ export default async function LandingPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* ── Top brand bar ────────────────────────────────────────────── */}
       <div className="h-1 brand-rule" aria-hidden />
 
       {/* ── Header ───────────────────────────────────────────────────── */}
@@ -104,20 +93,30 @@ export default async function LandingPage() {
         <Aurora />
         <div className="absolute inset-0 dotted-map opacity-40 pointer-events-none" aria-hidden />
 
-        <div className="container relative mx-auto px-4 pt-16 pb-20 sm:pt-24 sm:pb-28">
-          <div className="flex items-start justify-between mb-12 gap-6">
+        <div className="container relative mx-auto px-4 pt-14 pb-20 sm:pt-20 sm:pb-24">
+          <div className="flex items-start justify-between mb-10 gap-6">
             <div className="brand-eyebrow font-mono-label text-foreground/70 leading-relaxed">
               <div>TOP 2027</div>
               <div>QS WORLD RANKING</div>
               <div className="text-[var(--brand-red)]">AI ADMISSIONS COPILOT</div>
             </div>
             <div className="brand-eyebrow font-mono-label text-foreground/70 leading-relaxed text-right hidden sm:block">
-              <span>{t.hero.badge}</span>
+              <span>Claude Sonnet 4.5</span>
             </div>
           </div>
 
+          {/* Edu AI #1 badge — flagship trust signal above the headline */}
           <Reveal>
-            <h1 className="font-display font-extrabold tracking-tight leading-[0.92] text-5xl sm:text-7xl lg:text-8xl uppercase">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--brand-red)] text-white font-mono-label shadow-[0_8px_24px_-12px_var(--brand-red-glow)]">
+              <Star className="h-3.5 w-3.5 fill-current" />
+              <span>Edu AI #1 в СНГ</span>
+              <span className="text-white/60">·</span>
+              <span className="text-white/80">{t.hero.badge.split("·")[1]?.trim() ?? "Claude Sonnet 4.5"}</span>
+            </div>
+          </Reveal>
+
+          <Reveal delay={80}>
+            <h1 className="mt-6 font-display font-extrabold tracking-tight leading-[0.92] text-5xl sm:text-7xl lg:text-8xl uppercase">
               {t.hero.title.line1}
               <br />
               <span className="text-[var(--brand-red)]">{t.hero.title.accent}</span>
@@ -126,8 +125,8 @@ export default async function LandingPage() {
           </Reveal>
 
           <div className="mt-10 grid lg:grid-cols-2 gap-10 items-start">
-            <Reveal delay={120}>
-              <p className="text-lg sm:text-xl text-foreground/75 leading-relaxed max-w-xl">
+            <Reveal delay={160}>
+              <p className="text-lg sm:text-xl text-foreground/80 leading-relaxed max-w-xl">
                 {t.hero.sub}
               </p>
               <div className="flex flex-col sm:flex-row items-start gap-3 pt-6">
@@ -170,9 +169,10 @@ export default async function LandingPage() {
             </Reveal>
           </div>
 
-          {/* Stats — count-up on intersection */}
+          {/* Trust stats — count-up. Now leading with admit + diagnostic numbers
+             (concrete social proof) instead of generic feature counts. */}
           <Reveal delay={360}>
-            <div className="mt-20 grid grid-cols-2 sm:grid-cols-4 gap-8 max-w-4xl">
+            <div className="mt-16 grid grid-cols-2 sm:grid-cols-4 gap-8 max-w-4xl">
               {t.stats.map((s, i) => (
                 <div key={i} className="brand-eyebrow">
                   <p className="font-display text-4xl sm:text-5xl tracking-tight leading-none text-foreground">
@@ -183,35 +183,25 @@ export default async function LandingPage() {
               ))}
             </div>
           </Reveal>
-
-          {/* Social-proof rail — universities our students got into. Pure typo,
-             no logos: keeps the editorial feel and avoids trademark headaches. */}
-          <Reveal delay={480}>
-            <div className="mt-16 border-t border-border pt-8">
-              <p className="brand-eyebrow font-mono-label text-foreground/55 mb-4">
-                Наши студенты поступили в
-              </p>
-              <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2 font-display font-extrabold uppercase text-2xl sm:text-3xl tracking-tight">
-                {SOCIAL_PROOF_UNIS.map((uni, i) => (
-                  <span
-                    key={uni}
-                    className={i === 3 || i === 6 ? "text-[var(--brand-red)]" : "text-foreground/55"}
-                  >
-                    {uni}
-                    {i < SOCIAL_PROOF_UNIS.length - 1 && (
-                      <span className="text-foreground/20 ml-6">·</span>
-                    )}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </Reveal>
         </div>
 
         <div className="h-1 brand-rule" aria-hidden />
       </section>
 
-      {/* ── Platform — bento grid ────────────────────────────────────── */}
+      {/* ── Alumni rail — real names + universities ──────────────────── */}
+      <section className="border-b border-border bg-card">
+        <div className="container mx-auto px-4 pt-10 pb-6">
+          <p className="brand-eyebrow font-mono-label text-[var(--brand-red)] mb-2">
+            Наши студенты учатся в
+          </p>
+          <p className="text-foreground/65 max-w-2xl">
+            100+ ребят из Узбекистана и СНГ уже поступили — в LSE, NYU, Sapienza, Purdue, UCW и десятки других.
+          </p>
+        </div>
+        <AlumniRail />
+      </section>
+
+      {/* ── Platform — bento grid (entire cards clickable → /signup) ── */}
       <section id="platform" className="border-b border-border py-20 sm:py-28">
         <div className="container mx-auto px-4">
           <Reveal>
@@ -226,23 +216,17 @@ export default async function LandingPage() {
             </div>
           </Reveal>
 
-          {/* Bento layout: 3×3 grid on desktop.
-             [0] AI Agent → spans 2 cols × 2 rows (hero tile, top-left).
-             [1] AI Counselor → top-right.
-             [2] App Tracker  → middle-right.
-             [3] Document Parse, [4] Календарь, [5] Telegram-бот → bottom row. */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:auto-rows-[minmax(180px,auto)]">
             {t.platform.items.map((f, i) => {
               const Icon = PLATFORM_ICONS[i] ?? Sparkles
               const isHero = i === 0
-              const bentoClass = isHero
-                ? "md:col-span-2 md:row-span-2"
-                : ""
+              const bentoClass = isHero ? "md:col-span-2 md:row-span-2" : ""
               return (
                 <Reveal key={i} delay={i * 60} className={bentoClass}>
-                  <div
-                    className={`card-hover group h-full rounded-2xl border border-border bg-card p-6 flex flex-col ${
-                      isHero ? "lg:p-8" : ""
+                  <Link
+                    href="/signup"
+                    className={`card-hover group h-full rounded-2xl border border-border bg-card no-underline text-inherit flex flex-col ${
+                      isHero ? "p-6 lg:p-8" : "p-6"
                     }`}
                   >
                     <div
@@ -276,7 +260,7 @@ export default async function LandingPage() {
                           1 · ПРОФИЛЬ
                         </span>
                         <span className="px-2.5 py-1 rounded-md bg-secondary text-foreground/75">
-                          2 · УНИВЕРЫ
+                          2 · ВУЗЫ
                         </span>
                         <span className="px-2.5 py-1 rounded-md bg-secondary text-foreground/75">
                           3 · СТИПЕНДИИ
@@ -286,7 +270,12 @@ export default async function LandingPage() {
                         </span>
                       </div>
                     )}
-                  </div>
+                    {!isHero && (
+                      <div className="mt-auto pt-4 font-mono-label text-foreground/40 group-hover:text-[var(--brand-red)] transition-colors flex items-center gap-1">
+                        Открыть <ArrowRight className="h-3 w-3" />
+                      </div>
+                    )}
+                  </Link>
                 </Reveal>
               )
             })}
@@ -294,7 +283,7 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* ── 11 tools — live cards ────────────────────────────────────── */}
+      {/* ── 11 tools — entire card is a link to /signup ──────────────── */}
       <section id="tools" className="border-b border-border py-20 sm:py-28 bg-secondary">
         <div className="container mx-auto px-4">
           <Reveal>
@@ -316,18 +305,19 @@ export default async function LandingPage() {
               const num = String(i + 1).padStart(2, "0")
               return (
                 <Reveal key={i} delay={i * 40}>
-                  <div className="card-hover h-full rounded-2xl border border-border bg-card p-5 flex flex-col">
+                  <Link
+                    href="/signup"
+                    className="card-hover h-full rounded-2xl border border-border bg-card p-5 flex flex-col no-underline text-inherit group"
+                  >
                     <div className="flex items-start justify-between mb-4">
-                      <div className="grid h-10 w-10 place-items-center rounded-lg bg-[var(--brand-red-soft)]">
-                        <Icon className="h-[18px] w-[18px] text-[var(--brand-red)]" />
+                      <div className="grid h-10 w-10 place-items-center rounded-lg bg-[var(--brand-red-soft)] group-hover:bg-[var(--brand-red)] transition-colors">
+                        <Icon className="h-[18px] w-[18px] text-[var(--brand-red)] group-hover:text-white transition-colors" />
                       </div>
                       <span className="font-mono-label text-foreground/40">{num}</span>
                     </div>
                     <h3 className="font-display font-extrabold text-lg tracking-tight mb-1">{tool.title}</h3>
                     <p className="text-sm text-foreground/65 leading-relaxed">{tool.desc}</p>
 
-                    {/* Mini-preview — single mono line showing a fragment of
-                       what this tool's AI output looks like. Glanceable. */}
                     <div className="mt-4 pt-4 border-t border-dashed border-border">
                       <div className="flex items-center gap-2 font-mono-label text-foreground/60">
                         <span className="h-1.5 w-1.5 rounded-full bg-[var(--brand-red)] shimmer" />
@@ -335,14 +325,11 @@ export default async function LandingPage() {
                       </div>
                     </div>
 
-                    <Link
-                      href="/signup"
-                      className="mt-4 inline-flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-border bg-background hover:bg-[var(--brand-red)] hover:text-white hover:border-[var(--brand-red)] transition-colors font-mono-label group/btn"
-                    >
+                    <div className="mt-4 inline-flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-border bg-background group-hover:bg-[var(--brand-red)] group-hover:text-white group-hover:border-[var(--brand-red)] transition-colors font-mono-label">
                       <span>Попробовать</span>
-                      <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover/btn:translate-x-0.5" />
-                    </Link>
-                  </div>
+                      <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                    </div>
+                  </Link>
                 </Reveal>
               )
             })}
@@ -350,7 +337,7 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* ── How it works — horizontal timeline ───────────────────────── */}
+      {/* ── How it works — timeline (steps clickable too) ────────────── */}
       <section id="how" className="border-b border-border py-20 sm:py-28">
         <div className="container mx-auto px-4">
           <Reveal>
@@ -364,8 +351,6 @@ export default async function LandingPage() {
             </div>
           </Reveal>
 
-          {/* Timeline: vertical on mobile, horizontal grid on lg+ with a thin
-             dashed line connecting the three step circles. */}
           <div className="relative">
             <div
               aria-hidden
@@ -376,9 +361,11 @@ export default async function LandingPage() {
                 const Icon = HOW_ICONS[i] ?? Sparkles
                 return (
                   <Reveal key={i} delay={i * 140}>
-                    <div className="flex flex-col items-start lg:items-center lg:text-center">
-                      {/* Numbered circle that sits on the connector line */}
-                      <div className="relative z-10 grid h-14 w-14 place-items-center rounded-full bg-[var(--brand-red)] text-white font-display font-extrabold text-xl shadow-[0_8px_24px_-8px_var(--brand-red-glow)]">
+                    <Link
+                      href="/signup"
+                      className="flex flex-col items-start lg:items-center lg:text-center group no-underline text-inherit"
+                    >
+                      <div className="relative z-10 grid h-14 w-14 place-items-center rounded-full bg-[var(--brand-red)] text-white font-display font-extrabold text-xl shadow-[0_8px_24px_-8px_var(--brand-red-glow)] group-hover:scale-110 transition-transform">
                         {s.step}
                       </div>
                       <div className="mt-5 flex items-center gap-2">
@@ -387,13 +374,13 @@ export default async function LandingPage() {
                           ШАГ {s.step}
                         </span>
                       </div>
-                      <h3 className="font-display font-extrabold text-xl sm:text-2xl tracking-tight mt-3 leading-tight">
+                      <h3 className="font-display font-extrabold text-xl sm:text-2xl tracking-tight mt-3 leading-tight group-hover:text-[var(--brand-red)] transition-colors">
                         {s.title}
                       </h3>
                       <p className="text-foreground/70 leading-relaxed mt-2 lg:max-w-xs">
                         {s.desc}
                       </p>
-                    </div>
+                    </Link>
                   </Reveal>
                 )
               })}
@@ -402,7 +389,7 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* ── Why us ───────────────────────────────────────────────────── */}
+      {/* ── Why us (clickable reason cards) ──────────────────────────── */}
       <section className="border-b border-border py-20 sm:py-28 bg-secondary">
         <div className="container mx-auto px-4 max-w-5xl">
           <Reveal>
@@ -420,15 +407,18 @@ export default async function LandingPage() {
               const Icon = REASON_ICONS[i] ?? Sparkles
               return (
                 <Reveal key={i} delay={i * 70}>
-                  <div className="card-hover h-full rounded-2xl border border-border bg-card p-6 flex gap-4">
-                    <div className="grid h-11 w-11 place-items-center rounded-xl bg-[var(--brand-red-soft)] shrink-0">
-                      <Icon className="h-5 w-5 text-[var(--brand-red)]" />
+                  <Link
+                    href="/signup"
+                    className="card-hover h-full rounded-2xl border border-border bg-card p-6 flex gap-4 no-underline text-inherit group"
+                  >
+                    <div className="grid h-11 w-11 place-items-center rounded-xl bg-[var(--brand-red-soft)] shrink-0 group-hover:bg-[var(--brand-red)] transition-colors">
+                      <Icon className="h-5 w-5 text-[var(--brand-red)] group-hover:text-white transition-colors" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-display font-extrabold text-lg tracking-tight mb-1">{r.title}</h3>
                       <p className="text-foreground/70 leading-relaxed">{r.desc}</p>
                     </div>
-                  </div>
+                  </Link>
                 </Reveal>
               )
             })}
@@ -436,9 +426,8 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* ── Telegram bot CTA-band — inverted ink-on-white block ─────── */}
+      {/* ── Telegram bot CTA-band ───────────────────────────────────── */}
       <section className="border-b border-border bg-foreground text-background relative overflow-hidden">
-        {/* subtle red corner glow */}
         <div
           aria-hidden
           className="absolute -top-32 -right-32 w-[480px] h-[480px] rounded-full bg-[var(--brand-red)] opacity-20 blur-[100px] pointer-events-none"
@@ -453,7 +442,7 @@ export default async function LandingPage() {
                 Дедлайны не упустишь — <span className="text-[var(--brand-red)]">мы напомним</span>
               </h2>
               <p className="text-background/75 leading-relaxed mt-5 text-lg max-w-xl">
-                Push-уведомления за 30 · 14 · 7 · 3 · 1 · 0 дней до каждого дедлайна. AI Counselor доступен прямо в боте — спрашивай 24/7 на русском, английском и узбекском.
+                Push за 30 · 14 · 7 · 3 · 1 день до каждого дедлайна. AI-консультант доступен прямо в боте — 24/7 на русском, английском и узбекском.
               </p>
               <div className="mt-7 flex flex-wrap gap-3">
                 <MagneticButton>
@@ -480,7 +469,6 @@ export default async function LandingPage() {
             </Reveal>
 
             <Reveal delay={160}>
-              {/* Telegram-style mock chat */}
               <div className="rounded-2xl bg-background text-foreground p-5 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.5)]">
                 <div className="flex items-center gap-3 pb-4 border-b border-border">
                   <div className="grid h-10 w-10 place-items-center rounded-full bg-[var(--brand-red)] text-white">
@@ -493,10 +481,10 @@ export default async function LandingPage() {
                 </div>
                 <div className="pt-4 space-y-3">
                   <div className="bg-secondary rounded-2xl rounded-tl-md px-4 py-2.5 text-sm w-fit max-w-[85%]">
-                    📅 <b>Common App</b> · через 7 дней. Эссе всё ещё в драфте — закончим?
+                    📅 <b>UCAS</b> · через 7 дней. Эссе всё ещё в драфте — закончим?
                   </div>
                   <div className="bg-secondary rounded-2xl rounded-tl-md px-4 py-2.5 text-sm w-fit max-w-[85%]">
-                    Готов showcase для Stanford. Открыть в трекере?
+                    Готов showcase для LSE. Открыть в трекере?
                   </div>
                   <div className="bg-[var(--brand-red)] text-white rounded-2xl rounded-tr-md px-4 py-2.5 text-sm w-fit max-w-[85%] ml-auto">
                     Да, давай эссе
