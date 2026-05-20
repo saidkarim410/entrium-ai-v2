@@ -22,6 +22,10 @@ export function Aurora({ className }: { className?: string }) {
         className,
       )}
     >
+      {/* Three blurred orbs — gentle peach/red wash that reads as a warm
+         spotlight on white paper, not a red flood. Opacity tuned for the
+         light brand: keep it whispery, raise via the outer wrapper if a
+         section wants more. */}
       <span
         className="aurora-orb"
         style={{
@@ -30,7 +34,7 @@ export function Aurora({ className }: { className?: string }) {
           width: "55vw",
           height: "55vw",
           background: "var(--brand-red)",
-          opacity: 0.55,
+          opacity: 0.16,
           animationDelay: "0s",
         }}
       />
@@ -41,8 +45,8 @@ export function Aurora({ className }: { className?: string }) {
           top: "5%",
           width: "45vw",
           height: "45vw",
-          background: "#ff6b71",
-          opacity: 0.4,
+          background: "#ff8a8e",
+          opacity: 0.14,
           animationDelay: "-6s",
         }}
       />
@@ -54,7 +58,7 @@ export function Aurora({ className }: { className?: string }) {
           width: "60vw",
           height: "60vw",
           background: "#ffd1d3",
-          opacity: 0.5,
+          opacity: 0.2,
           animationDelay: "-12s",
         }}
       />
