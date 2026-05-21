@@ -11,7 +11,7 @@ import {
 import {
   LayoutDashboard, Bot, LayoutGrid, MoreHorizontal,
   Brain, Sparkles, Map, FileText, MessageSquare, Award, GraduationCap,
-  Mail, FileUser, Wallet, ShieldCheck, History, UserCog, LogOut, ListChecks, Crown, Gift, CalendarDays, Trophy, Star,
+  Mail, FileUser, Wallet, ShieldCheck, History, UserCog, LogOut, ListChecks, Crown, Gift, CalendarDays, Trophy, Heart,
   type LucideIcon,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -37,7 +37,7 @@ const TOOLS: Array<{ slug: string; name: string; icon: LucideIcon }> = [
 ]
 
 const BROWSE: Array<{ href: string; name: string; icon: LucideIcon }> = [
-  { href: "/shortlist", name: "Shortlist · ⭐", icon: Star },
+  { href: "/shortlist", name: "Shortlist · ❤", icon: Heart },
   { href: "/universities", name: "Все университеты", icon: GraduationCap },
   { href: "/scholarships", name: "Все стипендии", icon: Award },
 ]

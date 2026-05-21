@@ -31,7 +31,7 @@ import { unreadCount } from "@/lib/notifications/actions"
 import {
   Sparkles, Brain, Sparkles as SparklesIcon, Map, FileText,
   MessageSquare, Award, GraduationCap, LogOut, LayoutDashboard, Mail, FileUser, Wallet, ShieldCheck,
-  History, UserCog, Bot, ListChecks, Crown, Gift, CalendarDays, Trophy, Star,
+  History, UserCog, Bot, ListChecks, Crown, Gift, CalendarDays, Trophy, Heart,
 } from "lucide-react"
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -54,7 +54,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     { slug: "reviewer", name: t.sidebar.tool_reviewer, icon: ShieldCheck },
   ]
   const browse = [
-    { href: "/shortlist", name: "Shortlist · ⭐", icon: Star },
+    { href: "/shortlist", name: "Shortlist · ❤", icon: Heart },
     { href: "/universities", name: t.sidebar.all_universities, icon: GraduationCap },
     { href: "/scholarships", name: t.sidebar.all_scholarships, icon: Award },
   ]
@@ -80,8 +80,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <aside className="hidden lg:flex flex-col border-r border-border/40 bg-card/30" aria-label="Главная навигация">
         <div className="flex h-16 items-center justify-between px-6 border-b border-border/40">
           <Link href="/dashboard" className="flex items-center gap-2 font-semibold tracking-tight">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-foreground text-background">
-              <Sparkles className="h-4 w-4" />
+            <span className="grid h-8 w-8 place-items-center rounded-lg bg-[var(--brand-red)] text-white">
+              <Heart className="h-4 w-4 fill-current" />
             </span>
             <span>Entrium AI</span>
           </Link>

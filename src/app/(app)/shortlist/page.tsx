@@ -2,7 +2,7 @@ import Link from "next/link"
 import { redirect } from "next/navigation"
 import { supabaseAdmin } from "@/lib/supabase/admin"
 import { getCurrentUser } from "@/lib/supabase/server"
-import { Star, MapPin, ArrowRight, Sparkles, GraduationCap } from "lucide-react"
+import { Heart, MapPin, ArrowRight, Sparkles, GraduationCap } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { FavoriteButton } from "@/components/favorite-button"
 
@@ -48,11 +48,11 @@ export default async function ShortlistPage() {
       <header className="flex h-16 items-center justify-between border-b border-border/40 px-4 sm:px-6 shrink-0">
         <div className="min-w-0 flex-1">
           <h1 className="font-display text-base sm:text-lg tracking-tight truncate flex items-center gap-2">
-            <Star className="h-4 w-4 fill-gold text-gold" />
+            <Heart className="h-4 w-4 fill-[var(--brand-red)] text-[var(--brand-red)]" />
             Shortlist
           </h1>
           <p className="font-mono-label text-cream-3 mt-0.5 truncate">
-            {orderedUnis.length} избранных · сюда добавляются ⭐ из /universities
+            {orderedUnis.length} избранных · сюда добавляются ❤ из /universities
           </p>
         </div>
         {orderedUnis.length >= 2 && (
@@ -70,11 +70,11 @@ export default async function ShortlistPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-3">
           {orderedUnis.length === 0 ? (
             <div className="rounded-xl border border-dashed border-border/60 bg-card/20 p-10 text-center space-y-3">
-              <Star className="h-10 w-10 text-cream-3 mx-auto" />
+              <Heart className="h-10 w-10 text-foreground/40 mx-auto" />
               <p className="font-display text-lg">Здесь будет твой shortlist</p>
               <p className="font-serif text-sm text-cream-2 max-w-md mx-auto">
-                Открой <Link href="/universities" className="text-gold hover:underline">список университетов</Link>{" "}
-                и нажми ⭐ рядом с теми, к кому присматриваешься.
+                Открой <Link href="/universities" className="text-[var(--brand-red)] hover:underline">список университетов</Link>{" "}
+                и нажми ❤ рядом с теми, к кому присматриваешься.
               </p>
               <Link href="/universities">
                 <Button className="gap-2 mt-3">

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { Star } from "lucide-react"
+import { Heart } from "lucide-react"
 import { toast } from "sonner"
 import { toggleFavorite, type FavoriteKind } from "@/lib/favorites/actions"
 import { cn } from "@/lib/utils"
@@ -49,11 +49,11 @@ export function FavoriteButton({
         className={cn(
           "inline-flex items-center gap-1.5 rounded-md border px-2.5 h-8 text-xs font-mono-label transition-colors",
           on
-            ? "border-gold/40 bg-gold/15 text-gold"
-            : "border-border bg-card hover:border-gold/30 text-cream-3 hover:text-cream"
+            ? "border-[var(--brand-red)]/40 bg-[var(--brand-red-soft)] text-[var(--brand-red)]"
+            : "border-border bg-card hover:border-[var(--brand-red)]/30 text-foreground/60 hover:text-foreground"
         )}
       >
-        <Star className={cn(dim, on && "fill-gold")} />
+        <Heart className={cn(dim, on && "fill-[var(--brand-red)]")} />
         {on ? "В избранном" : "Сохранить"}
       </button>
     )
@@ -69,11 +69,11 @@ export function FavoriteButton({
         "grid place-items-center rounded-md border transition-colors shrink-0",
         size === "sm" ? "h-8 w-8" : "h-9 w-9",
         on
-          ? "bg-gold/15 border-gold/40 text-gold"
-          : "bg-card border-border text-cream-3 hover:border-gold/30 hover:text-gold"
+          ? "bg-[var(--brand-red-soft)] border-[var(--brand-red)]/40 text-[var(--brand-red)]"
+          : "bg-card border-border text-foreground/60 hover:border-[var(--brand-red)]/30 hover:text-[var(--brand-red)]"
       )}
     >
-      <Star className={cn(dim, on && "fill-gold")} />
+      <Heart className={cn(dim, on && "fill-[var(--brand-red)]")} />
     </button>
   )
 }
