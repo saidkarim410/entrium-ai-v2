@@ -17,6 +17,8 @@ export const dynamic = "force-dynamic"
  *   - customer.subscription.updated
  *   - customer.subscription.deleted
  *   - invoice.payment_failed
+ *   - payment_intent.succeeded         (logs into entrium.payments)
+ *   - charge.refunded                  (logs refund into entrium.payments)
  */
 export async function POST(req: Request) {
   if (!stripeEnabled() || !env.STRIPE_WEBHOOK_SECRET) {
@@ -60,6 +62,16 @@ export async function POST(req: Request) {
         // Optional: notify user. For now just log.
         const inv = event.data.object
         console.warn("Stripe invoice.payment_failed for customer:", inv.customer)
+        break
+      }
+      case "payment_intent.succeeded": {
+        const pi = event.data.object
+        await logPaymentSucceeded(pi)
+        break
+      }
+      case "charge.refunded": {
+        const charge = event.data.object
+        await logRefund(charge)
         break
       }
       default:
@@ -160,4 +172,57 @@ async function deactivateSubscription(sub: Stripe.Subscription) {
     .from("profiles")
     .update({ tier: "free", pro_until: null })
     .eq("id", userId)
+}
+
+// PDF spec §9–10: every successful payment lands in entrium.payments,
+// linked by user_id only (no name/lastname duplication).
+async function logPaymentSucceeded(pi: Stripe.PaymentIntent) {
+  const customerId = typeof pi.customer === "string" ? pi.customer : pi.customer?.id ?? null
+  const userId = await findUserId({ metadata: pi.metadata, customerId })
+  if (!userId) {
+    console.warn("payment_intent.succeeded but user_id not resolvable:", pi.id)
+    return
+  }
+
+  // Stripe stores money in minor units (cents) — convert to a 2-decimal amount
+  const amount = Number((pi.amount_received ?? pi.amount) / 100)
+  const currency = (pi.currency ?? "usd").toUpperCase()
+
+  // Best-effort method: take the brand of the first charge's card if present
+  const charges = (pi as unknown as { charges?: { data?: Stripe.Charge[] } }).charges?.data ?? []
+  const firstCharge = charges[0]
+  const methodLabel =
+    firstCharge?.payment_method_details?.card?.brand ??
+    firstCharge?.payment_method_details?.type ??
+    "card"
+
+  const { error } = await supabaseAdmin
+    .from("payments")
+    .upsert(
+      {
+        user_id: userId,
+        amount,
+        currency,
+        payment_method: methodLabel,
+        payment_platform: "stripe",
+        payment_status: "succeeded",
+        stripe_payment_intent_id: pi.id,
+        stripe_invoice_id: typeof pi.invoice === "string" ? pi.invoice : pi.invoice?.id ?? null,
+        description: pi.description ?? null,
+        metadata: pi.metadata ?? {},
+        payment_date: new Date(pi.created * 1000).toISOString(),
+      },
+      { onConflict: "stripe_payment_intent_id" },
+    )
+  if (error) console.error("payments insert failed:", error.message)
+}
+
+async function logRefund(charge: Stripe.Charge) {
+  const piId = typeof charge.payment_intent === "string" ? charge.payment_intent : charge.payment_intent?.id
+  if (!piId) return
+  const { error } = await supabaseAdmin
+    .from("payments")
+    .update({ payment_status: "refunded" })
+    .eq("stripe_payment_intent_id", piId)
+  if (error) console.error("payments refund update failed:", error.message)
 }
