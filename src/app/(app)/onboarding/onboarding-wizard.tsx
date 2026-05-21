@@ -20,10 +20,29 @@ const STEP_LABELS = ["Знакомство", "Академика", "Цели", "
 
 type AutosaveState = "idle" | "saving" | "saved" | "error"
 
-export function OnboardingWizard({ initial }: { initial: ApplicantProfile }) {
+const PROVIDER_LABEL: Record<string, string> = {
+  google: "Google",
+  telegram: "Telegram",
+  yandex: "Yandex",
+  whatsapp: "WhatsApp",
+  email: "email",
+  phone: "телефону",
+}
+
+export function OnboardingWizard({
+  initial,
+  autofilled = [],
+  source = null,
+}: {
+  initial: ApplicantProfile
+  autofilled?: string[]
+  source?: string | null
+}) {
   const router = useRouter()
   const [step, setStep] = useState(1)
   const [profile, setProfile] = useState<ApplicantProfile>(initial)
+  const autofilledSet = new Set(autofilled)
+  const sourceLabel = source ? PROVIDER_LABEL[source] ?? source : null
   const [pending, startTransition] = useTransition()
   const [autosave, setAutosave] = useState<AutosaveState>("idle")
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -192,12 +211,22 @@ export function OnboardingWizard({ initial }: { initial: ApplicantProfile }) {
             <p className="font-serif text-cream-2 mb-6">
               Расскажи кто ты — это поможет AI настроить рекомендации под твой контекст.
             </p>
+            {autofilledSet.size > 0 && sourceLabel && (
+              <div className="mb-5 rounded-lg border border-[var(--brand-red)]/30 bg-[var(--brand-red-soft)] px-4 py-3 flex items-start gap-2">
+                <Check className="h-4 w-4 text-[var(--brand-red)] mt-0.5 shrink-0" />
+                <p className="font-serif text-sm text-foreground">
+                  Подставили данные из <strong>{sourceLabel}</strong> — проверь и заполни остальное.
+                </p>
+              </div>
+            )}
             <div className="space-y-4">
               <Field
                 label="Полное имя"
                 value={profile.personal.name ?? ""}
                 onChange={(v) => update("personal", "name", v)}
                 placeholder="Saidkarim Tursunbaev"
+                autofilled={autofilledSet.has("personal.name")}
+                sourceLabel={sourceLabel}
               />
               <div className="grid sm:grid-cols-2 gap-4">
                 <Field
@@ -205,6 +234,8 @@ export function OnboardingWizard({ initial }: { initial: ApplicantProfile }) {
                   value={profile.personal.age ?? ""}
                   onChange={(v) => update("personal", "age", v)}
                   placeholder="17"
+                  autofilled={autofilledSet.has("personal.age")}
+                  sourceLabel={sourceLabel}
                 />
                 <Field
                   label="Гражданство"
@@ -218,7 +249,27 @@ export function OnboardingWizard({ initial }: { initial: ApplicantProfile }) {
                 value={profile.personal.location ?? ""}
                 onChange={(v) => update("personal", "location", v)}
                 placeholder="Tashkent, Uzbekistan"
+                autofilled={autofilledSet.has("personal.location")}
+                sourceLabel={sourceLabel}
               />
+              <div className="grid sm:grid-cols-2 gap-4">
+                <Field
+                  label="Email"
+                  value={profile.personal.email ?? ""}
+                  onChange={(v) => update("personal", "email", v)}
+                  placeholder="you@example.com"
+                  autofilled={autofilledSet.has("personal.email")}
+                  sourceLabel={sourceLabel}
+                />
+                <Field
+                  label="Телефон"
+                  value={profile.personal.phone ?? ""}
+                  onChange={(v) => update("personal", "phone", v)}
+                  placeholder="+998 90 ..."
+                  autofilled={autofilledSet.has("personal.phone")}
+                  sourceLabel={sourceLabel}
+                />
+              </div>
             </div>
           </Card>
         )}
@@ -288,6 +339,8 @@ export function OnboardingWizard({ initial }: { initial: ApplicantProfile }) {
                 value={profile.academic.school ?? ""}
                 onChange={(v) => update("academic", "school", v)}
                 placeholder="Лицей №2, Tashkent"
+                autofilled={autofilledSet.has("academic.school")}
+                sourceLabel={sourceLabel}
               />
               <div className="grid sm:grid-cols-2 gap-4">
                 <Field
@@ -453,10 +506,32 @@ function Card({ icon, children }: { icon: React.ReactNode; children: React.React
   )
 }
 
-function Field({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string }) {
+function Field({
+  label,
+  value,
+  onChange,
+  placeholder,
+  autofilled,
+  sourceLabel,
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  placeholder?: string
+  autofilled?: boolean
+  sourceLabel?: string | null
+}) {
   return (
     <div className="space-y-1.5">
-      <Label className="font-mono-label text-cream-3">{label}</Label>
+      <div className="flex items-center justify-between gap-2">
+        <Label className="font-mono-label text-cream-3">{label}</Label>
+        {autofilled && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-[var(--brand-red-soft)] px-2 py-0.5 text-[9px] font-mono-label uppercase tracking-wider text-[var(--brand-red)]">
+            <Check className="h-2.5 w-2.5" />
+            {sourceLabel ? `из ${sourceLabel}` : "auto"}
+          </span>
+        )}
+      </div>
       <Input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} />
     </div>
   )

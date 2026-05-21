@@ -32,6 +32,91 @@ export async function getApplicantProfile(): Promise<ApplicantProfile> {
   } as ApplicantProfile
 }
 
+/**
+ * Smart onboarding pre-fill — for the wizard's initial render.
+ *
+ * If a user already gave us data via Google/Telegram/Yandex OAuth or
+ * via the entrium.profiles row (full_name, first_name, last_name, email,
+ * phone, country, city, school_or_university, class_or_course), we
+ * surface it as a default value AND track which fields were auto-filled
+ * so the UI can show "Получено через Google ✓" badges and skip them.
+ *
+ * Wired into /onboarding/page.tsx — the wizard uses this instead of
+ * raw getApplicantProfile() so social-login users don't re-enter
+ * name/email/phone.
+ */
+export async function getOnboardingInitial(): Promise<{
+  profile: ApplicantProfile
+  autofilled: string[]   // field paths like "personal.name", "personal.email"
+  source: string | null  // "google" | "telegram" | "yandex" | "email" | ...
+}> {
+  const user = await getCurrentUser()
+  if (!user) return { profile: EMPTY_PROFILE, autofilled: [], source: null }
+
+  const stored = await getApplicantProfile()
+
+  // Pull provider-derived columns out of entrium.profiles
+  const { data: profileRow } = await supabaseAdmin
+    .from("profiles")
+    .select(
+      "email, phone, full_name, first_name, last_name, country, city, school_or_university, class_or_course, age, auth_provider",
+    )
+    .eq("id", user.id)
+    .maybeSingle()
+
+  const next: ApplicantProfile = {
+    ...stored,
+    personal: { ...stored.personal },
+    academic: { ...stored.academic },
+    goals: { ...stored.goals },
+  }
+  const autofilled = new Set<string>()
+
+  const tryFill = (path: string, current: string | undefined, candidate: string | null | undefined) => {
+    if (current && current.trim().length > 0) return current
+    if (!candidate) return current
+    const trimmed = candidate.trim()
+    if (!trimmed) return current
+    autofilled.add(path)
+    return trimmed
+  }
+
+  // personal.name: prefer applicant_data, then full_name, then "first last"
+  const synthName =
+    profileRow?.full_name ??
+    [profileRow?.first_name, profileRow?.last_name].filter(Boolean).join(" ") ||
+    null
+  next.personal.name = tryFill("personal.name", next.personal.name, synthName)
+  next.personal.email = tryFill("personal.email", next.personal.email, profileRow?.email ?? user.email ?? null)
+  next.personal.phone = tryFill("personal.phone", next.personal.phone, profileRow?.phone ?? null)
+  next.personal.age = tryFill(
+    "personal.age",
+    next.personal.age,
+    profileRow?.age != null ? String(profileRow.age) : null,
+  )
+
+  // location: combine city + country if either present
+  if (!(next.personal.location && next.personal.location.trim())) {
+    const loc = [profileRow?.city, profileRow?.country].filter(Boolean).join(", ")
+    if (loc) {
+      next.personal.location = loc
+      autofilled.add("personal.location")
+    }
+  }
+
+  next.academic.school = tryFill(
+    "academic.school",
+    next.academic.school,
+    profileRow?.school_or_university ?? null,
+  )
+
+  return {
+    profile: next,
+    autofilled: [...autofilled],
+    source: profileRow?.auth_provider ?? null,
+  }
+}
+
 export async function saveApplicantProfile(profile: ApplicantProfile): Promise<{ ok: boolean; error?: string }> {
   const user = await getCurrentUser()
   if (!user) return { ok: false, error: "unauthorized" }
