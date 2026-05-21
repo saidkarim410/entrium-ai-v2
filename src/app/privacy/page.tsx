@@ -57,8 +57,8 @@ export default function PrivacyPage() {
             <h2 className="text-lg font-medium tracking-tight mt-8">4. С кем мы делимся данными</h2>
             <p>Мы передаём минимум необходимых данных следующим обработчикам:</p>
             <ul className="list-disc pl-6 space-y-2">
-              <li><strong>Anthropic (Claude):</strong> текст ваших сообщений для генерации AI-ответов.</li>
-              <li><strong>OpenAI:</strong> текст для создания эмбеддингов (поиск по университетам).</li>
+              <li><strong>AI-провайдер (ZDR-режим):</strong> текст ваших сообщений для генерации AI-ответов; данные не используются для обучения моделей.</li>
+              <li><strong>Embedding-провайдер:</strong> текст для создания векторов поиска по университетам.</li>
               <li><strong>Supabase:</strong> хранение профиля, истории, токенов сессий.</li>
               <li><strong>Vercel:</strong> хостинг приложения.</li>
               <li><strong>Google (для OAuth):</strong> только если вы выбрали вход через Google.</li>

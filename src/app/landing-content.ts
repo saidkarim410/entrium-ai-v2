@@ -47,7 +47,7 @@ export const LANDING: Record<Locale, LandingCopy> = {
       haveAccount: "У меня уже есть аккаунт",
     },
     hero: {
-      badge: "Edu AI #1 в СНГ · Claude Sonnet 4.5",
+      badge: "Edu AI #1 в СНГ · Entrium AI",
       title: {
         line1: "Поступай",
         accent: "с AI-консультантом",
@@ -118,11 +118,11 @@ export const LANDING: Record<Locale, LandingCopy> = {
       tag: "Вопросы",
       h2: "Частые вопросы",
       items: [
-        { q: "Сколько стоит?", a: "Бесплатный старт — 10 AI-запросов в день, навсегда. Этого хватает большинству до финальных месяцев. Pro — $18/мес (Claude Sonnet 4.5 + безлимит, отписка в один клик) или $5 за разовый глубокий анализ. Карту просим только когда сам решаешь подключить Pro." },
+        { q: "Сколько стоит?", a: "Бесплатный старт — 10 AI-запросов в день, навсегда. Этого хватает большинству до финальных месяцев. Pro — $18/мес (Entrium AI Pro + безлимит, отписка в один клик) или $5 за разовый глубокий анализ. Карту просим только когда сам решаешь подключить Pro." },
         { q: "Это просто ChatGPT с другим интерфейсом?", a: "Нет. У нас специализированный promptarium, натренированный под admission (а не general chat). База QS 2026 с реальными данными. Знание реалий поступления из СНГ. Tracker дедлайнов, Telegram-бот, парсер документов. ChatGPT не знает твой профиль и забывает контекст." },
         { q: "Кто за этим стоит?", a: "Команда Entrium — консалтинговое агентство в Узбекистане, помогающее ребятам из СНГ поступать в зарубежные вузы. 100+ поступивших за всё время, 2000+ диагностик. AI-платформа — это наш продукт, в который мы зашили опыт всех консультаций." },
         { q: "А если AI ошибётся?", a: "AI даёт оценку, не диагноз. Все выводы можно проверить и обсудить с живым консультантом — мы добавим контакт после первого анализа. Refund-политика: если разовый анализ не помог — деньги возвращаем." },
-        { q: "Что с моими данными?", a: "Профиль в Supabase с RLS — видишь только ты. Документы парсятся в памяти, не сохраняются. Эссе уходят в Anthropic под их ZDR-политику (не используются для обучения). Удаление аккаунта удаляет всё." },
+        { q: "Что с моими данными?", a: "Профиль в Supabase с RLS — видишь только ты. Документы парсятся в памяти, не сохраняются. Эссе обрабатываются AI-провайдером под ZDR-политику (не используются для обучения). Удаление аккаунта удаляет всё." },
         { q: "На каких языках?", a: "Интерфейс и AI: RU / EN / UZ. Эссе можно писать на английском, разбор — на русском. Telegram-бот подстраивается под твой язык автоматически." },
         { q: "Зачем это, если у меня уже есть консультант?", a: "AI дополняет, не заменяет. Консультант ограничен по времени, AI работает 24/7. Эссе можно прогонять между сессиями с консультантом, диагностику обновлять каждый месяц. В итоге консультант фокусируется на стратегии — рутина на нас." },
       ],
@@ -150,7 +150,7 @@ export const LANDING: Record<Locale, LandingCopy> = {
       haveAccount: "I already have an account",
     },
     hero: {
-      badge: "AI counselor · Claude Sonnet 4.5",
+      badge: "AI counselor · Entrium AI",
       title: {
         line1: "Apply",
         accent: "with an AI counselor",
@@ -214,7 +214,7 @@ export const LANDING: Record<Locale, LandingCopy> = {
         { title: "Telegram + email", desc: "Push reminders 30/14/7/3/1/0 days out. Counselor inside Telegram too." },
         { title: "Public sharing", desc: "Show your admission package via one URL — to a mentor, parents, counselor." },
         { title: "Referral program", desc: "+10 bonus requests for every friend who completes their profile. They get +10 on day one." },
-        { title: "Pro = unlimited", desc: "When 10/day stops being enough in the final months — Pro with Claude Sonnet 4.5 and AI Agent." },
+        { title: "Pro = unlimited", desc: "When 10/day stops being enough in the final months — Pro with Entrium AI Pro and AI Agent." },
       ],
     },
     faq: {
@@ -223,8 +223,8 @@ export const LANDING: Record<Locale, LandingCopy> = {
       items: [
         { q: "How much does it cost?", a: "Free gives you 10 AI requests a day — enough for most students starting out. Pro is for the final 1-2 months before deadlines, when load peaks. Cancel anytime." },
         { q: "How is this different from ChatGPT?", a: "ChatGPT doesn't know your profile, doesn't remember context across sessions, has no DB of 1500+ universities with QS rankings, and doesn't track deadlines. Here, everything is connected: profile → tools → applications → notifications." },
-        { q: "Which model do you use?", a: "Pro — Claude Sonnet 4.5 (strongest for academic analysis). Free — Claude Haiku 4.5 (fast, free for you). Voice interview uses OpenAI Realtime API. Documents are parsed via Sonnet's vision capability." },
-        { q: "What about privacy?", a: "Your profile lives in Supabase Postgres with RLS — only you see it. Documents are parsed in memory and never stored. Essays go through the Anthropic API under their ZDR policy. Deleting your account deletes everything." },
+        { q: "Which model do you use?", a: "Pro — Entrium AI Pro (strongest for academic analysis). Free — Entrium AI (fast, free for you). Voice interview uses real-time speech models. Documents are parsed via the same vision-enabled AI." },
+        { q: "What about privacy?", a: "Your profile lives in Supabase Postgres with RLS — only you see it. Documents are parsed in memory and never stored. Essays go through our AI provider under a ZDR (zero-data-retention) policy. Deleting your account deletes everything." },
         { q: "Does it work in Uzbek / English?", a: "Yes. UI is RU / EN / UZ, and the AI responds in your language automatically. The Telegram bot adapts too." },
         { q: "Can I share my profile with a counselor?", a: "Yes. In /settings there's a \"Public link\" toggle that generates /p/your-name. Contacts and notes are hidden — only academic context and the list of applications are visible." },
       ],
@@ -252,7 +252,7 @@ export const LANDING: Record<Locale, LandingCopy> = {
       haveAccount: "Akkauntim allaqachon bor",
     },
     hero: {
-      badge: "AI maslahatchi · Claude Sonnet 4.5",
+      badge: "AI maslahatchi · Entrium AI",
       title: {
         line1: "Hujjat topshir",
         accent: "AI maslahatchi bilan",
@@ -316,7 +316,7 @@ export const LANDING: Record<Locale, LandingCopy> = {
         { title: "Telegram + email", desc: "30/14/7/3/1/0 kun oldin push xabarnomalar. Counselor Telegramda ham ishlaydi." },
         { title: "Public sharing", desc: "Admission paketingizni bitta URL orqali ko'rsating — mentorga, ota-onaga, maslahatchiga." },
         { title: "Referal dasturi", desc: "Profilini to'ldirgan har bir do'st uchun +10 bonus so'rov. Unga ham boshlanishida +10." },
-        { title: "Pro = cheksiz", desc: "Yakuniy oylarda kunlik 10 yetmay qolganda — Claude Sonnet 4.5 va AI Agent bilan Pro." },
+        { title: "Pro = cheksiz", desc: "Yakuniy oylarda kunlik 10 yetmay qolganda — Entrium AI Pro va AI Agent bilan Pro." },
       ],
     },
     faq: {
@@ -325,8 +325,8 @@ export const LANDING: Record<Locale, LandingCopy> = {
       items: [
         { q: "Narxi qancha?", a: "Free versiya kuniga 10 ta so'rov beradi — boshlanishda ko'pchilikka yetadi. Pro yakuniy 1-2 oyda muddatlardan oldin yuklama eng yuqori bo'lganda kerak. Istalgan vaqtda bekor qilish mumkin." },
         { q: "Bu ChatGPT'dan qanday farq qiladi?", a: "ChatGPT sizning profilingizni bilmaydi, sessiyalararo kontekstni eslab qolmaydi, 1500+ universitet bazasi yo'q va muddatlarni kuzatmaydi. Bu yerda hammasi bog'langan: profil → vositalar → arizalar → xabarnomalar." },
-        { q: "Qaysi modeldan foydalaniladi?", a: "Pro — Claude Sonnet 4.5 (akademik tahlil uchun eng kuchli). Free — Claude Haiku 4.5 (tez, siz uchun bepul). Ovozli interview uchun OpenAI Realtime API. Hujjatlar Sonnet vision capability orqali tahlil qilinadi." },
-        { q: "Maxfiylik bilan nima bo'ladi?", a: "Profil RLS bilan Supabase Postgres'da saqlanadi — faqat siz ko'rasiz. Hujjatlar xotirada tahlil qilinib, saqlanmaydi. Esselar Anthropic API ga ZDR siyosati doirasida yuboriladi. Akkauntni o'chirish hammasini o'chiradi." },
+        { q: "Qaysi modeldan foydalaniladi?", a: "Pro — Entrium AI Pro (akademik tahlil uchun eng kuchli). Free — Entrium AI (tez, siz uchun bepul). Ovozli interview uchun real-time nutq modeli. Hujjatlar bir xil vision-imkoniyatli AI orqali tahlil qilinadi." },
+        { q: "Maxfiylik bilan nima bo'ladi?", a: "Profil RLS bilan Supabase Postgres'da saqlanadi — faqat siz ko'rasiz. Hujjatlar xotirada tahlil qilinib, saqlanmaydi. Esselar AI-provayder tomonidan ZDR (zero-data-retention) siyosati doirasida qayta ishlanadi. Akkauntni o'chirish hammasini o'chiradi." },
         { q: "U o'zbek / ingliz tilida ishlaydimi?", a: "Ha. Interfeys RU / EN / UZ, AI sizning tilingizda avtomatik javob beradi. Telegram bot ham moslashadi." },
         { q: "Profilni maslahatchiga ulashish mumkinmi?", a: "Ha. /settings da «Public link» tugmasi bor — /p/your-name yaratadi. Kontaktlar va izohlar yashirin, faqat akademik kontekst va arizalar ro'yxati ko'rinadi." },
       ],

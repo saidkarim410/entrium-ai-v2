@@ -223,7 +223,7 @@ Research Assistant · TashSU CS Lab (2023-2024)
             label="Проекты (название, что делает, технологии, ссылки)"
             value={form.projects}
             onChange={update("projects")}
-            placeholder={`Entrium AI · Next.js, Supabase, Claude API
+            placeholder={`Entrium AI · Next.js, Supabase, AI API
 - AI consultant platform for university admissions
 - 1500+ universities database with vector search
 - 200+ active users

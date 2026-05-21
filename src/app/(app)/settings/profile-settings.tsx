@@ -242,7 +242,7 @@ Top-10% scholarship, Лицей №2`}
             label="Проекты"
             value={profile.projects ?? ""}
             onChange={(v) => updateField("projects", v)}
-            placeholder="Entrium AI · Next.js, Supabase, Claude API · 200+ active users · github.com/saidkarim410/entrium-ai-v2"
+            placeholder="Entrium AI · Next.js, Supabase, AI API · 200+ active users · github.com/saidkarim410/entrium-ai-v2"
             rows={3}
           />
           <div className="grid sm:grid-cols-2 gap-4">

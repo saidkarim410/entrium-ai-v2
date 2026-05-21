@@ -6,7 +6,7 @@ export const dict = {
   ru: {
     nav: { signin: "Войти", signup: "Начать бесплатно", logout: "Выйти" },
     landing: {
-      badge: "На базе Claude Sonnet 4.5 + GPT-4o",
+      badge: "Entrium AI · мультимодельный движок",
       h1_top: "Твой старший брат",
       h1_bottom: "по поступлению",
       sub: "8 AI-инструментов, база 1504 университета QS и 289 стипендий. Поступай в лучшие университеты мира с поддержкой AI.",
@@ -101,7 +101,7 @@ export const dict = {
   en: {
     nav: { signin: "Sign in", signup: "Get started free", logout: "Log out" },
     landing: {
-      badge: "Powered by Claude Sonnet 4.5 + GPT-4o",
+      badge: "Powered by Entrium AI · multi-model engine",
       h1_top: "Your older brother",
       h1_bottom: "for university admission",
       sub: "8 AI tools, a database of 1504 QS-ranked universities and 289 scholarships. Get into the world's best universities with AI support.",
@@ -196,7 +196,7 @@ export const dict = {
   uz: {
     nav: { signin: "Kirish", signup: "Bepul boshlash", logout: "Chiqish" },
     landing: {
-      badge: "Claude Sonnet 4.5 + GPT-4o asosida",
+      badge: "Entrium AI · multi-model engine asosida",
       h1_top: "Universitetga qabul",
       h1_bottom: "bo'yicha katta akangiz",
       sub: "8 ta AI-vosita, 1504 ta QS reytingidagi universitet va 289 ta stipendiya bazasi. AI yordamida dunyoning eng yaxshi universitetlariga kiring.",

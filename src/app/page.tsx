@@ -16,7 +16,7 @@ import {
   ArrowRight, Sparkles, Bot, MessageCircle, Map, Award,
   GraduationCap, FileText, ShieldCheck, FileUser, Wallet, Brain, Mail,
   ListChecks, CalendarDays, Send, Upload, Globe, Gift, Share2, Zap,
-  ArrowUpRight, Star,
+  ArrowUpRight, Heart,
   type LucideIcon,
 } from "lucide-react"
 
@@ -101,17 +101,17 @@ export default async function LandingPage() {
               <div className="text-[var(--brand-red)]">AI ADMISSIONS COPILOT</div>
             </div>
             <div className="brand-eyebrow font-mono-label text-foreground/70 leading-relaxed text-right hidden sm:block">
-              <span>Claude Sonnet 4.5</span>
+              <span>Entrium AI</span>
             </div>
           </div>
 
           {/* Edu AI #1 badge — flagship trust signal above the headline */}
           <Reveal>
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--brand-red)] text-white font-mono-label shadow-[0_8px_24px_-12px_var(--brand-red-glow)]">
-              <Star className="h-3.5 w-3.5 fill-current" />
+              <Heart className="h-3.5 w-3.5 fill-current" />
               <span>Edu AI #1 в СНГ</span>
               <span className="text-white/60">·</span>
-              <span className="text-white/80">{t.hero.badge.split("·")[1]?.trim() ?? "Claude Sonnet 4.5"}</span>
+              <span className="text-white/80">{t.hero.badge.split("·")[1]?.trim() ?? "Entrium AI"}</span>
             </div>
           </Reveal>
 
@@ -151,9 +151,9 @@ export default async function LandingPage() {
                 <div className="flex items-center justify-between border-b border-border px-5 py-3">
                   <div className="flex items-center gap-2">
                     <span className="h-2.5 w-2.5 rounded-full bg-[var(--brand-red)]" />
-                    <span className="font-mono-label text-foreground/70">CLAUDE · LIVE OUTPUT</span>
+                    <span className="font-mono-label text-foreground/70">ENTRIUM AI · LIVE OUTPUT</span>
                   </div>
-                  <span className="font-mono-label text-foreground/50">v4.5</span>
+                  <span className="font-mono-label text-foreground/50">v2</span>
                 </div>
                 <div className="px-5 py-6 min-h-[180px] flex flex-col gap-3">
                   <div className="font-mono-label text-[var(--brand-red)]">› AI · АНАЛИЗ ПРОФИЛЯ</div>
@@ -161,7 +161,7 @@ export default async function LandingPage() {
                     <Typewriter lines={TYPEWRITER_LINES} />
                   </div>
                   <div className="mt-auto pt-4 border-t border-border flex items-center justify-between font-mono-label text-foreground/60">
-                    <span>Sonnet 4.5</span>
+                    <span>Entrium AI Pro</span>
                     <span>streaming · 1.4s</span>
                   </div>
                 </div>

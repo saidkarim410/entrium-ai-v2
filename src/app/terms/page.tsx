@@ -56,8 +56,8 @@ export default function TermsPage() {
           <section>
             <h2 className="text-lg font-medium tracking-tight mt-8">4. Тарифы</h2>
             <ul className="list-disc pl-6 space-y-2">
-              <li><strong>Free:</strong> 5 AI-запросов в день, модель Claude Haiku 4.5.</li>
-              <li><strong>Pro:</strong> безлимитные запросы, Claude Sonnet 4.5, расширенные функции.</li>
+              <li><strong>Free:</strong> 5 AI-запросов в день, движок Entrium AI.</li>
+              <li><strong>Pro:</strong> безлимитные запросы, Entrium AI Pro, расширенные функции.</li>
               <li>Бонус: +10 запросов за каждого приглашённого друга.</li>
             </ul>
             <p className="mt-3">Цены и условия Pro могут меняться с уведомлением за 30 дней.</p>

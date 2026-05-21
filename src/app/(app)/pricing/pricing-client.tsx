@@ -18,7 +18,7 @@ const FREE_FEATURES = [
 
 const PRO_FEATURES = [
   "Безлимит запросов",
-  "Claude Sonnet 4.5 (самая сильная модель)",
+  "Entrium AI Pro (флагманский движок)",
   "AI Agent · все миссии",
   "Document upload + AI parse",
   "Приоритетная скорость",
