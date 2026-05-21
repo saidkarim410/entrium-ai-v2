@@ -9,6 +9,8 @@ import { useT } from "@/lib/i18n/client"
 import { signupAction, type AuthState } from "../actions"
 import { GoogleButton } from "../google-button"
 import { TelegramButton } from "../telegram-button"
+import { YandexButton } from "../yandex-button"
+import { WhatsAppButton } from "../whatsapp-button"
 import { RefCapture } from "@/components/ref-capture"
 
 const initialState: AuthState = {}
@@ -31,6 +33,8 @@ export default function SignupPage() {
       </div>
       <GoogleButton />
       <TelegramButton />
+      <YandexButton />
+      <WhatsAppButton />
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
           <span className="w-full border-t border-border/60" />
