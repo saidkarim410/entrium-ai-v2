@@ -29,7 +29,7 @@ import { CmdKTrigger } from "@/components/cmd-k-trigger"
 import { MobileSearchTrigger } from "@/components/mobile-search-trigger"
 import { unreadCount } from "@/lib/notifications/actions"
 import {
-  Sparkles, Brain, Sparkles as SparklesIcon, Map, FileText,
+  Brain, Sparkles as SparklesIcon, Map, FileText,
   MessageSquare, Award, GraduationCap, LogOut, LayoutDashboard, Mail, FileUser, Wallet, ShieldCheck,
   History, UserCog, Bot, ListChecks, Crown, Gift, CalendarDays, Trophy, Heart,
 } from "lucide-react"

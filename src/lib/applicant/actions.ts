@@ -84,8 +84,8 @@ export async function getOnboardingInitial(): Promise<{
   // personal.name: prefer applicant_data, then full_name, then "first last"
   const synthName =
     profileRow?.full_name ??
-    [profileRow?.first_name, profileRow?.last_name].filter(Boolean).join(" ") ||
-    null
+    ([profileRow?.first_name, profileRow?.last_name].filter(Boolean).join(" ") ||
+      null)
   next.personal.name = tryFill("personal.name", next.personal.name, synthName)
   next.personal.email = tryFill("personal.email", next.personal.email, profileRow?.email ?? user.email ?? null)
   next.personal.phone = tryFill("personal.phone", next.personal.phone, profileRow?.phone ?? null)

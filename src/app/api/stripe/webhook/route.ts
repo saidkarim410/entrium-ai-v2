@@ -207,7 +207,11 @@ async function logPaymentSucceeded(pi: Stripe.PaymentIntent) {
         payment_platform: "stripe",
         payment_status: "succeeded",
         stripe_payment_intent_id: pi.id,
-        stripe_invoice_id: typeof pi.invoice === "string" ? pi.invoice : pi.invoice?.id ?? null,
+        stripe_invoice_id: (() => {
+          const inv = (pi as unknown as { invoice?: string | { id?: string } | null }).invoice
+          if (typeof inv === "string") return inv
+          return inv?.id ?? null
+        })(),
         description: pi.description ?? null,
         metadata: pi.metadata ?? {},
         payment_date: new Date(pi.created * 1000).toISOString(),

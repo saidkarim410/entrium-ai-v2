@@ -88,6 +88,7 @@ export function Reveal({
     const el = ref.current
     if (!el) return
     if (typeof IntersectionObserver === "undefined") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setVisible(true)
       return
     }
@@ -157,6 +158,7 @@ export function CountUp({
     const target = parseTarget(value)
     if (target === null) {
       // Non-numeric (e.g. "∞") — render as-is, no animation.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDisplay(value)
       return
     }
@@ -267,6 +269,7 @@ export function Typewriter({
         )
         return () => clearTimeout(t)
       }
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLineIdx((i) => (i + 1) % lines.length)
       setPhase("typing")
     }
