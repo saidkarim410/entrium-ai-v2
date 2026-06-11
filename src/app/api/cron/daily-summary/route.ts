@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/lib/supabase/admin"
+import { denyIfNotCron } from "@/lib/cron-auth"
 import { generateForUser } from "@/app/api/daily-summary/route"
 import { checkUsage } from "@/lib/rate-limit"
 
@@ -15,13 +16,8 @@ export const dynamic = "force-dynamic"
  * vercel.json: { "path": "/api/cron/daily-summary", "schedule": "0 6 * * *" }
  */
 export async function GET(req: Request) {
-  const cronSecret = process.env.CRON_SECRET
-  if (cronSecret) {
-    const auth = req.headers.get("authorization")
-    if (auth !== `Bearer ${cronSecret}`) {
-      return Response.json({ error: "unauthorized" }, { status: 401 })
-    }
-  }
+  const denied = denyIfNotCron(req)
+  if (denied) return denied
 
   const stats = { eligible: 0, generated: 0, skipped: 0, errors: 0 }
 

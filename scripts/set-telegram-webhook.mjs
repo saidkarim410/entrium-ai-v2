@@ -2,7 +2,7 @@
  * One-time webhook registration with Telegram Bot API.
  *
  * Usage (PowerShell):
- *   $env:TELEGRAM_BOT_TOKEN="8781529396:..."
+ *   $env:TELEGRAM_BOT_TOKEN="<your-bot-token>"
  *   $env:TELEGRAM_WEBHOOK_SECRET="some-random-string"
  *   $env:NEXT_PUBLIC_SITE_URL="https://entrium-ai-v2.vercel.app"
  *   node scripts/set-telegram-webhook.mjs

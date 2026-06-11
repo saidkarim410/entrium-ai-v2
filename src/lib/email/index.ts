@@ -58,6 +58,10 @@ export function verifyToken(token: string, action: string): string | null {
     .update(`${userId}.${action}`)
     .digest("base64url")
     .slice(0, 32)
-  if (sig !== expected) return null
+  const sigBuf = Buffer.from(sig)
+  const expBuf = Buffer.from(expected)
+  if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
+    return null
+  }
   return userId
 }

@@ -23,12 +23,10 @@ type SetupResponse = {
   message?: string
 }
 
-const PRESET_TG_TOKEN = "8781529396:AAFUCY0WzeTwI5Ax57yfjxyQg7US0RcrrgM"
-
 export function SetupClient({ userEmail }: { userEmail: string }) {
   const [supabaseToken, setSupabaseToken] = useState("")
   const [vercelToken, setVercelToken] = useState("")
-  const [tgBotToken, setTgBotToken] = useState(PRESET_TG_TOKEN)
+  const [tgBotToken, setTgBotToken] = useState("")
   const [resendKey, setResendKey] = useState("")
   const [running, setRunning] = useState(false)
   const [result, setResult] = useState<SetupResponse | null>(null)

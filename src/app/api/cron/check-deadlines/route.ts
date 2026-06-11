@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/lib/supabase/admin"
+import { denyIfNotCron } from "@/lib/cron-auth"
 import { createNotification } from "@/lib/notifications/actions"
 import { sendTelegramMessage } from "@/lib/telegram"
 import { telegramEnabled } from "@/lib/env"
@@ -20,14 +21,8 @@ const THRESHOLDS = [30, 14, 7, 3, 1, 0] as const
  * Auth via CRON_SECRET (Vercel automatically sends it as Authorization: Bearer).
  */
 export async function GET(req: Request) {
-  // Vercel Cron sends `Authorization: Bearer ${CRON_SECRET}`
-  const cronSecret = process.env.CRON_SECRET
-  if (cronSecret) {
-    const auth = req.headers.get("authorization")
-    if (auth !== `Bearer ${cronSecret}`) {
-      return Response.json({ error: "unauthorized" }, { status: 401 })
-    }
-  }
+  const denied = denyIfNotCron(req)
+  if (denied) return denied
 
   const today = todayUTC()
   const stats = { scanned: 0, queued: 0, telegram: 0, errors: 0 }

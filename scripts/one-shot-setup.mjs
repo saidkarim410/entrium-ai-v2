@@ -16,7 +16,7 @@ if (!supabaseToken?.startsWith("sbp_")) {
 const SUPABASE_REF = "zcbbpqfdyqavdubzrgaf"
 const SITE_URL = "https://entrium-ai-v2.vercel.app"
 const VERCEL_PROJECT_NAME = "entrium-ai-v2"
-const TG_BOT_TOKEN = tgBotTokenArg ?? "8781529396:AAFUCY0WzeTwI5Ax57yfjxyQg7US0RcrrgM"
+const TG_BOT_TOKEN = tgBotTokenArg ?? process.env.TELEGRAM_BOT_TOKEN ?? ""
 
 const tgWebhookSecret = crypto.randomBytes(32).toString("base64url").slice(0, 32)
 const cronSecret = crypto.randomBytes(32).toString("base64url").slice(0, 32)

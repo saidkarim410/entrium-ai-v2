@@ -46,8 +46,11 @@ export async function POST(req: Request) {
     return Response.json({ error: "invalid_input" }, { status: 400 })
   }
 
-  // Default recipient = current user's email; override only allowed if same domain
-  const to = parsed.data.to ?? profile.email
+  // SECURITY: always send to the authenticated user's own address. We previously
+  // accepted an arbitrary `to` from the request body, which let any signed-in user
+  // send mail from our domain to anyone (open relay / spam → domain-reputation hit).
+  // The Body.to field is intentionally ignored now.
+  const to = profile.email
   if (!to) return Response.json({ error: "no_recipient" }, { status: 400 })
 
   // Build a real digest for THIS user — same logic as the cron, just with
