@@ -1,5 +1,5 @@
 import { checkUsage, recordUsage } from "@/lib/rate-limit"
-import { env, telegramEnabled } from "@/lib/env"
+import { env, miniAppBotToken, miniAppEnabled } from "@/lib/env"
 import { withApiError } from "@/lib/api-error"
 import { validateInitData } from "@/lib/telegram/init-data"
 import { resolveTelegramUser } from "@/lib/telegram/resolve-user"
@@ -28,7 +28,7 @@ const SUPPORTED_TYPES = new Set([
  * Proxies audio to OpenAI Whisper, returns { text }.
  */
 export const POST = withApiError(async (req: Request) => {
-  if (!telegramEnabled()) {
+  if (!miniAppEnabled()) {
     return Response.json({ error: "telegram_disabled" }, { status: 503 })
   }
 
@@ -37,7 +37,7 @@ export const POST = withApiError(async (req: Request) => {
   }
 
   const initData = req.headers.get("x-telegram-init-data") ?? ""
-  const verdict = validateInitData(initData, env.TELEGRAM_BOT_TOKEN)
+  const verdict = validateInitData(initData, miniAppBotToken())
   if (!verdict.ok) {
     return Response.json({ error: "unauthorized", reason: verdict.reason }, { status: 401 })
   }

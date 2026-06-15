@@ -13,7 +13,7 @@ import { checkUsage, recordUsage, consumeBonus } from "@/lib/rate-limit"
 import { profileToContextBlock, EMPTY_PROFILE, type ApplicantProfile } from "@/lib/applicant/types"
 import { applicationsToContextBlock, type Application } from "@/lib/applications/types"
 import { languageInstruction } from "@/lib/ai/language"
-import { env, telegramEnabled } from "@/lib/env"
+import { miniAppBotToken, miniAppEnabled } from "@/lib/env"
 import { validateInitData } from "@/lib/telegram/init-data"
 import { resolveTelegramUser } from "@/lib/telegram/resolve-user"
 import { findMission, type MissionId } from "@/lib/agent/missions"
@@ -52,13 +52,13 @@ const schema = z.object({
  */
 export async function POST(req: Request) {
   // Guard: Telegram must be configured
-  if (!telegramEnabled()) {
+  if (!miniAppEnabled()) {
     return Response.json({ error: "telegram_disabled" }, { status: 503 })
   }
 
   // Auth: validate Telegram Mini App initData
   const initData = req.headers.get("x-telegram-init-data") ?? ""
-  const verdict = validateInitData(initData, env.TELEGRAM_BOT_TOKEN)
+  const verdict = validateInitData(initData, miniAppBotToken())
   if (!verdict.ok) {
     return Response.json({ error: "unauthorized", reason: verdict.reason }, { status: 401 })
   }

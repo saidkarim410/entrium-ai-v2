@@ -42,6 +42,9 @@ export const env = {
   get TELEGRAM_WEBHOOK_SECRET() {
     return process.env.TELEGRAM_WEBHOOK_SECRET ?? ""
   },
+  get TELEGRAM_MINIAPP_BOT_TOKEN() {
+    return process.env.TELEGRAM_MINIAPP_BOT_TOKEN ?? ""
+  },
 
   // ── Resend (optional — email digest) ────────────────────────────
   get RESEND_API_KEY() {
@@ -75,6 +78,20 @@ export function stripeEnabled(): boolean {
 /** Check if Telegram bot is wired up */
 export function telegramEnabled(): boolean {
   return Boolean(process.env.TELEGRAM_BOT_TOKEN)
+}
+
+/**
+ * Token the Telegram Mini App validates initData against. Prefers a dedicated
+ * student-bot token (TELEGRAM_MINIAPP_BOT_TOKEN); falls back to the main bot
+ * token so nothing breaks before the dedicated student bot is configured.
+ */
+export function miniAppBotToken(): string {
+  return process.env.TELEGRAM_MINIAPP_BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN || ""
+}
+
+/** Check if the Telegram Mini App bot is wired up */
+export function miniAppEnabled(): boolean {
+  return Boolean(miniAppBotToken())
 }
 
 /** Check if Resend email is wired up */
