@@ -3,8 +3,12 @@ import { getT } from "@/lib/i18n/server"
 import { AGENTS } from "@/lib/agents/registry"
 import { Aurora } from "@/components/landing/animations"
 import { TgReady } from "@/components/tg/tg-ready"
+import { MISSIONS } from "@/lib/agent/missions"
+import { Zap, Briefcase, ShieldCheck, Calendar, type LucideIcon } from "lucide-react"
 
 export const dynamic = "force-dynamic"
+
+const MISSION_ICONS: Record<string, LucideIcon> = { Zap, Briefcase, ShieldCheck, Calendar }
 
 export default async function TgHubPage() {
   const t = await getT()
@@ -26,6 +30,32 @@ export default async function TgHubPage() {
         <p className="mt-2 text-sm text-muted-foreground">Выбери агента — он проведёт за руку</p>
       </header>
 
+      <p className="brand-eyebrow font-mono-label mb-3 text-muted-foreground">Миссии</p>
+      <section className="relative mb-6 space-y-3">
+        {MISSIONS.map((m) => {
+          const Icon = MISSION_ICONS[m.icon] ?? Zap
+          return (
+            <Link
+              key={m.id}
+              href={`/tg/mission/${m.id}`}
+              className="card-hover flex items-start gap-3 rounded-2xl border border-border bg-card p-3"
+            >
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-[var(--brand-red-soft)] text-[var(--brand-red)]">
+                <Icon className="h-5 w-5" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-semibold leading-tight">{m.title}</div>
+                <div className="mt-0.5 text-xs text-muted-foreground">{m.subtitle}</div>
+                <div className="font-mono-label mt-1 text-[10px] text-muted-foreground">
+                  {m.steps.length} шага · {m.duration}
+                </div>
+              </div>
+            </Link>
+          )
+        })}
+      </section>
+
+      <p className="brand-eyebrow font-mono-label mb-3 text-muted-foreground">Агенты</p>
       <section className="relative grid grid-cols-2 gap-3">
         {AGENTS.map((a) => {
           const Icon = a.icon
