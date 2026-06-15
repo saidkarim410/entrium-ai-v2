@@ -84,6 +84,16 @@ export function aiToTelegramHtml(s: string): string {
     .replace(/^#{1,6}\s+/gm, "")
 }
 
+export async function setChatMenuButton(
+  url: string,
+  text = "Открыть Entrium AI",
+): Promise<TelegramSendResult> {
+  if (!telegramEnabled()) return { ok: false, description: "telegram_disabled" }
+  return callBotApi("setChatMenuButton", {
+    menu_button: { type: "web_app", text, web_app: { url } },
+  })
+}
+
 export function generateLinkCode(): string {
   // Short, URL-safe, easy to type
   const chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
