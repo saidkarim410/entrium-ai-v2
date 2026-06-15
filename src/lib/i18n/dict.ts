@@ -31,6 +31,7 @@ export const dict = {
       cv: { title: "CV / Resume Builder", desc: "ATS-friendly CV с impact-метриками для admissions, internships и jobs" },
       cost: { title: "Cost Calculator", desc: "Полная стоимость обучения по странам + AI-стратегия financial aid" },
       reviewer: { title: "Mock Application Reviewer", desc: "AI-симуляция admission officer — финальное review заявки до отправки" },
+      summer: { title: "Летние программы", desc: "Подбор summer schools и pre-college для усиления профиля" },
     },
     auth: {
       login_title: "Войти",
@@ -80,6 +81,7 @@ export const dict = {
       tool_cv: "CV Builder",
       tool_cost: "Калькулятор стоимости",
       tool_reviewer: "Mock Reviewer",
+      tool_summer: "Летние программы",
     },
     chat: {
       empty: "Начни диалог — AI задаст уточняющие вопросы и подготовит ответ под твой контекст.",
@@ -126,6 +128,7 @@ export const dict = {
       cv: { title: "CV / Resume Builder", desc: "ATS-friendly CV with impact metrics for admissions, internships, jobs" },
       cost: { title: "Cost Calculator", desc: "Full study-abroad cost breakdown + AI financial aid strategy" },
       reviewer: { title: "Mock Application Reviewer", desc: "AI admission officer simulation — final review before you submit" },
+      summer: { title: "Summer Programs", desc: "Find summer schools & pre-college programs to strengthen your profile" },
     },
     auth: {
       login_title: "Sign in",
@@ -175,6 +178,7 @@ export const dict = {
       tool_cv: "CV Builder",
       tool_cost: "Cost Calculator",
       tool_reviewer: "Mock Reviewer",
+      tool_summer: "Summer Programs",
     },
     chat: {
       empty: "Start the dialog — AI will ask clarifying questions and tailor the answer to your context.",
@@ -221,6 +225,7 @@ export const dict = {
       cv: { title: "CV / Resume Builder", desc: "Qabul, internship va ish uchun ATS formatdagi CV" },
       cost: { title: "Xarajat kalkulyatori", desc: "To'liq o'qish xarajatlari + AI financial aid strategiyasi" },
       reviewer: { title: "Mock Application Reviewer", desc: "Yuborishdan oldin AI admission officer simulyatori orqali tekshirish" },
+      summer: { title: "Yozgi dasturlar", desc: "Profilni mustahkamlash uchun summer school va pre-college tanlash" },
     },
     auth: {
       login_title: "Kirish",
@@ -270,6 +275,7 @@ export const dict = {
       tool_cv: "CV Builder",
       tool_cost: "Xarajat kalkulyatori",
       tool_reviewer: "Mock Reviewer",
+      tool_summer: "Yozgi dasturlar",
     },
     chat: {
       empty: "Suhbatni boshlang — AI aniqlashtiruvchi savollar beradi va kontekstingizga moslashgan javob tayyorlaydi.",
