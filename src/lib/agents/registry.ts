@@ -1,7 +1,7 @@
 import type { Dict } from "@/lib/i18n/dict"
 import {
   Target, Sparkles, PencilLine, Wand2, Mic, GraduationCap,
-  Award, CalendarRange, FileText, FileUser, Calculator, ShieldCheck, Sun,
+  Award, CalendarRange, FileText, FileUser, Calculator, ShieldCheck, Sun, Languages,
   type LucideIcon,
 } from "lucide-react"
 
@@ -31,6 +31,7 @@ export const AGENTS: Agent[] = [
   { slug: "cost", icon: Calculator, placeholder: "Сколько стоит учёба в Канаде и как снизить расходы?" },
   { slug: "reviewer", icon: ShieldCheck, placeholder: "Проверь мою заявку перед подачей — будь строгим" },
   { slug: "summer", icon: Sun, placeholder: "9 класс, интересуюсь биологией, бюджет до $3000, лето 2027 — что посоветуешь?", isNew: true },
+  { slug: "speaking", icon: Languages, placeholder: "Запиши или впиши свой ответ на английском — разберу по IELTS", isNew: true },
 ]
 
 export function findAgent(slug: string): Agent | undefined {

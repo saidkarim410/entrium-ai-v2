@@ -2,9 +2,9 @@ import { describe, it, expect } from "vitest"
 import { AGENTS, findAgent } from "@/lib/agents/registry"
 
 describe("agents registry", () => {
-  it("has 13 unique agents", () => {
-    expect(AGENTS).toHaveLength(13)
-    expect(new Set(AGENTS.map((a) => a.slug)).size).toBe(13)
+  it("has 14 unique agents", () => {
+    expect(AGENTS).toHaveLength(14)
+    expect(new Set(AGENTS.map((a) => a.slug)).size).toBe(14)
   })
 
   it("findAgent resolves a known slug and rejects unknown", () => {

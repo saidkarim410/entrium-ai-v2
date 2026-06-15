@@ -32,6 +32,7 @@ export const dict = {
       cost: { title: "Cost Calculator", desc: "Полная стоимость обучения по странам + AI-стратегия financial aid" },
       reviewer: { title: "Mock Application Reviewer", desc: "AI-симуляция admission officer — финальное review заявки до отправки" },
       summer: { title: "Летние программы", desc: "Подбор summer schools и pre-college для усиления профиля" },
+      speaking: { title: "Speaking-коуч", desc: "Практика устного английского: разбор по IELTS + образцовый ответ" },
     },
     auth: {
       login_title: "Войти",
@@ -82,6 +83,7 @@ export const dict = {
       tool_cost: "Калькулятор стоимости",
       tool_reviewer: "Mock Reviewer",
       tool_summer: "Летние программы",
+      tool_speaking: "Speaking-коуч",
     },
     chat: {
       empty: "Начни диалог — AI задаст уточняющие вопросы и подготовит ответ под твой контекст.",
@@ -129,6 +131,7 @@ export const dict = {
       cost: { title: "Cost Calculator", desc: "Full study-abroad cost breakdown + AI financial aid strategy" },
       reviewer: { title: "Mock Application Reviewer", desc: "AI admission officer simulation — final review before you submit" },
       summer: { title: "Summer Programs", desc: "Find summer schools & pre-college programs to strengthen your profile" },
+      speaking: { title: "Speaking Coach", desc: "Spoken English practice: IELTS breakdown + model answer" },
     },
     auth: {
       login_title: "Sign in",
@@ -179,6 +182,7 @@ export const dict = {
       tool_cost: "Cost Calculator",
       tool_reviewer: "Mock Reviewer",
       tool_summer: "Summer Programs",
+      tool_speaking: "Speaking Coach",
     },
     chat: {
       empty: "Start the dialog — AI will ask clarifying questions and tailor the answer to your context.",
@@ -226,6 +230,7 @@ export const dict = {
       cost: { title: "Xarajat kalkulyatori", desc: "To'liq o'qish xarajatlari + AI financial aid strategiyasi" },
       reviewer: { title: "Mock Application Reviewer", desc: "Yuborishdan oldin AI admission officer simulyatori orqali tekshirish" },
       summer: { title: "Yozgi dasturlar", desc: "Profilni mustahkamlash uchun summer school va pre-college tanlash" },
+      speaking: { title: "Speaking-kouч", desc: "Inglizcha og'zaki nutq mashqi: IELTS tahlili + namunali javob" },
     },
     auth: {
       login_title: "Kirish",
@@ -276,6 +281,7 @@ export const dict = {
       tool_cost: "Xarajat kalkulyatori",
       tool_reviewer: "Mock Reviewer",
       tool_summer: "Yozgi dasturlar",
+      tool_speaking: "Speaking-kouч",
     },
     chat: {
       empty: "Suhbatni boshlang — AI aniqlashtiruvchi savollar beradi va kontekstingizga moslashgan javob tayyorlaydi.",

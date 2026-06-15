@@ -22,7 +22,7 @@ export const maxDuration = 60
 
 const TOOL_KEYS = [
   "profile", "analyzer", "tracker", "essay", "humanizer", "interview",
-  "scholarship", "university", "recommendation", "cv", "cost", "reviewer", "counselor", "summer",
+  "scholarship", "university", "recommendation", "cv", "cost", "reviewer", "counselor", "summer", "speaking",
 ] as const
 
 const bodySchema = z.object({
