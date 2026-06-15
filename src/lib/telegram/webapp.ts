@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useState } from "react"
+import { useEffect, useSyncExternalStore } from "react"
 
 export type TgWebApp = {
   initData: string
@@ -15,24 +15,30 @@ declare global {
   }
 }
 
+function getWebApp(): TgWebApp | null {
+  return (typeof window !== "undefined" && window.Telegram?.WebApp) || null
+}
+
+// initData is injected by Telegram at launch and never changes afterwards, so
+// there is nothing to subscribe to — a no-op subscription is correct.
+const subscribeNoop = () => () => {}
+
 export function useTelegram() {
-  const [webApp, setWebApp] = useState<TgWebApp | null>(null)
-  const [ready, setReady] = useState(false)
+  // Server snapshots ("" / false) keep SSR + hydration consistent; the real
+  // values resolve on the client without a setState-in-effect cascade.
+  const initData = useSyncExternalStore(subscribeNoop, () => getWebApp()?.initData ?? "", () => "")
+  const ready = useSyncExternalStore(subscribeNoop, () => true, () => false)
 
   useEffect(() => {
-    const wa = window.Telegram?.WebApp ?? null
-    if (wa) {
-      wa.ready?.()
-      wa.expand?.()
-    }
-    setWebApp(wa)
-    setReady(true)
+    const wa = getWebApp()
+    wa?.ready?.()
+    wa?.expand?.()
   }, [])
 
   return {
-    webApp,
+    webApp: getWebApp(),
     ready,
-    initData: webApp?.initData ?? "",
-    colorScheme: webApp?.colorScheme ?? ("light" as const),
+    initData,
+    colorScheme: getWebApp()?.colorScheme ?? ("light" as const),
   }
 }
