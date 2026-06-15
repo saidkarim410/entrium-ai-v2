@@ -23,7 +23,7 @@ beforeEach(() => {
 })
 
 describe("resolveTelegramUser", () => {
-  it("returns the existing profile id when linked by telegram_user_id", async () => {
+  it("returns the existing profile id when linked by telegram_chat_id", async () => {
     maybeSingle.mockResolvedValueOnce({
       data: { id: "uuid-1", tier: "pro", applicant_data: null, language: "en" },
       error: null,
@@ -35,9 +35,7 @@ describe("resolveTelegramUser", () => {
   })
 
   it("provisions a new auth user when none is linked", async () => {
-    maybeSingle
-      .mockResolvedValueOnce({ data: null, error: null }) // by telegram_user_id
-      .mockResolvedValueOnce({ data: null, error: null }) // by telegram_chat_id
+    maybeSingle.mockResolvedValueOnce({ data: null, error: null }) // lookup by telegram_chat_id → not found
     createUser.mockResolvedValueOnce({ data: { user: { id: "uuid-new" } }, error: null })
     const r = await resolveTelegramUser({ id: 8, username: "z" })
     expect(createUser).toHaveBeenCalledOnce()
