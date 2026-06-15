@@ -29,11 +29,12 @@ export const config = {
      *   - api/cron/*            → CRON_SECRET (Vercel-injected)
      *   - api/stripe/webhook    → Stripe signature
      *   - api/telegram/webhook  → TELEGRAM_WEBHOOK_SECRET
+     *   - tg, api/tg            → Telegram Mini App (initData HMAC, no cookie)
      *   - api/calendar.ics      → HMAC token (calendar clients have no cookie)
      *   - api/email/unsubscribe → HMAC token (mail-client clicks)
      *   - monitoring            → Sentry tunnel (no auth needed)
      *   - opengraph-image       → public OG image
      */
-    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|api/cron|api/stripe/webhook|api/telegram/webhook|api/calendar\\.ics|api/email/unsubscribe|monitoring|opengraph-image|r/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|api/cron|api/stripe/webhook|api/telegram/webhook|api/tg(?:/|$)|tg(?:/|$)|api/calendar\\.ics|api/email/unsubscribe|monitoring|opengraph-image|r/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 }
