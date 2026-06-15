@@ -163,8 +163,6 @@ export async function POST(req: Request) {
             }
           }
 
-          let stepText = ""
-
           const result = streamText({
             model,
             system: systemPrompt,
@@ -172,7 +170,6 @@ export async function POST(req: Request) {
           })
 
           for await (const delta of result.textStream) {
-            stepText += delta
             emit({ type: "delta", step: stepNum, text: delta })
           }
 
