@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useSyncExternalStore } from "react"
+import { useEffect, useState } from "react"
 
 export type TgWebApp = {
   initData: string
@@ -19,26 +19,36 @@ function getWebApp(): TgWebApp | null {
   return (typeof window !== "undefined" && window.Telegram?.WebApp) || null
 }
 
-// initData is injected by Telegram at launch and never changes afterwards, so
-// there is nothing to subscribe to — a no-op subscription is correct.
-const subscribeNoop = () => () => {}
+type State = { initData: string; ready: boolean }
 
 export function useTelegram() {
-  // Server snapshots ("" / false) keep SSR + hydration consistent; the real
-  // values resolve on the client without a setState-in-effect cascade.
-  const initData = useSyncExternalStore(subscribeNoop, () => getWebApp()?.initData ?? "", () => "")
-  const ready = useSyncExternalStore(subscribeNoop, () => true, () => false)
+  const [state, setState] = useState<State>({ initData: "", ready: false })
 
   useEffect(() => {
-    const wa = getWebApp()
-    wa?.ready?.()
-    wa?.expand?.()
+    let tries = 0
+    // The Telegram SDK script can finish loading slightly after hydration, and
+    // initData is only populated once it does. Poll the bridge until the signed
+    // launch data appears (or give up after ~6s and let the screen show a hint).
+    const id = window.setInterval(() => {
+      const wa = getWebApp()
+      tries += 1
+      if (wa && wa.initData) {
+        wa.ready?.()
+        wa.expand?.()
+        setState({ initData: wa.initData, ready: true })
+        window.clearInterval(id)
+      } else if (tries >= 60) {
+        setState((s) => (s.ready ? s : { ...s, ready: true }))
+        window.clearInterval(id)
+      }
+    }, 100)
+    return () => window.clearInterval(id)
   }, [])
 
   return {
     webApp: getWebApp(),
-    ready,
-    initData,
+    ready: state.ready,
+    initData: state.initData,
     colorScheme: getWebApp()?.colorScheme ?? ("light" as const),
   }
 }

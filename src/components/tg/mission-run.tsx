@@ -34,7 +34,7 @@ export function MissionRun({
   if (!initData)
     return (
       <div className="p-6 text-sm text-muted-foreground">
-        Открой это приложение через бота <b>@entriumleedbot</b>.
+        Открой это приложение через бота <b>@entriumcouselorbot</b>.
       </div>
     )
 
