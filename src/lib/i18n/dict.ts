@@ -33,6 +33,7 @@ export const dict = {
       reviewer: { title: "Mock Application Reviewer", desc: "AI-симуляция admission officer — финальное review заявки до отправки" },
       summer: { title: "Летние программы", desc: "Подбор summer schools и pre-college для усиления профиля" },
       speaking: { title: "Speaking-коуч", desc: "Практика устного английского: разбор по IELTS + образцовый ответ" },
+      research: { title: "Научное письмо", desc: "Помогает писать статьи и дипломы: структура, методология, стиль, ссылки" },
     },
     auth: {
       login_title: "Войти",
@@ -84,6 +85,7 @@ export const dict = {
       tool_reviewer: "Mock Reviewer",
       tool_summer: "Летние программы",
       tool_speaking: "Speaking-коуч",
+      tool_research: "Научное письмо",
     },
     chat: {
       empty: "Начни диалог — AI задаст уточняющие вопросы и подготовит ответ под твой контекст.",
@@ -132,6 +134,7 @@ export const dict = {
       reviewer: { title: "Mock Application Reviewer", desc: "AI admission officer simulation — final review before you submit" },
       summer: { title: "Summer Programs", desc: "Find summer schools & pre-college programs to strengthen your profile" },
       speaking: { title: "Speaking Coach", desc: "Spoken English practice: IELTS breakdown + model answer" },
+      research: { title: "Academic Writing", desc: "Guides you through writing papers and theses: structure, methodology, style, citations" },
     },
     auth: {
       login_title: "Sign in",
@@ -183,6 +186,7 @@ export const dict = {
       tool_reviewer: "Mock Reviewer",
       tool_summer: "Summer Programs",
       tool_speaking: "Speaking Coach",
+      tool_research: "Academic Writing",
     },
     chat: {
       empty: "Start the dialog — AI will ask clarifying questions and tailor the answer to your context.",
@@ -231,6 +235,7 @@ export const dict = {
       reviewer: { title: "Mock Application Reviewer", desc: "Yuborishdan oldin AI admission officer simulyatori orqali tekshirish" },
       summer: { title: "Yozgi dasturlar", desc: "Profilni mustahkamlash uchun summer school va pre-college tanlash" },
       speaking: { title: "Speaking-kouч", desc: "Inglizcha og'zaki nutq mashqi: IELTS tahlili + namunali javob" },
+      research: { title: "Ilmiy yozuv", desc: "Maqola va diplomlar yozishga yordam: tuzilish, metodologiya, uslub, manbalar" },
     },
     auth: {
       login_title: "Kirish",
@@ -282,6 +287,7 @@ export const dict = {
       tool_reviewer: "Mock Reviewer",
       tool_summer: "Yozgi dasturlar",
       tool_speaking: "Speaking-kouч",
+      tool_research: "Ilmiy yozuv",
     },
     chat: {
       empty: "Suhbatni boshlang — AI aniqlashtiruvchi savollar beradi va kontekstingizga moslashgan javob tayyorlaydi.",
