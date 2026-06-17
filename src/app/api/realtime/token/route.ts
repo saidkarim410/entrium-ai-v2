@@ -8,7 +8,7 @@ import { profileToContextBlock } from "@/lib/applicant/types"
 export const runtime = "nodejs"
 export const maxDuration = 30
 
-const REALTIME_MODEL = "gpt-4o-realtime-preview"
+const REALTIME_MODEL = "gpt-realtime"
 
 const schema = z.object({
   uni: z.string().min(1).max(200),
@@ -77,23 +77,29 @@ export async function POST(req: Request) {
     profileBlock ? `Candidate profile (use it but don't read it back):\n${profileBlock}` : "",
   ].filter(Boolean).join("\n")
 
-  const sessionRes = await fetch("https://api.openai.com/v1/realtime/sessions", {
+  const sessionRes = await fetch("https://api.openai.com/v1/realtime/client_secrets", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${env.OPENAI_API_KEY}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: REALTIME_MODEL,
-      voice,
-      instructions,
-      modalities: ["audio", "text"],
-      input_audio_transcription: { model: "whisper-1" },
-      turn_detection: {
-        type: "server_vad",
-        threshold: 0.5,
-        prefix_padding_ms: 300,
-        silence_duration_ms: 700,
+      session: {
+        type: "realtime",
+        model: REALTIME_MODEL,
+        instructions,
+        audio: {
+          input: {
+            transcription: { model: "whisper-1" },
+            turn_detection: {
+              type: "server_vad",
+              threshold: 0.5,
+              prefix_padding_ms: 300,
+              silence_duration_ms: 700,
+            },
+          },
+          output: { voice },
+        },
       },
     }),
   })
@@ -120,9 +126,9 @@ export async function POST(req: Request) {
   }).catch(() => null)
 
   return Response.json({
-    sessionId: session.id,
-    token: session.client_secret?.value,
-    expiresAt: session.client_secret?.expires_at,
+    sessionId: session.session?.id ?? session.id,
+    token: session.value,
+    expiresAt: session.expires_at,
     model: REALTIME_MODEL,
   })
 }

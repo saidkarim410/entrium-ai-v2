@@ -116,7 +116,6 @@ export function VoiceSession({
         sendDC({
           type: "response.create",
           response: {
-            modalities: ["audio", "text"],
             instructions: "Begin the interview by greeting the candidate and asking your first question. Keep it warm and brief.",
           },
         })
@@ -135,7 +134,7 @@ export function VoiceSession({
       await pc.setLocalDescription(offer)
 
       const sdpRes = await fetch(
-        `https://api.openai.com/v1/realtime?model=${encodeURIComponent(tokenJson.model)}`,
+        "https://api.openai.com/v1/realtime/calls",
         {
           method: "POST",
           headers: {
@@ -169,9 +168,11 @@ export function VoiceSession({
   function handleRealtimeEvent(event: { type: string; [k: string]: unknown }) {
     switch (event.type) {
       case "response.audio.start":
+      case "response.output_audio.delta":
         setAiSpeaking(true)
         break
       case "response.audio.done":
+      case "response.output_audio.done":
       case "response.done":
         setAiSpeaking(false)
         break
@@ -189,13 +190,15 @@ export function VoiceSession({
         break
       }
 
-      case "response.audio_transcript.delta": {
+      case "response.audio_transcript.delta":
+      case "response.output_audio_transcript.delta": {
         const itemId = String(event.item_id ?? event.response_id ?? "ai")
         const delta = String(event.delta ?? "")
         appendDelta("assistant", itemId, delta, true)
         break
       }
-      case "response.audio_transcript.done": {
+      case "response.audio_transcript.done":
+      case "response.output_audio_transcript.done": {
         const itemId = String(event.item_id ?? event.response_id ?? "ai")
         const text = String(event.transcript ?? "")
         finalizeTranscript("assistant", itemId, text)
@@ -245,7 +248,6 @@ export function VoiceSession({
     sendDC({
       type: "response.create",
       response: {
-        modalities: ["audio", "text"],
         instructions:
           "Drop the interviewer role NOW. As an admission coach, give specific feedback: one biggest strength of the candidate, two weaknesses, and one rewritten sample answer for their weakest moment. Keep it under 90 seconds.",
       },
@@ -357,7 +359,7 @@ export function VoiceSession({
                       {aiSpeaking ? "AI говорит..." : muted ? "Микрофон выключен" : "Слушаю тебя"}
                     </p>
                     <p className="font-mono-label text-[10px] text-cream-3">
-                      WebRTC · OpenAI Realtime · gpt-4o-realtime
+                      WebRTC · OpenAI Realtime · gpt-realtime
                     </p>
                   </div>
                 </div>
