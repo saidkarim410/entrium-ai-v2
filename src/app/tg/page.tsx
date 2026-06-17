@@ -4,7 +4,7 @@ import { AGENTS } from "@/lib/agents/registry"
 import { Aurora } from "@/components/landing/animations"
 import { TgReady } from "@/components/tg/tg-ready"
 import { MISSIONS } from "@/lib/agent/missions"
-import { Zap, Briefcase, ShieldCheck, Calendar, type LucideIcon } from "lucide-react"
+import { Zap, Briefcase, ShieldCheck, Calendar, UserPen, type LucideIcon } from "lucide-react"
 
 export const dynamic = "force-dynamic"
 
@@ -29,6 +29,23 @@ export default async function TgHubPage() {
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">Выбери агента — он проведёт за руку</p>
       </header>
+
+      {/* Profile entry card */}
+      <Link
+        href="/tg/profile"
+        className="card-hover mb-5 flex w-full items-center gap-3 rounded-2xl border border-border bg-card p-4"
+      >
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-[var(--brand-red-soft)] text-[var(--brand-red)]">
+          <UserPen className="h-5 w-5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="text-sm font-bold leading-tight">Мой профиль</div>
+          <div className="mt-0.5 text-xs text-muted-foreground">
+            Заполни о себе — агенты ответят персонально
+          </div>
+        </div>
+        <span className="text-muted-foreground">→</span>
+      </Link>
 
       <p className="brand-eyebrow font-mono-label mb-3 text-muted-foreground">Миссии</p>
       <section className="relative mb-6 space-y-3">
