@@ -10,7 +10,7 @@ import {
 } from "@/lib/ai/rag"
 import { supabaseAdmin } from "@/lib/supabase/admin"
 import { checkUsage, recordUsage, consumeBonus } from "@/lib/rate-limit"
-import { profileToContextBlock, EMPTY_PROFILE, type ApplicantProfile } from "@/lib/applicant/types"
+import { profileToContextBlock, normalizeApplicantProfile } from "@/lib/applicant/types"
 import { applicationsToContextBlock, type Application } from "@/lib/applications/types"
 import { languageInstruction } from "@/lib/ai/language"
 import { miniAppBotToken, miniAppEnabled } from "@/lib/env"
@@ -102,7 +102,7 @@ export async function POST(req: Request) {
   }
 
   // Fetch profile + applications via admin client (no cookie session)
-  const applicant = (resolved.applicantData as ApplicantProfile | null) ?? EMPTY_PROFILE
+  const applicant = normalizeApplicantProfile(resolved.applicantData)
   const profileBlock = profileToContextBlock(applicant)
 
   const { data: appsRows } = await supabaseAdmin

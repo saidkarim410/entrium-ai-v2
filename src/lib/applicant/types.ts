@@ -56,6 +56,22 @@ export const EMPTY_PROFILE: ApplicantProfile = {
 }
 
 /**
+ * Normalize raw applicant_data — which can be null, {}, or a partial object
+ * missing the personal/academic/goals sub-objects — into a safe ApplicantProfile.
+ * Mirrors the defensive merge in getApplicantProfile so AI routes that read the
+ * profile via the admin client never throw "Cannot read properties of undefined".
+ */
+export function normalizeApplicantProfile(raw: unknown): ApplicantProfile {
+  const p = (raw && typeof raw === "object" ? raw : {}) as Partial<ApplicantProfile>
+  return {
+    ...p,
+    personal: { ...EMPTY_PROFILE.personal, ...(p.personal ?? {}) },
+    academic: { ...EMPTY_PROFILE.academic, ...(p.academic ?? {}) },
+    goals: { ...EMPTY_PROFILE.goals, ...(p.goals ?? {}) },
+  } as ApplicantProfile
+}
+
+/**
  * Calculate completeness percentage to show onboarding progress.
  */
 export function profileCompleteness(p: ApplicantProfile): number {
