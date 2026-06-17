@@ -145,7 +145,8 @@ export function VoiceSession({
         }
       )
       if (!sdpRes.ok) {
-        throw new Error(`Realtime SDP exchange ${sdpRes.status}`)
+        const errBody = await sdpRes.text().catch(() => "")
+        throw new Error(`Realtime SDP exchange ${sdpRes.status}: ${errBody.slice(0, 250)}`)
       }
       const answerSdp = await sdpRes.text()
       await pc.setRemoteDescription({ type: "answer", sdp: answerSdp })
