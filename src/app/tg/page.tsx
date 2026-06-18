@@ -4,6 +4,7 @@ import { AGENTS } from "@/lib/agents/registry"
 import { Aurora } from "@/components/landing/animations"
 import { TgReady } from "@/components/tg/tg-ready"
 import { MISSIONS } from "@/lib/agent/missions"
+import { NotificationsToggle } from "@/components/tg/notifications-toggle"
 import { Zap, Briefcase, ShieldCheck, Calendar, UserPen, type LucideIcon } from "lucide-react"
 
 export const dynamic = "force-dynamic"
@@ -46,6 +47,8 @@ export default async function TgHubPage() {
         </div>
         <span className="text-muted-foreground">→</span>
       </Link>
+
+      <NotificationsToggle />
 
       <p className="brand-eyebrow font-mono-label mb-3 text-muted-foreground">Миссии</p>
       <section className="relative mb-6 space-y-3">

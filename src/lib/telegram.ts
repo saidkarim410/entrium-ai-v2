@@ -1,4 +1,4 @@
-import { env, telegramEnabled } from "@/lib/env"
+import { env, telegramEnabled, miniAppBotToken } from "@/lib/env"
 
 const TG_API = "https://api.telegram.org"
 
@@ -15,18 +15,66 @@ export async function sendTelegramMessage(
   opts?: { reply_to_message_id?: number; disable_notification?: boolean }
 ): Promise<TelegramSendResult> {
   if (!telegramEnabled()) return { ok: false, description: "telegram_disabled" }
-  // Telegram limits messages to 4096 chars — chunk if needed
+  return sendViaToken(chatId, text, env.TELEGRAM_BOT_TOKEN, opts)
+}
+
+/**
+ * Sends a proactive reminder to a STUDENT. Tries the Mini App bot
+ * (@entriumcouselorbot) first — that is where students actually pressed Start —
+ * and falls back to the main bot (@entriumleedbot) for users who only linked
+ * through the web /start flow. A given chat_id can only be messaged by a bot
+ * the user has started, so attempting both maximises real delivery.
+ * Returns the first successful result (tagged with `via`), or the last error.
+ */
+export async function sendStudentReminder(
+  chatId: string,
+  text: string,
+  opts?: { reply_to_message_id?: number; disable_notification?: boolean }
+): Promise<TelegramSendResult & { via?: "miniapp" | "main" }> {
+  const studentToken = miniAppBotToken()
+  const mainToken = env.TELEGRAM_BOT_TOKEN
+
+  if (studentToken) {
+    const r = await sendViaToken(chatId, text, studentToken, opts)
+    if (r.ok) return { ...r, via: "miniapp" }
+    // Student bot couldn't reach them — fall back to the main bot if it's a
+    // genuinely different token (otherwise we'd just repeat the same failure).
+    if (mainToken && mainToken !== studentToken) {
+      const r2 = await sendViaToken(chatId, text, mainToken, opts)
+      return r2.ok ? { ...r2, via: "main" } : r2
+    }
+    return r
+  }
+  if (mainToken) {
+    const r = await sendViaToken(chatId, text, mainToken, opts)
+    return { ...r, via: "main" }
+  }
+  return { ok: false, description: "no_token" }
+}
+
+/** Chunk + send `text` through a specific bot token (Telegram caps at 4096). */
+async function sendViaToken(
+  chatId: string,
+  text: string,
+  token: string,
+  opts?: { reply_to_message_id?: number; disable_notification?: boolean }
+): Promise<TelegramSendResult> {
+  if (!token) return { ok: false, description: "no_token" }
   const MAX = 4000
   let lastResult: TelegramSendResult = { ok: true }
   for (let i = 0; i < text.length; i += MAX) {
     const chunk = text.slice(i, i + MAX)
-    lastResult = await callBotApi("sendMessage", {
-      chat_id: chatId,
-      text: chunk,
-      parse_mode: "HTML",
-      disable_web_page_preview: true,
-      ...opts,
-    })
+    lastResult = await callBotApi(
+      "sendMessage",
+      {
+        chat_id: chatId,
+        text: chunk,
+        parse_mode: "HTML",
+        disable_web_page_preview: true,
+        ...opts,
+      },
+      token
+    )
     if (!lastResult.ok) return lastResult
   }
   return lastResult
@@ -49,12 +97,16 @@ export async function setTelegramWebhook(url: string, secret: string) {
   })
 }
 
-async function callBotApi(method: string, body: Record<string, unknown>): Promise<TelegramSendResult> {
-  const token = env.TELEGRAM_BOT_TOKEN
-  if (!token) return { ok: false, description: "no_token" }
+async function callBotApi(
+  method: string,
+  body: Record<string, unknown>,
+  token?: string
+): Promise<TelegramSendResult> {
+  const useToken = token || env.TELEGRAM_BOT_TOKEN
+  if (!useToken) return { ok: false, description: "no_token" }
 
   try {
-    const res = await fetch(`${TG_API}/bot${token}/${method}`, {
+    const res = await fetch(`${TG_API}/bot${useToken}/${method}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
