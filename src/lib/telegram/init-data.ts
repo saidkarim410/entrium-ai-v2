@@ -12,7 +12,7 @@ export type InitDataResult =
   | { ok: true; user: TelegramUser; authDate: number }
   | { ok: false; reason: "missing" | "bad_hash" | "expired" | "no_user" }
 
-const DEFAULT_MAX_AGE = 24 * 60 * 60
+const DEFAULT_MAX_AGE = 60 * 60 // M2: 1h (was 24h); initData is a per-request bearer credential
 
 export function validateInitData(
   initData: string,
@@ -43,7 +43,14 @@ export function validateInitData(
   }
 
   const authDate = Number(params.get("auth_date") ?? 0)
-  if (!authDate || nowSeconds - authDate > maxAgeSeconds) return { ok: false, reason: "expired" }
+  // M2: reject missing, too-old, AND future-dated auth_date (replay / clock-forge guard)
+  if (
+    !authDate ||
+    nowSeconds - authDate > maxAgeSeconds ||
+    authDate > nowSeconds + 60
+  ) {
+    return { ok: false, reason: "expired" }
+  }
 
   const userRaw = params.get("user")
   if (!userRaw) return { ok: false, reason: "no_user" }

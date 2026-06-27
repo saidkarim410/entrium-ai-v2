@@ -25,7 +25,10 @@ function verifyTelegramAuth(data: Record<string, string | number>): boolean {
     .join("\n")
   const secretKey = crypto.createHash("sha256").update(BOT_TOKEN).digest()
   const computed = crypto.createHmac("sha256", secretKey).update(checkString).digest("hex")
-  return computed === hash
+  // M3: constant-time compare (was ===, a timing oracle on the auth hash)
+  const a = Buffer.from(computed)
+  const b = Buffer.from(String(hash))
+  return a.length === b.length && crypto.timingSafeEqual(a, b)
 }
 
 export async function POST(req: Request) {

@@ -161,6 +161,24 @@ async function syncSubscription(sub: Stripe.Subscription) {
   }
 
   await supabaseAdmin.from("profiles").update(update).eq("id", userId)
+
+  // L4/B-4: mirror into entrium.subscriptions so the admin panel + any "who actually
+  // paid" check sees authoritative subscription state, not just profiles.tier.
+  const priceId = sub.items?.data?.[0]?.price?.id ?? null
+  if (priceId && proUntilIso) {
+    await supabaseAdmin.from("subscriptions").upsert(
+      {
+        user_id: userId,
+        stripe_subscription_id: sub.id,
+        stripe_price_id: priceId,
+        status: sub.status,
+        current_period_end: proUntilIso,
+        cancel_at_period_end: sub.cancel_at_period_end ?? false,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "stripe_subscription_id" },
+    )
+  }
 }
 
 async function deactivateSubscription(sub: Stripe.Subscription) {

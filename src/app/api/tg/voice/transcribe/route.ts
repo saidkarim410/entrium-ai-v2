@@ -102,7 +102,7 @@ export const POST = withApiError(async (req: Request) => {
     const errText = await oaRes.text()
     console.error("Whisper (tg) failed:", errText)
     return Response.json(
-      { error: "whisper_failed", message: errText.slice(0, 200) },
+      { error: "whisper_failed", message: "Transcription failed" }, // M7: errText logged server-side only
       { status: 502 },
     )
   }

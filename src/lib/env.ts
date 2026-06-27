@@ -60,13 +60,16 @@ export const env = {
     // setup ergonomic, but in production we hard-fail.
     const secret = process.env.EMAIL_TOKEN_SECRET
     if (secret) return secret
-    if (process.env.NODE_ENV === "production") {
+    // M1: hard-fail on ANY deployed env (production OR Vercel preview). Never sign
+    // emailed HMAC tokens with the service-role key — if either leaks, both are.
+    if (process.env.NODE_ENV === "production" || process.env.VERCEL_ENV) {
       throw new Error(
-        "EMAIL_TOKEN_SECRET is required in production. " +
+        "EMAIL_TOKEN_SECRET is required on all deployed environments. " +
         "Generate with: openssl rand -base64 64",
       )
     }
-    return process.env.SUPABASE_SERVICE_ROLE_KEY ?? ""
+    // Local dev only — a static dev constant, NOT the service-role key.
+    return "dev-only-email-token-secret"
   },
 }
 

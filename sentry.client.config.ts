@@ -9,6 +9,7 @@ if (dsn) {
     tracesSampleRate: 0.1,
     replaysSessionSampleRate: 0,
     replaysOnErrorSampleRate: 0.1,
-    integrations: [Sentry.replayIntegration({ maskAllText: false, blockAllMedia: false })],
+    // SECURITY (H7): mask all text/media so applicant PII never reaches Sentry replays.
+    integrations: [Sentry.replayIntegration({ maskAllText: true, blockAllMedia: true })],
   })
 }

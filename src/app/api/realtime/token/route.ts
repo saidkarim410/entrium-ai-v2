@@ -108,7 +108,7 @@ export async function POST(req: Request) {
     const errText = await sessionRes.text()
     console.error("Realtime session create failed:", errText)
     return Response.json(
-      { error: "realtime_failed", message: errText.slice(0, 300) },
+      { error: "realtime_failed", message: "Realtime session failed" }, // M7: errText logged server-side only
       { status: 502 }
     )
   }

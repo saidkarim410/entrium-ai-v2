@@ -94,6 +94,7 @@ export async function POST(req: Request) {
 
   const result = streamText({
     model,
+    maxOutputTokens: 3000, // H5: cap free-form output
     system,
     messages: await convertToModelMessages(uiMessages),
     onFinish: async ({ usage: aiUsage }) => {

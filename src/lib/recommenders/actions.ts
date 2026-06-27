@@ -254,13 +254,39 @@ export async function finalizeRecommenderSubmission(params: {
     return { ok: false, error: "Invalid path" }
   }
 
+  // L5: don't trust the client-supplied mimeType/size — re-stat the stored object and
+  // enforce a content-type allow-list, so a spoofed "PDF" (e.g. HTML/SVG) can't become
+  // stored-XSS if ever served same-origin.
+  const ALLOWED_MIME = new Set([
+    "application/pdf",
+    "image/png",
+    "image/jpeg",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ])
+  const slash = params.path.lastIndexOf("/")
+  const folder = params.path.slice(0, slash)
+  const objName = params.path.slice(slash + 1)
+  const { data: objs } = await supabaseAdmin.storage
+    .from("documents")
+    .list(folder, { search: objName, limit: 1 })
+  const meta = objs?.find((o) => o.name === objName)?.metadata as
+    | { mimetype?: string; size?: number }
+    | undefined
+  const realMime = meta?.mimetype ?? params.mimeType
+  const realSize = meta?.size ?? params.size
+  if (!ALLOWED_MIME.has(realMime)) {
+    await supabaseAdmin.storage.from("documents").remove([params.path])
+    return { ok: false, error: "Unsupported file type" }
+  }
+
   await supabaseAdmin.from("documents").insert({
     user_id: row.user_id,
     storage_path: params.path,
     kind: "recommendation",
     label: `${row.recommender_name} — ${params.label}`,
-    size_bytes: params.size,
-    mime_type: params.mimeType,
+    size_bytes: realSize,
+    mime_type: realMime,
     recommender_invite_id: row.id,
   })
 

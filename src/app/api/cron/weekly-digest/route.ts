@@ -117,7 +117,7 @@ export async function GET(req: Request) {
         unreadNotifs: unreadNotifs ?? 0,
         weekRunCount: weekRunCount ?? 0,
         topRecommendation: recommendation,
-        unsubscribeUrl: `${SITE}/api/email/unsubscribe?token=${signToken(userId, "unsubscribe")}`,
+        unsubscribeUrl: `${SITE}/api/email/unsubscribe?token=${signToken(userId, "unsubscribe", 60 * 60 * 24 * 90)}`,
         siteUrl: SITE,
       }
 

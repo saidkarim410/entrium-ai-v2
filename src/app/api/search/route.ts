@@ -1,6 +1,7 @@
 import { z } from "zod"
 import { supabaseAdmin } from "@/lib/supabase/admin"
 import { getCurrentUser } from "@/lib/supabase/server"
+import { checkRateLimit } from "@/lib/rate-limit"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -21,6 +22,10 @@ export type SearchResult = {
 export async function POST(req: Request) {
   const user = await getCurrentUser()
   if (!user) return Response.json({ error: "unauthorized" }, { status: 401 })
+
+  // H4: rate-limit — search is cheap per call but fans out to 4 DB queries.
+  const within = await checkRateLimit(`search:${user.id}`, 20, 10)
+  if (!within) return Response.json({ error: "rate_limited" }, { status: 429 })
 
   const body = await req.json().catch(() => null)
   const parsed = Body.safeParse(body)

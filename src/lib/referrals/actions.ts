@@ -184,21 +184,10 @@ export async function awardReferralOnCompletion(referredUserId: string): Promise
 
   if (!profile?.referred_by) return { awarded: false }
 
-  // Increment referrer bonus_credits atomically
-  const { data: ref } = await supabaseAdmin
-    .from("profiles")
-    .select("bonus_credits")
-    .eq("id", profile.referred_by)
-    .maybeSingle()
-  if (!ref) return { awarded: false }
-
-  const newBonus = ((ref.bonus_credits as number | null) ?? 0) + REWARD_CREDITS
-  await supabaseAdmin
-    .from("profiles")
-    .update({ bonus_credits: newBonus })
-    .eq("id", profile.referred_by)
-
-  // Notify referrer (idempotent via dedup_key on user+referredId)
+  // L3/B-3: dedup FIRST, then credit. Previously the credit was applied BEFORE the
+  // dedup check, so a repeated completion call double-credited the referrer (and the
+  // increment was a non-atomic read-then-write). Now the unique dedup_key gates the
+  // credit, and the credit itself is an atomic RPC.
   const r = await createNotification({
     userId: profile.referred_by as string,
     type: "referral",
@@ -208,8 +197,14 @@ export async function awardReferralOnCompletion(referredUserId: string): Promise
     dedupKey: `ref_completed:${referredUserId}`,
   })
 
-  // If the dedup hit (notification already existed) → don't double-credit
+  // If the dedup hit (notification already existed) → don't credit at all.
   if (!r.inserted) return { awarded: false }
+
+  // Atomic increment — no read-then-write race.
+  await supabaseAdmin.rpc("award_bonus_credits", {
+    uid: profile.referred_by,
+    amount: REWARD_CREDITS,
+  })
 
   revalidatePath("/refer")
   revalidatePath("/dashboard")

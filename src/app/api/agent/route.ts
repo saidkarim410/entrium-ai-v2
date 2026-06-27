@@ -146,6 +146,7 @@ export async function POST(req: Request) {
 
           const result = streamText({
             model,
+            maxOutputTokens: 3000, // H5: cap per-step output
             system: systemPrompt,
             messages: [{ role: "user", content: userPrompt }],
           })

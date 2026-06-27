@@ -147,11 +147,14 @@ export async function setChatMenuButton(
 }
 
 export function generateLinkCode(): string {
-  // Short, URL-safe, easy to type
+  // C5: CSPRNG (was Math.random — predictable; it fed the link-code takeover path).
+  // Short, URL-safe, easy to type.
   const chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
+  const bytes = new Uint8Array(8)
+  globalThis.crypto.getRandomValues(bytes)
   let out = ""
   for (let i = 0; i < 8; i++) {
-    out += chars.charAt(Math.floor(Math.random() * chars.length))
+    out += chars.charAt(bytes[i] % chars.length)
   }
   return out
 }

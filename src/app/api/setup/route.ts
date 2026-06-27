@@ -1,6 +1,7 @@
 import crypto from "node:crypto"
 import { z } from "zod"
 import { getCurrentUser } from "@/lib/supabase/server"
+import { requireAdminApi } from "@/lib/admin/auth"
 import { env } from "@/lib/env"
 import { SETUP_MIGRATIONS } from "@/lib/setup/migrations-data"
 
@@ -22,6 +23,9 @@ const SITE_URL = (env.NEXT_PUBLIC_SITE_URL ?? "https://entrium-ai-v2.vercel.app"
 const VERCEL_PROJECT_NAME = "entrium-ai-v2"
 
 export async function POST(req: Request) {
+  // SECURITY (C2): privileged provisioning endpoint — admins only.
+  const denied = await requireAdminApi()
+  if (denied) return denied
   const user = await getCurrentUser()
   if (!user) {
     return Response.json({ success: false, steps: [], message: "Unauthorized" }, { status: 401 })

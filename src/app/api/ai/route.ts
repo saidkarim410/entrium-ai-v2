@@ -20,7 +20,6 @@ const requestSchema = z.object({
     "humanizer", "interview", "scholarship", "university",
     "recommendation", "cv", "cost", "reviewer", "counselor",
   ]) satisfies z.ZodType<ToolKey>,
-  system_override: z.string().optional(),
   user: z.string().min(1),
   max_tokens: z.number().int().positive().max(16000).optional(),
 })
@@ -51,13 +50,13 @@ export async function POST(req: Request) {
     )
   }
 
-  const { tool, system_override, user: userMessage, max_tokens } = parsed.data
+  const { tool, user: userMessage, max_tokens } = parsed.data
   const model = usage.tier === "pro" ? models.claudeSonnet : models.claudeHaiku
   const modelId = usage.tier === "pro" ? "claude-sonnet-4-5" : "claude-haiku-4-5"
 
   // RAG enrichment for scholarship/university tools + language
-  let systemPrompt: string = system_override ?? SYSTEM_PROMPTS[tool]
-  if (!system_override && (tool === "university" || tool === "scholarship")) {
+  let systemPrompt: string = SYSTEM_PROMPTS[tool]
+  if (tool === "university" || tool === "scholarship") {
     try {
       const ctx =
         tool === "university"
@@ -70,13 +69,11 @@ export async function POST(req: Request) {
   }
 
   // Always honor user's UI language for AI output
-  if (!system_override) {
-    try {
-      const langInstr = await getLanguageInstruction()
-      systemPrompt = `${systemPrompt}\n\n---\n\n${langInstr}`
-    } catch (err) {
-      console.error("language instruction failed:", err)
-    }
+  try {
+    const langInstr = await getLanguageInstruction()
+    systemPrompt = `${systemPrompt}\n\n---\n\n${langInstr}`
+  } catch (err) {
+    console.error("language instruction failed:", err)
   }
 
   const startTime = Date.now()
@@ -86,7 +83,9 @@ export async function POST(req: Request) {
       model,
       system: systemPrompt,
       messages: [{ role: "user", content: userMessage }],
-      ...(max_tokens && usage.tier === "pro" ? { maxOutputTokens: Math.min(max_tokens, 16000) } : {}),
+      // SECURITY (H5): always cap output server-side. Free is tightly bounded;
+      // pro may opt higher via max_tokens up to 16k.
+      maxOutputTokens: usage.tier === "pro" ? Math.min(max_tokens ?? 8000, 16000) : 2048,
     })
 
     await recordUsage({
@@ -122,10 +121,8 @@ export async function POST(req: Request) {
       },
     })
   } catch (err) {
+    // M7: log full detail server-side, return a generic message (no provider leak)
     console.error("AI generation error:", err)
-    return Response.json(
-      { error: err instanceof Error ? err.message : "AI generation failed" },
-      { status: 500 }
-    )
+    return Response.json({ error: "ai_failed" }, { status: 500 })
   }
 }

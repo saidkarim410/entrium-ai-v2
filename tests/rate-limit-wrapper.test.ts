@@ -14,13 +14,28 @@ import { describe, it, expect, beforeEach, vi } from "vitest"
 
 const rpcMock = vi.fn()
 const insertMock = vi.fn()
+const updateEqMock = vi.fn()
+const updateMock = vi.fn(() => ({ eq: updateEqMock }))
+const maybeSingleMock = vi.fn()
+
+// Chainable mock supporting both the reservation lookup
+// (select().eq().eq().order().limit().maybeSingle()) and insert/update.
+function makeChain() {
+  const chain: Record<string, unknown> = {}
+  chain.select = () => chain
+  chain.eq = () => chain
+  chain.order = () => chain
+  chain.limit = () => chain
+  chain.maybeSingle = maybeSingleMock
+  chain.insert = insertMock
+  chain.update = updateMock
+  return chain
+}
 
 vi.mock("@/lib/supabase/admin", () => ({
   supabaseAdmin: {
     rpc: rpcMock,
-    from: () => ({
-      insert: insertMock,
-    }),
+    from: () => makeChain(),
   },
 }))
 
@@ -29,7 +44,13 @@ const { checkUsage, consumeBonus, recordUsage } = await import("@/lib/rate-limit
 beforeEach(() => {
   rpcMock.mockReset()
   insertMock.mockReset()
+  updateMock.mockReset()
+  updateEqMock.mockReset()
+  maybeSingleMock.mockReset()
   insertMock.mockResolvedValue({ data: null, error: null })
+  updateMock.mockImplementation(() => ({ eq: updateEqMock }))
+  updateEqMock.mockResolvedValue({ error: null })
+  maybeSingleMock.mockResolvedValue({ data: null, error: null })
 })
 
 describe("checkUsage", () => {
@@ -130,23 +151,43 @@ describe("consumeBonus", () => {
 })
 
 describe("recordUsage", () => {
-  it("inserts one row with all fields populated", async () => {
-    await recordUsage({
-      userId: "u1",
-      tool: "reviewer",
-      model: "haiku",
-      inputTokens: 123,
-      outputTokens: 456,
-      costUsd: 0.0042,
-    })
+  const params = {
+    userId: "u1",
+    tool: "reviewer",
+    model: "haiku",
+    inputTokens: 123,
+    outputTokens: 456,
+    costUsd: 0.0042,
+  }
+  const row = {
+    tool: "reviewer",
+    model: "haiku",
+    input_tokens: 123,
+    output_tokens: 456,
+    cost_usd: 0.0042,
+  }
+
+  it("inserts a row when no reservation exists (fallback)", async () => {
+    maybeSingleMock.mockResolvedValueOnce({ data: null, error: null })
+    await recordUsage(params)
+    expect(updateMock).not.toHaveBeenCalled()
     expect(insertMock).toHaveBeenCalledTimes(1)
-    expect(insertMock).toHaveBeenCalledWith({
-      user_id: "u1",
-      tool: "reviewer",
-      model: "haiku",
-      input_tokens: 123,
-      output_tokens: 456,
-      cost_usd: 0.0042,
-    })
+    expect(insertMock).toHaveBeenCalledWith({ user_id: "u1", ...row })
+  })
+
+  it("fills the reservation in place when one exists (no second insert → no double-count)", async () => {
+    maybeSingleMock.mockResolvedValueOnce({ data: { id: 99 }, error: null })
+    await recordUsage(params)
+    expect(updateMock).toHaveBeenCalledWith(row)
+    expect(updateEqMock).toHaveBeenCalledWith("id", 99)
+    expect(insertMock).not.toHaveBeenCalled()
+  })
+
+  it("falls back to insert if updating the reservation errors", async () => {
+    maybeSingleMock.mockResolvedValueOnce({ data: { id: 99 }, error: null })
+    updateEqMock.mockResolvedValueOnce({ error: { message: "boom" } })
+    await recordUsage(params)
+    expect(insertMock).toHaveBeenCalledTimes(1)
+    expect(insertMock).toHaveBeenCalledWith({ user_id: "u1", ...row })
   })
 })

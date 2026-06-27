@@ -38,30 +38,49 @@ export async function sendEmail(opts: {
  * Sign a payload + user_id with EMAIL_TOKEN_SECRET. Used for unsubscribe links
  * so a leaked DB row doesn't grant the attacker the ability to forge tokens.
  */
-export function signToken(userId: string, action: string): string {
+function hmac32(secret: string, payload: string): string {
+  return crypto.createHmac("sha256", secret).update(payload).digest("base64url").slice(0, 32)
+}
+
+function safeEq(a: string, b: string): boolean {
+  const ab = Buffer.from(a)
+  const bb = Buffer.from(b)
+  return ab.length === bb.length && crypto.timingSafeEqual(ab, bb)
+}
+
+/**
+ * Sign userId+action with EMAIL_TOKEN_SECRET. Pass `ttlSeconds` to make the token
+ * expire (M4) — recommended for one-shot links (unsubscribe). Omit it for long-lived
+ * feeds (calendar .ics) that must keep working without re-subscription.
+ */
+export function signToken(userId: string, action: string, ttlSeconds?: number): string {
   const secret = env.EMAIL_TOKEN_SECRET
   if (!secret) return ""
+  if (ttlSeconds && ttlSeconds > 0) {
+    const exp = Math.floor(Date.now() / 1000) + ttlSeconds
+    const payload = `${userId}.${action}.${exp}`
+    return `${payload}.${hmac32(secret, payload)}`
+  }
   const payload = `${userId}.${action}`
-  const sig = crypto.createHmac("sha256", secret).update(payload).digest("base64url").slice(0, 32)
-  return `${payload}.${sig}`
+  return `${payload}.${hmac32(secret, payload)}`
 }
 
 export function verifyToken(token: string, action: string): string | null {
   const secret = env.EMAIL_TOKEN_SECRET
   if (!secret || !token) return null
   const parts = token.split(".")
-  if (parts.length !== 3) return null
-  const [userId, gotAction, sig] = parts
-  if (gotAction !== action) return null
-  const expected = crypto
-    .createHmac("sha256", secret)
-    .update(`${userId}.${action}`)
-    .digest("base64url")
-    .slice(0, 32)
-  const sigBuf = Buffer.from(sig)
-  const expBuf = Buffer.from(expected)
-  if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
-    return null
+  // M4: accept legacy (userId.action.sig) AND expiring (userId.action.exp.sig) tokens.
+  if (parts.length === 4) {
+    const [userId, gotAction, expStr, sig] = parts
+    if (gotAction !== action) return null
+    const exp = Number(expStr)
+    if (!exp || exp < Math.floor(Date.now() / 1000)) return null
+    return safeEq(sig, hmac32(secret, `${userId}.${action}.${expStr}`)) ? userId : null
   }
-  return userId
+  if (parts.length === 3) {
+    const [userId, gotAction, sig] = parts
+    if (gotAction !== action) return null
+    return safeEq(sig, hmac32(secret, `${userId}.${action}`)) ? userId : null
+  }
+  return null
 }

@@ -42,10 +42,17 @@ export async function POST(req: Request) {
     return Response.json({ error: "telegram_disabled" }, { status: 503 })
   }
 
-  // Verify secret token (Telegram echoes whatever we set in setWebhook)
-  if (env.TELEGRAM_WEBHOOK_SECRET) {
+  // Verify secret token (Telegram echoes whatever we set in setWebhook).
+  // L1: fail CLOSED — on any deployed env the secret is mandatory; without it
+  // anyone could POST forged bot updates to drive account-linking.
+  const webhookSecret = env.TELEGRAM_WEBHOOK_SECRET
+  if (!webhookSecret) {
+    if (process.env.NODE_ENV === "production" || process.env.VERCEL_ENV) {
+      return Response.json({ error: "webhook_misconfigured" }, { status: 503 })
+    }
+  } else {
     const got = req.headers.get("x-telegram-bot-api-secret-token")
-    if (got !== env.TELEGRAM_WEBHOOK_SECRET) {
+    if (got !== webhookSecret) {
       return Response.json({ error: "bad_secret" }, { status: 401 })
     }
   }
@@ -230,6 +237,7 @@ async function handleCounselorMessage(chatId: string, text: string, msg: TGMessa
 
   const result = await generateText({
     model,
+    maxOutputTokens: 1500, // H5: cap counselor reply (TG message)
     system: systemPrompt,
     messages: [{ role: "user", content: text }],
   })
