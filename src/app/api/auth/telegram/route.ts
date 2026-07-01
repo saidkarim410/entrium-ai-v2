@@ -44,22 +44,37 @@ export async function POST(req: Request) {
 
   const data = parsed.data
 
-  // Verify hash & freshness (within 1 day)
+  // Verify hash & freshness (1h window, matching the Mini App initData policy)
   const ok = verifyTelegramAuth(data as unknown as Record<string, string | number>)
   if (!ok) return NextResponse.json({ error: "invalid_signature" }, { status: 401 })
 
-  const ageSec = Date.now() / 1000 - data.auth_date
-  if (ageSec > 86400) return NextResponse.json({ error: "stale_auth" }, { status: 401 })
+  // Replay/clock-forge guard: reject stale (>1h) AND future-dated auth_date.
+  const nowSec = Date.now() / 1000
+  const ageSec = nowSec - data.auth_date
+  if (ageSec > 3600 || data.auth_date > nowSec + 60) {
+    return NextResponse.json({ error: "stale_auth" }, { status: 401 })
+  }
 
   const tgId = String(data.id)
   const fullName = [data.first_name, data.last_name].filter(Boolean).join(" ") || data.username || `tg_${tgId}`
   const email = `tg.${tgId}@telegram.entrium.local` // synthetic; Supabase needs unique email
 
-  // Find or create the auth user
-  const { data: existing } = await supabaseAdmin.auth.admin.listUsers()
-  const found = existing?.users?.find((u) => u.email === email)
+  // Resolve the auth user by the indexed `profiles.telegram_id` (populated by the
+  // handle_new_user trigger from user_metadata). Replaces a listUsers() call that
+  // only read the first page (50): past 50 users, returning Telegram-Widget users
+  // were not found, hit the unique-email constraint on re-create, and got a 500
+  // (login silently broke at scale). Deterministic indexed lookup fixes that.
+  const { data: prof, error: lookupErr } = await supabaseAdmin
+    .from("profiles")
+    .select("id")
+    .eq("telegram_id", tgId)
+    .maybeSingle()
+  if (lookupErr) {
+    console.error("[auth/telegram] profile lookup failed:", lookupErr)
+    return NextResponse.json({ error: "lookup_failed" }, { status: 500 })
+  }
 
-  let userId = found?.id
+  let userId = prof?.id as string | undefined
   if (!userId) {
     const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
       email,
@@ -72,9 +87,21 @@ export async function POST(req: Request) {
       },
     })
     if (createErr || !created.user) {
-      return NextResponse.json({ error: createErr?.message ?? "create_failed" }, { status: 500 })
+      // Lost a concurrent first-login race: the trigger just created the profile.
+      // Re-resolve by telegram_id before failing so the loser still gets a session.
+      const retry = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .eq("telegram_id", tgId)
+        .maybeSingle()
+      if (!retry.data) {
+        console.error("[auth/telegram] create failed:", createErr)
+        return NextResponse.json({ error: "create_failed" }, { status: 500 })
+      }
+      userId = retry.data.id as string
+    } else {
+      userId = created.user.id
     }
-    userId = created.user.id
   }
 
   // Generate a magic link and exchange immediately for a session
@@ -83,7 +110,8 @@ export async function POST(req: Request) {
     email,
   })
   if (linkErr || !link.properties?.hashed_token) {
-    return NextResponse.json({ error: linkErr?.message ?? "link_failed" }, { status: 500 })
+    console.error("[auth/telegram] generateLink failed:", linkErr)
+    return NextResponse.json({ error: "link_failed" }, { status: 500 })
   }
 
   const supabase = await createSupabaseServerClient()
@@ -92,7 +120,8 @@ export async function POST(req: Request) {
     token_hash: link.properties.hashed_token,
   })
   if (verifyErr) {
-    return NextResponse.json({ error: verifyErr.message }, { status: 500 })
+    console.error("[auth/telegram] verifyOtp failed:", verifyErr)
+    return NextResponse.json({ error: "verify_failed" }, { status: 500 })
   }
 
   return NextResponse.json({ ok: true, redirect: "/dashboard" })

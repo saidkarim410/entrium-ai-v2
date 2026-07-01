@@ -1,6 +1,6 @@
 import { generateObject } from "ai"
 import { z } from "zod"
-import { models } from "@/lib/ai"
+import { models, MODEL_IDS } from "@/lib/ai"
 import { getCurrentUser } from "@/lib/supabase/server"
 import { supabaseAdmin } from "@/lib/supabase/admin"
 import { checkUsage, recordUsage } from "@/lib/rate-limit"
@@ -164,7 +164,7 @@ export async function generateForUser(userId: string, tier: "free" | "pro"): Pro
   await recordUsage({
     userId,
     tool: "daily_summary",
-    model: tier === "pro" ? "claude-sonnet-4-5" : "claude-haiku-4-5",
+    model: tier === "pro" ? MODEL_IDS.sonnet : MODEL_IDS.haiku,
     inputTokens: result.usage?.inputTokens ?? 0,
     outputTokens: result.usage?.outputTokens ?? 0,
     costUsd: 0,

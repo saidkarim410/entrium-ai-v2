@@ -1,6 +1,7 @@
 import { streamText, convertToModelMessages, type UIMessage } from "ai"
 import { z } from "zod"
-import { models } from "@/lib/ai"
+import { models, MODEL_IDS } from "@/lib/ai"
+import { DATA_GUARD, asUserData } from "@/lib/ai/guard"
 import { SYSTEM_PROMPTS, type ToolKey } from "@/lib/ai/prompts"
 import {
   searchUniversities, searchScholarships,
@@ -68,9 +69,9 @@ export async function POST(req: Request) {
     .order("deadline", { ascending: true, nullsFirst: false }).limit(50)
   const appsBlock = applicationsToContextBlock((appsRows ?? []) as Application[])
 
-  let system: string = SYSTEM_PROMPTS[tool]
-  if (profileBlock) system += `\n\n---\n\n${profileBlock}`
-  if (appsBlock) system += `\n\n---\n\n${appsBlock}`
+  let system: string = SYSTEM_PROMPTS[tool] + DATA_GUARD
+  if (profileBlock) system += asUserData(profileBlock)
+  if (appsBlock) system += asUserData(appsBlock)
   system += `\n\n---\n\n${languageInstruction((resolved.language as Locale) ?? "ru")}`
 
   if (tool === "university" || tool === "scholarship") {
@@ -78,10 +79,10 @@ export async function POST(req: Request) {
       const q = lastUserText(uiMessages)
       if (q && tool === "university") {
         const unis = await searchUniversities(q, 12)
-        if (unis?.length) system += `\n\n---\n\n${formatUniversitiesContext(unis)}`
+        if (unis?.length) system += asUserData(formatUniversitiesContext(unis))
       } else if (q) {
         const sch = await searchScholarships(q, 12)
-        if (sch?.length) system += `\n\n---\n\n${formatScholarshipsContext(sch)}`
+        if (sch?.length) system += asUserData(formatScholarshipsContext(sch))
       }
     } catch (e) {
       console.error("tg rag failed", e)
@@ -90,10 +91,11 @@ export async function POST(req: Request) {
 
   const isPro = usage.tier === "pro"
   const model = isPro ? models.claudeSonnet : models.claudeHaiku
-  const modelId = isPro ? "claude-sonnet-4-5" : "claude-haiku-4-5"
+  const modelId = isPro ? MODEL_IDS.sonnet : MODEL_IDS.haiku
 
   const result = streamText({
     model,
+    abortSignal: req.signal, // M2: stop billing tokens if the client disconnects
     maxOutputTokens: 3000, // H5: cap free-form output
     system,
     messages: await convertToModelMessages(uiMessages),

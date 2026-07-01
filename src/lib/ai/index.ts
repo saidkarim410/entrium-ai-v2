@@ -18,9 +18,16 @@ function openaiClient() {
   return _openaiClient
 }
 
+// Model IDs centralised so the actual model and the logged `modelId` can never drift.
+// Sonnet bumped 4.5 -> 4.6 (adaptive thinking + 1M context, same price tier).
+export const MODEL_IDS = {
+  sonnet: "claude-sonnet-4-6",
+  haiku: "claude-haiku-4-5",
+} as const
+
 export const models = {
-  get claudeSonnet() { return anthropicClient()("claude-sonnet-4-5-20250929") },
-  get claudeHaiku() { return anthropicClient()("claude-haiku-4-5-20251001") },
+  get claudeSonnet() { return anthropicClient()(MODEL_IDS.sonnet) },
+  get claudeHaiku() { return anthropicClient()(MODEL_IDS.haiku) },
   get gpt4o() { return openaiClient()("gpt-4o") },
   get gpt4oMini() { return openaiClient()("gpt-4o-mini") },
 }

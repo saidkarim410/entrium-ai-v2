@@ -1,6 +1,7 @@
 import { streamText } from "ai"
 import { z } from "zod"
-import { models } from "@/lib/ai"
+import { models, MODEL_IDS } from "@/lib/ai"
+import { DATA_GUARD, asUserData } from "@/lib/ai/guard"
 import { SYSTEM_PROMPTS } from "@/lib/ai/prompts"
 import {
   searchUniversities,
@@ -116,7 +117,7 @@ export async function POST(req: Request) {
   const langInstr = languageInstruction((resolved.language as Locale) ?? "ru")
 
   const model = initialUsage.tier === "pro" ? models.claudeSonnet : models.claudeHaiku
-  const modelId = initialUsage.tier === "pro" ? "claude-sonnet-4-5" : "claude-haiku-4-5"
+  const modelId = initialUsage.tier === "pro" ? MODEL_IDS.sonnet : MODEL_IDS.haiku
   const missionId = mission.id as MissionId
 
   const encoder = new TextEncoder()
@@ -134,6 +135,9 @@ export async function POST(req: Request) {
           const step = mission.steps[i]
           const stepNum = i + 1
 
+          // M2: stop the pipeline if the client disconnected (don't start new steps)
+          if (req.signal.aborted) break
+
           emit({
             type: "step_start",
             step: stepNum,
@@ -143,9 +147,9 @@ export async function POST(req: Request) {
           })
 
           // Build system prompt with profile + applications + RAG enrichment + language
-          let systemPrompt: string = SYSTEM_PROMPTS[step.tool]
-          if (profileBlock) systemPrompt = `${systemPrompt}\n\n---\n\n${profileBlock}`
-          if (appsBlock) systemPrompt = `${systemPrompt}\n\n---\n\n${appsBlock}`
+          let systemPrompt: string = SYSTEM_PROMPTS[step.tool] + DATA_GUARD
+          if (profileBlock) systemPrompt += asUserData(profileBlock)
+          if (appsBlock) systemPrompt += asUserData(appsBlock)
           systemPrompt = `${systemPrompt}\n\n---\n\n${langInstr}`
 
           const userPrompt = step.buildPrompt(applicant)
@@ -157,7 +161,7 @@ export async function POST(req: Request) {
                 step.tool === "university"
                   ? formatUniversitiesContext(await searchUniversities(userPrompt, 12))
                   : formatScholarshipsContext(await searchScholarships(userPrompt, 12))
-              if (ctx) systemPrompt = `${systemPrompt}\n\n---\n\n${ctx}`
+              if (ctx) systemPrompt += asUserData(ctx)
             } catch (err) {
               console.error("RAG search failed in tg agent step:", err)
             }
@@ -165,6 +169,7 @@ export async function POST(req: Request) {
 
           const result = streamText({
             model,
+            abortSignal: req.signal, // M2: cancel generation on client disconnect
             maxOutputTokens: 3000, // H5: cap per-step output
             system: systemPrompt,
             messages: [{ role: "user", content: userPrompt }],
@@ -198,7 +203,7 @@ export async function POST(req: Request) {
         console.error("TG agent pipeline error:", err)
         emit({
           type: "error",
-          message: err instanceof Error ? err.message : "Pipeline failed",
+          message: "pipeline_failed",
         })
       } finally {
         controller.close()

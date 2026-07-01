@@ -40,6 +40,24 @@ export async function POST(req: Request) {
     return Response.json({ error: "bad_signature" }, { status: 400 })
   }
 
+  // M3: idempotency. Stripe delivers at-least-once — claim the event id before
+  // processing; a conflict means we already handled it (ack without re-running).
+  // If migration 0021 (stripe_events) isn't applied yet, the claim errors and we
+  // fall through to processing — i.e. prior at-least-once behaviour, never a drop.
+  try {
+    const { data: claimed, error: claimErr } = await supabaseAdmin
+      .from("stripe_events")
+      .upsert({ event_id: event.id, type: event.type }, { onConflict: "event_id", ignoreDuplicates: true })
+      .select("event_id")
+    if (claimErr) {
+      console.error("[stripe] event claim failed (continuing):", claimErr)
+    } else if (!claimed || claimed.length === 0) {
+      return Response.json({ received: true, duplicate: true })
+    }
+  } catch (e) {
+    console.error("[stripe] event claim threw (continuing):", e)
+  }
+
   try {
     switch (event.type) {
       case "checkout.session.completed": {

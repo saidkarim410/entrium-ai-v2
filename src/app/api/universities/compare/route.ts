@@ -1,6 +1,6 @@
 import { generateObject } from "ai"
 import { z } from "zod"
-import { models } from "@/lib/ai"
+import { models, MODEL_IDS } from "@/lib/ai"
 import { getCurrentUser } from "@/lib/supabase/server"
 import { supabaseAdmin } from "@/lib/supabase/admin"
 import { checkUsage, recordUsage } from "@/lib/rate-limit"
@@ -126,7 +126,7 @@ export async function POST(req: Request) {
   ].join("\n")
 
   const model = usage.tier === "pro" ? models.claudeSonnet : models.claudeHaiku
-  const modelId = usage.tier === "pro" ? "claude-sonnet-4-5" : "claude-haiku-4-5"
+  const modelId = usage.tier === "pro" ? MODEL_IDS.sonnet : MODEL_IDS.haiku
 
   try {
     const result = await generateObject({
@@ -134,6 +134,7 @@ export async function POST(req: Request) {
       system,
       schema: ComparisonSchema,
       messages: [{ role: "user", content: userPrompt }],
+      abortSignal: req.signal,
     })
 
     await recordUsage({

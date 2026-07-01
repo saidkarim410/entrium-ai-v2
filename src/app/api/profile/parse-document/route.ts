@@ -1,6 +1,6 @@
 import { generateObject, type ModelMessage } from "ai"
 import { z } from "zod"
-import { models } from "@/lib/ai"
+import { models, MODEL_IDS } from "@/lib/ai"
 import { getCurrentUser } from "@/lib/supabase/server"
 import { checkUsage, recordUsage } from "@/lib/rate-limit"
 
@@ -128,7 +128,7 @@ export async function POST(req: Request) {
 
   // Always use Sonnet — Haiku is unreliable for vision + structured extraction
   const model = models.claudeSonnet
-  const modelId = "claude-sonnet-4-5"
+  const modelId = MODEL_IDS.sonnet
 
   const messages: ModelMessage[] = [
     {
@@ -146,6 +146,7 @@ export async function POST(req: Request) {
       system: SYSTEM_PROMPT,
       schema: ExtractionSchema,
       messages,
+      abortSignal: req.signal,
     })
 
     await recordUsage({

@@ -1,6 +1,7 @@
 import { streamText, convertToModelMessages, type UIMessage } from "ai"
 import { z } from "zod"
-import { models } from "@/lib/ai"
+import { models, MODEL_IDS } from "@/lib/ai"
+import { DATA_GUARD, asUserData } from "@/lib/ai/guard"
 import { SYSTEM_PROMPTS, type ToolKey } from "@/lib/ai/prompts"
 import {
   searchUniversities,
@@ -74,11 +75,12 @@ export async function POST(req: Request) {
 
   const tool = toolParse.data
   const model = usage.tier === "pro" ? models.claudeSonnet : models.claudeHaiku
-  const modelId = usage.tier === "pro" ? "claude-sonnet-4-5" : "claude-haiku-4-5"
+  const modelId = usage.tier === "pro" ? MODEL_IDS.sonnet : MODEL_IDS.haiku
   const modelMessages = await convertToModelMessages(body.messages)
 
-  // Profile + applications context: counselor always knows them; other tools get them as bonus
-  let systemPrompt: string = SYSTEM_PROMPTS[tool]
+  // Profile + applications context: counselor always knows them; other tools get them as bonus.
+  // M5: user-derived blocks are wrapped in <user_data> and prefaced with DATA_GUARD.
+  let systemPrompt: string = SYSTEM_PROMPTS[tool] + DATA_GUARD
   try {
     const [applicant, apps, langInstr] = await Promise.all([
       getApplicantProfile(),
@@ -87,8 +89,8 @@ export async function POST(req: Request) {
     ])
     const profileBlock = profileToContextBlock(applicant)
     const appsBlock = applicationsToContextBlock(apps)
-    if (profileBlock) systemPrompt = `${systemPrompt}\n\n---\n\n${profileBlock}`
-    if (appsBlock) systemPrompt = `${systemPrompt}\n\n---\n\n${appsBlock}`
+    if (profileBlock) systemPrompt += asUserData(profileBlock)
+    if (appsBlock) systemPrompt += asUserData(appsBlock)
     systemPrompt = `${systemPrompt}\n\n---\n\n${langInstr}`
   } catch (err) {
     console.error("Profile/apps context fetch failed:", err)
@@ -103,7 +105,7 @@ export async function POST(req: Request) {
           tool === "university"
             ? formatUniversitiesContext(await searchUniversities(query, 12))
             : formatScholarshipsContext(await searchScholarships(query, 12))
-        if (ctx) systemPrompt = `${systemPrompt}\n\n---\n\n${ctx}`
+        if (ctx) systemPrompt += asUserData(ctx)
       } catch (err) {
         console.error("RAG search failed:", err)
       }
@@ -112,6 +114,7 @@ export async function POST(req: Request) {
 
   const result = streamText({
     model,
+    abortSignal: req.signal, // M2: stop billing tokens if the client disconnects
     maxOutputTokens: 4000, // H5: cap free-form output
     system: systemPrompt,
     messages: modelMessages,

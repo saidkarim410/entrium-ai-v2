@@ -12,7 +12,7 @@ import { withSentryConfig } from "@sentry/nextjs"
 //   - img/media: data: + https: for AI-generated and externally hosted images
 const csp = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.vercel.app https://*.posthog.com https://*.i.posthog.com https://js.stripe.com https://*.sentry.io https://telegram.org https://*.telegram.org",
+  "script-src 'self' 'unsafe-inline' https://*.vercel.app https://*.posthog.com https://*.i.posthog.com https://js.stripe.com https://*.sentry.io https://telegram.org https://*.telegram.org",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' data: https://fonts.gstatic.com",
   "img-src 'self' data: blob: https:",

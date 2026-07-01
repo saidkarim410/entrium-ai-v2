@@ -1,5 +1,5 @@
 import { generateText } from "ai"
-import { models } from "@/lib/ai"
+import { models, MODEL_IDS } from "@/lib/ai"
 import { SYSTEM_PROMPTS } from "@/lib/ai/prompts"
 import { supabaseAdmin } from "@/lib/supabase/admin"
 import { env, telegramEnabled } from "@/lib/env"
@@ -233,7 +233,7 @@ async function handleCounselorMessage(chatId: string, text: string, msg: TGMessa
     "For deep analysis, invite the user to open the full tool on the website."
 
   const model = profile.tier === "pro" ? models.claudeSonnet : models.claudeHaiku
-  const modelId = profile.tier === "pro" ? "claude-sonnet-4-5" : "claude-haiku-4-5"
+  const modelId = profile.tier === "pro" ? MODEL_IDS.sonnet : MODEL_IDS.haiku
 
   const result = await generateText({
     model,

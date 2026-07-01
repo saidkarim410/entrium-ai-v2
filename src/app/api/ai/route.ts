@@ -1,6 +1,6 @@
 import { generateText } from "ai"
 import { z } from "zod"
-import { models } from "@/lib/ai"
+import { models, MODEL_IDS } from "@/lib/ai"
 import { SYSTEM_PROMPTS, type ToolKey } from "@/lib/ai/prompts"
 import {
   searchUniversities, searchScholarships,
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
 
   const { tool, user: userMessage, max_tokens } = parsed.data
   const model = usage.tier === "pro" ? models.claudeSonnet : models.claudeHaiku
-  const modelId = usage.tier === "pro" ? "claude-sonnet-4-5" : "claude-haiku-4-5"
+  const modelId = usage.tier === "pro" ? MODEL_IDS.sonnet : MODEL_IDS.haiku
 
   // RAG enrichment for scholarship/university tools + language
   let systemPrompt: string = SYSTEM_PROMPTS[tool]
@@ -81,6 +81,7 @@ export async function POST(req: Request) {
   try {
     const result = await generateText({
       model,
+      abortSignal: req.signal, // M2: stop billing tokens if the client disconnects
       system: systemPrompt,
       messages: [{ role: "user", content: userMessage }],
       // SECURITY (H5): always cap output server-side. Free is tightly bounded;
