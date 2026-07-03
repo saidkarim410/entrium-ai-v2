@@ -15,7 +15,7 @@
 - **Vercel project:** `prj_JiUijuqXlVnuG6OVjLBXf5o7pUtq` (team `team_MPhSFfSFW1AFxP4nHcdpGxpZ`)
 - **Supabase project:** `zcbbpqfdyqavdubzrgaf` (`https://zcbbpqfdyqavdubzrgaf.supabase.co`)
 - **Old v1 (legacy):** https://github.com/saidkarim410/entrium-ai (folder `C:\Users\Huawei\Documents\entrium-ai`)
-- **Telegram bot:** `@entriumleedbot` (chat group `-5273439557`)
+- **Telegram bot:** `@entriumcouselorbot` ("Entrium AI") — single bot: login + Mini App + reminders (replaced compromised `@entriumleedbot`). Chat group `-5273439557`
 - **Telegram channel (public):** https://t.me/entriumuzb
 
 ### Owner & Brand

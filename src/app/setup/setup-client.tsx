@@ -138,10 +138,10 @@ export function SetupClient({ userEmail }: { userEmail: string }) {
               <Link href="/dashboard">
                 <Button>Открыть Dashboard →</Button>
               </Link>
-              <a href="https://t.me/entriumleedbot" target="_blank" rel="noopener noreferrer">
+              <a href="https://t.me/entriumcouselorbot" target="_blank" rel="noopener noreferrer">
                 <Button variant="outline" className="gap-2">
                   <Send className="h-4 w-4" />
-                  Открыть @entriumleedbot
+                  Открыть @entriumcouselorbot
                 </Button>
               </a>
             </>
@@ -256,7 +256,7 @@ export function SetupClient({ userEmail }: { userEmail: string }) {
               autoComplete="off"
             />
             <p className="text-[10px] font-mono-label text-cream-3">
-              По умолчанию — @entriumleedbot. Можно поменять на свой.
+              По умолчанию — @entriumcouselorbot. Можно поменять на свой.
             </p>
           </div>
         </details>

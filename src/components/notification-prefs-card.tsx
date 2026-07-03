@@ -91,7 +91,7 @@ export function NotificationPrefsCard({ initial }: { initial: NotificationPrefs 
       <div className="border-t border-border/40 pt-4 space-y-3">
         <Toggle
           label="Telegram push"
-          desc="Дублировать в @entriumleedbot когда привязан"
+          desc="Дублировать в @entriumcouselorbot когда привязан"
           icon={Send}
           on={prefs.telegramPush}
           onChange={(v) => update({ telegramPush: v })}

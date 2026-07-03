@@ -436,7 +436,7 @@ export default async function LandingPage() {
           <div className="grid lg:grid-cols-[1.2fr_1fr] gap-10 items-center">
             <Reveal>
               <p className="brand-eyebrow font-mono-label text-[var(--brand-red)] mb-4">
-                Telegram · @entriumleedbot
+                Telegram · @entriumcouselorbot
               </p>
               <h2 className="font-display font-extrabold tracking-tight uppercase text-4xl sm:text-5xl lg:text-6xl leading-[0.95]">
                 Дедлайны не упустишь — <span className="text-[var(--brand-red)]">мы напомним</span>
@@ -447,7 +447,7 @@ export default async function LandingPage() {
               <div className="mt-7 flex flex-wrap gap-3">
                 <MagneticButton>
                   <a
-                    href="https://t.me/entriumleedbot"
+                    href="https://t.me/entriumcouselorbot"
                     target="_blank"
                     rel="noopener noreferrer"
                     className={buttonVariants({ size: "lg" })}
@@ -475,7 +475,7 @@ export default async function LandingPage() {
                     <Send className="h-5 w-5" />
                   </div>
                   <div>
-                    <div className="font-display font-extrabold tracking-tight">@entriumleedbot</div>
+                    <div className="font-display font-extrabold tracking-tight">@entriumcouselorbot</div>
                     <div className="font-mono-label text-foreground/55">online · отвечает за 2s</div>
                   </div>
                 </div>
@@ -552,7 +552,7 @@ export default async function LandingPage() {
 
             <Reveal delay={160}>
               <a
-                href="https://t.me/entriumleedbot"
+                href="https://t.me/entriumcouselorbot"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="card-hover group flex flex-col h-full rounded-2xl border border-border bg-card p-6 no-underline"
@@ -565,7 +565,7 @@ export default async function LandingPage() {
                   24/7 в Telegram. Быстрый ответ на любой вопрос.
                 </p>
                 <div className="mt-auto pt-5 font-mono-label text-[var(--brand-red)]">
-                  @entriumleedbot →
+                  @entriumcouselorbot →
                 </div>
               </a>
             </Reveal>
@@ -653,8 +653,8 @@ export default async function LandingPage() {
               <Link href="/privacy" className="hover:text-[var(--brand-red)] transition-colors">Privacy</Link>
               <Link href="/terms" className="hover:text-[var(--brand-red)] transition-colors">Terms</Link>
               <a href="mailto:hello@entrium.ai" className="hover:text-[var(--brand-red)] transition-colors">hello@entrium.ai</a>
-              <a href="https://t.me/entriumleedbot" target="_blank" rel="noopener noreferrer" className="hover:text-[var(--brand-red)] transition-colors inline-flex items-center gap-1">
-                <Send className="h-3 w-3" /> @entriumleedbot
+              <a href="https://t.me/entriumcouselorbot" target="_blank" rel="noopener noreferrer" className="hover:text-[var(--brand-red)] transition-colors inline-flex items-center gap-1">
+                <Send className="h-3 w-3" /> @entriumcouselorbot
               </a>
             </nav>
           </div>

@@ -30,7 +30,7 @@ export default async function AdminBroadcastsPage() {
         </h1>
         <p className="text-sm text-white/55 mt-2 leading-relaxed">
           Отправь сообщение всем пользователям, привязавшим Telegram-бота{" "}
-          <code className="px-1 py-0.5 bg-white/[0.05] rounded text-white/80">@entriumleedbot</code>.
+          <code className="px-1 py-0.5 bg-white/[0.05] rounded text-white/80">@entriumcouselorbot</code>.
           Сейчас linked: <strong className="text-white">{linkedTelegram ?? 0}</strong>.
         </p>
       </div>

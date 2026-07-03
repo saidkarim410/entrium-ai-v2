@@ -6,7 +6,7 @@ import { toast } from "sonner"
 import { Loader2, Send } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
-const BOT_USERNAME = "entriumleedbot"
+const BOT_USERNAME = "entriumcouselorbot"
 
 declare global {
   interface Window {

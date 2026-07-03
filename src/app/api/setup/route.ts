@@ -352,7 +352,7 @@ async function setTelegramWebhook(botToken: string, secret: string): Promise<Ste
     step: "Telegram: webhook зарегистрирован",
     ok: true,
     message: webhookUrl,
-    details: ["Открой @entriumleedbot и пошли /start — должен ответить"],
+    details: ["Открой @entriumcouselorbot и пошли /start — должен ответить"],
   }
 }
 

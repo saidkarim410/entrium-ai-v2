@@ -19,12 +19,12 @@ export async function sendTelegramMessage(
 }
 
 /**
- * Sends a proactive reminder to a STUDENT. Tries the Mini App bot
- * (@entriumcouselorbot) first — that is where students actually pressed Start —
- * and falls back to the main bot (@entriumleedbot) for users who only linked
- * through the web /start flow. A given chat_id can only be messaged by a bot
- * the user has started, so attempting both maximises real delivery.
- * Returns the first successful result (tagged with `via`), or the last error.
+ * Sends a proactive reminder to a STUDENT via the bot they pressed Start on
+ * (@entriumcouselorbot — "Entrium AI", the single Entrium bot). If a distinct
+ * legacy main-bot token is still configured, it falls back to that — a chat_id
+ * can only be messaged by a bot the user has actually started, so trying both
+ * maximises real delivery. Returns the first success (tagged `via`), else the
+ * last error.
  */
 export async function sendStudentReminder(
   chatId: string,

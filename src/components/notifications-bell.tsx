@@ -190,7 +190,7 @@ export function NotificationsBell({
             onClick={() => setOpen(false)}
             className="text-xs font-mono-label text-cream-3 hover:text-gold transition-colors"
           >
-            Подключи Telegram в /settings — будем дублировать важное в @entriumleedbot
+            Подключи Telegram в /settings — будем дублировать важное в @entriumcouselorbot
             <Badge variant="outline" className="ml-2 text-[9px] py-0">→</Badge>
           </Link>
         </div>

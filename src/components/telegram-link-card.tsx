@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Send, Check, Copy, Unlink, Loader2 } from "lucide-react"
 import { createTelegramLinkCode, unlinkTelegram, type TelegramStatus } from "@/lib/telegram-actions"
 
-const BOT_USERNAME = "entriumleedbot" // adjust if env-driven later
+const BOT_USERNAME = "entriumcouselorbot" // adjust if env-driven later
 
 export function TelegramLinkCard({ initial }: { initial: TelegramStatus }) {
   const [status, setStatus] = useState<TelegramStatus>(initial)
