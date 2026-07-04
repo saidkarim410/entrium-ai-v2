@@ -1,6 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase/admin"
 
-export const FREE_DAILY_LIMIT = 5
+export const FREE_DAILY_LIMIT = 3
 export const REFERRAL_BONUS = 10
 
 export type UsageStatus = {

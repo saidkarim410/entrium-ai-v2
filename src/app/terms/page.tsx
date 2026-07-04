@@ -56,7 +56,7 @@ export default function TermsPage() {
           <section>
             <h2 className="text-lg font-medium tracking-tight mt-8">4. Тарифы</h2>
             <ul className="list-disc pl-6 space-y-2">
-              <li><strong>Free:</strong> 5 AI-запросов в день, движок Entrium AI.</li>
+              <li><strong>Free:</strong> 3 AI-запроса в день, движок Entrium AI.</li>
               <li><strong>Pro:</strong> безлимитные запросы, Entrium AI Pro, расширенные функции.</li>
               <li>Бонус: +10 запросов за каждого приглашённого друга.</li>
             </ul>

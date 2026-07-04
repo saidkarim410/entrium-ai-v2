@@ -54,7 +54,7 @@ export const LANDING: Record<Locale, LandingCopy> = {
         line2: ", а не в одиночку",
       },
       sub: "100+ наших ребят уже учатся в LSE, NYU, Sapienza, Purdue, UCW. Узнай свои реальные шансы в топ-100 за 60 секунд — без консультанта за $300/час.",
-      note: "Бесплатный старт · Без карты · 10 AI-запросов в день",
+      note: "Бесплатный старт · Без карты · 3 AI-запроса в день",
     },
     stats: [
       { number: "100+", label: "поступили в топ-вузы" },
@@ -118,7 +118,7 @@ export const LANDING: Record<Locale, LandingCopy> = {
       tag: "Вопросы",
       h2: "Частые вопросы",
       items: [
-        { q: "Сколько стоит?", a: "Бесплатный старт — 10 AI-запросов в день, навсегда. Этого хватает большинству до финальных месяцев. Pro — $18/мес (Entrium AI Pro + безлимит, отписка в один клик) или $5 за разовый глубокий анализ. Карту просим только когда сам решаешь подключить Pro." },
+        { q: "Сколько стоит?", a: "Бесплатный старт — 3 AI-запроса в день, навсегда. Этого хватает большинству до финальных месяцев. Pro — $18/мес (Entrium AI Pro + безлимит, отписка в один клик) или $5 за разовый глубокий анализ. Карту просим только когда сам решаешь подключить Pro." },
         { q: "Это просто ChatGPT с другим интерфейсом?", a: "Нет. У нас специализированный promptarium, натренированный под admission (а не general chat). База QS 2026 с реальными данными. Знание реалий поступления из СНГ. Tracker дедлайнов, Telegram-бот, парсер документов. ChatGPT не знает твой профиль и забывает контекст." },
         { q: "Кто за этим стоит?", a: "Команда Entrium — консалтинговое агентство в Узбекистане, помогающее ребятам из СНГ поступать в зарубежные вузы. 100+ поступивших за всё время, 2000+ диагностик. AI-платформа — это наш продукт, в который мы зашили опыт всех консультаций." },
         { q: "А если AI ошибётся?", a: "AI даёт оценку, не диагноз. Все выводы можно проверить и обсудить с живым консультантом — мы добавим контакт после первого анализа. Refund-политика: если разовый анализ не помог — деньги возвращаем." },
@@ -157,7 +157,7 @@ export const LANDING: Record<Locale, LandingCopy> = {
         line2: ", not alone",
       },
       sub: "11 AI tools, 1500+ universities, your profile and deadlines in one place. Telegram push, document parsing, AI Agent for a complete admission package.",
-      note: "Free: 10 requests/day · no card · unsubscribe in one click",
+      note: "Free: 3 requests/day · no card · unsubscribe in one click",
     },
     stats: [
       { number: "1500+", label: "universities in DB" },
@@ -259,7 +259,7 @@ export const LANDING: Record<Locale, LandingCopy> = {
         line2: ", yolg'iz emas",
       },
       sub: "11 ta AI vosita, 1500+ universitet, profiling va muddatlar bir joyda. Telegram push, hujjatlarni avtomatik tahlil, to'liq admission paket uchun AI Agent.",
-      note: "Free: kunlik 10 so'rov · karta talab qilinmaydi · bir bosishda obunani bekor qilish",
+      note: "Free: kunlik 3 so'rov · karta talab qilinmaydi · bir bosishda obunani bekor qilish",
     },
     stats: [
       { number: "1500+", label: "universitet bazasi" },

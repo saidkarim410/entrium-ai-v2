@@ -8,7 +8,7 @@ import { Check, Loader2, Sparkles, Crown, Zap } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const FREE_FEATURES = [
-  "10 запросов в день",
+  "3 запроса в день",
   "Все 11 AI-инструментов",
   "AI Counselor (чат)",
   "Поиск по 1500+ университетам и стипендиям",
@@ -218,7 +218,7 @@ export function PricingClient({
             </div>
             <div>
               <p className="text-cream font-medium">Что если Free хватает?</p>
-              <p>Отлично, оставайся на Free. Pro нужен только когда 10 запросов/день перестают хватать (обычно в финальные 2 месяца до дедлайнов).</p>
+              <p>Отлично, оставайся на Free. Pro нужен только когда 3 запроса/день перестают хватать (обычно в финальные 2 месяца до дедлайнов).</p>
             </div>
             <div>
               <p className="text-cream font-medium">Возврат?</p>
