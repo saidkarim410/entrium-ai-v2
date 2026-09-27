@@ -8,7 +8,8 @@ import {
   formatUniversitiesContext, formatScholarshipsContext,
 } from "@/lib/ai/rag"
 import { supabaseAdmin } from "@/lib/supabase/admin"
-import { checkUsage, recordUsage, consumeBonus } from "@/lib/rate-limit"
+import { checkUsage, recordUsage, settleBonusAfterCall } from "@/lib/rate-limit"
+import { buildTemporalBlock } from "@/lib/ai/temporal"
 import { profileToContextBlock, normalizeApplicantProfile } from "@/lib/applicant/types"
 import { applicationsToContextBlock, type Application } from "@/lib/applications/types"
 import { languageInstruction } from "@/lib/ai/language"
@@ -16,6 +17,7 @@ import { miniAppBotToken, miniAppEnabled } from "@/lib/env"
 import { validateInitData } from "@/lib/telegram/init-data"
 import { resolveTelegramUser } from "@/lib/telegram/resolve-user"
 import type { Locale } from "@/lib/i18n/dict"
+import { emitOfficeEvent } from "@/lib/office"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -73,6 +75,7 @@ export async function POST(req: Request) {
   if (profileBlock) system += asUserData(profileBlock)
   if (appsBlock) system += asUserData(appsBlock)
   system += `\n\n---\n\n${languageInstruction((resolved.language as Locale) ?? "ru")}`
+  system += `\n\n---\n\n${buildTemporalBlock(applicant)}` // P0-02: server date + intake + plan months
 
   if (tool === "university" || tool === "scholarship") {
     try {
@@ -108,10 +111,9 @@ export async function POST(req: Request) {
         outputTokens: aiUsage?.outputTokens ?? 0,
         costUsd: 0,
       })
-      const status = await checkUsage(resolved.userId)
-      if (status.tier === "free" && status.remaining === 0 && status.bonus > 0) {
-        await consumeBonus(resolved.userId)
-      }
+      await settleBonusAfterCall(resolved.userId) // read-only; checkUsage here double-charged
+      // Оживить агента в 3D-офисе (best-effort, не влияет на чат)
+      emitOfficeEvent(tool)
     },
   })
 

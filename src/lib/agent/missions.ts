@@ -1,5 +1,6 @@
 import type { ToolKey } from "@/lib/ai/prompts"
 import type { ApplicantProfile } from "@/lib/applicant/types"
+import type { TemporalContext } from "@/lib/ai/temporal"
 
 /**
  * AI Agent Missions — sequential pipelines of specialized tool calls.
@@ -19,8 +20,11 @@ export type MissionStep = {
   title: string
   /** One-line description of what this step does */
   description: string
-  /** Builds the user-side prompt from the applicant profile */
-  buildPrompt: (p: ApplicantProfile) => string
+  /**
+   * Builds the user-side prompt from the applicant profile and the server-side
+   * temporal context (today, intake, precomputed plan months — P0-02).
+   */
+  buildPrompt: (p: ApplicantProfile, t: TemporalContext) => string
 }
 
 export type Mission = {
@@ -75,6 +79,20 @@ function firstCountry(p: ApplicantProfile): string {
   return (p.goals.countries ?? "").split(",")[0]?.trim() || "США"
 }
 
+/** Month labels the tracker must use, verbatim — the model never picks dates itself. */
+function monthsLine(t: TemporalContext, count: number): string {
+  return `Сегодня ${t.todayIso}. Месяцы плана строго в этом порядке и с этими названиями: ${t.planMonths
+    .slice(0, count)
+    .join(", ")}. Поле "month" каждого месяца — одно из этих значений; "deadline" задач — дата YYYY-MM-DD не раньше ${t.todayIso}.`
+}
+
+function intakeLine(t: TemporalContext): string {
+  if (t.intakeYear === null) return "Год поступления в профиле не указан — исходи из ближайшего реального набора и скажи об этом."
+  if (t.intakeStatus === "past") return `Указанный год поступления ${t.intakeYear} уже прошёл — планируй на ${t.year + 1} и объясни это.`
+  if (t.intakeStatus === "tight") return `Год поступления ${t.intakeYear} — текущий; проверь реалистичность и при необходимости предложи ${t.intakeYear + 1}.`
+  return `Учти поступление в ${t.intakeYear} году.`
+}
+
 // ── Missions ────────────────────────────────────────────────────────────────
 
 export const MISSIONS: Mission[] = [
@@ -96,8 +114,8 @@ export const MISSIONS: Mission[] = [
         tool: "tracker",
         title: "План на 6 месяцев",
         description: "Календарь действий до ближайшего дедлайна",
-        buildPrompt: (p) =>
-          `На основе моего профиля составь план действий на ближайшие 6 месяцев. Профиль:\n\n${profileSnippet(p)}\n\nФормат: список задач по месяцам с конкретными дедлайнами и приоритетами. Учти поступление в ${p.goals.year ?? "2027"} году.`,
+        buildPrompt: (p, t) =>
+          `На основе моего профиля составь план действий на ближайшие 6 месяцев. Профиль:\n\n${profileSnippet(p)}\n\n${monthsLine(t, 6)} ${intakeLine(t)}`,
       },
     ],
   },
@@ -133,8 +151,8 @@ export const MISSIONS: Mission[] = [
         tool: "tracker",
         title: "4. Полный план",
         description: "12-месячный roadmap до подачи",
-        buildPrompt: (p) =>
-          `Составь roadmap на 12 месяцев — от сегодня до подачи документов. Профиль:\n\n${profileSnippet(p)}\n\nФормат: разбивка по месяцам с задачами, дедлайнами, приоритетами. Включи тесты, эссе, рекомендации, заявки, стипендии.`,
+        buildPrompt: (p, t) =>
+          `Составь roadmap на 12 месяцев — от сегодня до подачи документов. Профиль:\n\n${profileSnippet(p)}\n\n${monthsLine(t, 12)} ${intakeLine(t)} Включи тесты, эссе, рекомендации, заявки, стипендии.`,
       },
     ],
   },
@@ -156,8 +174,8 @@ export const MISSIONS: Mission[] = [
         tool: "tracker",
         title: "Экстренный план до дедлайна",
         description: "Действия на финишной прямой",
-        buildPrompt: (p) =>
-          `Я подаю в ${firstUni(p)} в ближайшие недели. Составь экстренный план — что критично доделать до дедлайна. Профиль:\n\n${profileSnippet(p)}\n\nПриоритизируй задачи: high impact + low time. Дай конкретные дедлайны и checkpoint'ы.`,
+        buildPrompt: (p, t) =>
+          `Я подаю в ${firstUni(p)} в ближайшие недели. Составь экстренный план — что критично доделать до дедлайна. Профиль:\n\n${profileSnippet(p)}\n\n${monthsLine(t, 3)} Приоритизируй задачи: high impact + low time. Дай конкретные дедлайны и checkpoint'ы.`,
       },
     ],
   },
@@ -172,8 +190,8 @@ export const MISSIONS: Mission[] = [
         tool: "tracker",
         title: "12-месячный roadmap",
         description: "Полный план поступления",
-        buildPrompt: (p) =>
-          `Составь roadmap на 12 месяцев. Профиль:\n\n${profileSnippet(p)}\n\nРазбей на месяцы. Для каждого: 3-5 ключевых задач, дедлайны, метрики успеха. Включи тесты, эссе, активности, рекомендации, заявки.`,
+        buildPrompt: (p, t) =>
+          `Составь roadmap на 12 месяцев. Профиль:\n\n${profileSnippet(p)}\n\n${monthsLine(t, 12)} ${intakeLine(t)} Для каждого месяца: 3-5 ключевых задач, дедлайны, метрики успеха. Включи тесты, эссе, активности, рекомендации, заявки.`,
       },
       {
         tool: "cost",

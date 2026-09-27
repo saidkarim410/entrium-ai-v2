@@ -20,28 +20,17 @@ import { cn } from "@/lib/utils"
  *      collapsible cards with task lists categorised by icon.
  */
 
-export type TrackerTask = {
-  id: string
-  title: string
-  description?: string
-  priority: "high" | "medium" | "low"
-  category: string
-  deadline?: string
-  duration?: string
-}
+import {
+  parseTracker,
+  type TrackerTask,
+  type TrackerMonth,
+  type TrackerOutput,
+} from "@/lib/agent/tracker-parse"
 
-export type TrackerMonth = {
-  month: string
-  emoji?: string
-  color?: string
-  tasks: TrackerTask[]
-}
-
-export type TrackerOutput = {
-  diagnosis: string
-  score: number
-  months: TrackerMonth[]
-}
+// Parsing lives in @/lib/agent/tracker-parse so the server validates the same
+// shape the client renders. Re-exported for existing imports.
+export { parseTracker }
+export type { TrackerTask, TrackerMonth, TrackerOutput }
 
 const CATEGORY_ICONS: Record<string, typeof BookOpen> = {
   tests: FlaskConical,
@@ -58,39 +47,6 @@ const PRIORITY_STYLES: Record<TrackerTask["priority"], { chip: string; ring: str
   high:   { chip: "bg-rose-500/15 text-rose-300 border-rose-500/40",     ring: "border-l-rose-500/60",     label: "high" },
   medium: { chip: "bg-yellow-500/15 text-yellow-300 border-yellow-500/40", ring: "border-l-yellow-500/60", label: "med" },
   low:    { chip: "bg-emerald-500/15 text-emerald-300 border-emerald-500/40", ring: "border-l-emerald-500/60", label: "low" },
-}
-
-/**
- * Try to extract a TrackerOutput from raw streamed text.
- * The AI can wrap JSON in ```json fences despite our prompt saying
- * not to, or include leading whitespace — try both strict and loose.
- */
-export function parseTracker(text: string): TrackerOutput | null {
-  if (!text) return null
-  const trimmed = text.trim()
-
-  // Strip ```json ... ``` fences if present
-  const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/)
-  const candidate = fenced ? fenced[1].trim() : trimmed
-
-  // Find the first { and last } — robust to leading/trailing chatter
-  const start = candidate.indexOf("{")
-  const end = candidate.lastIndexOf("}")
-  if (start === -1 || end === -1 || end < start) return null
-  const slice = candidate.slice(start, end + 1)
-
-  try {
-    const obj = JSON.parse(slice) as Partial<TrackerOutput>
-    if (!obj || typeof obj !== "object") return null
-    if (!Array.isArray(obj.months)) return null
-    return {
-      diagnosis: typeof obj.diagnosis === "string" ? obj.diagnosis : "",
-      score: typeof obj.score === "number" ? obj.score : 0,
-      months: obj.months,
-    }
-  } catch {
-    return null
-  }
 }
 
 export function TrackerView({ data }: { data: TrackerOutput }) {

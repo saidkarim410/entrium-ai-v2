@@ -1,12 +1,20 @@
 import { AgentClient } from "./agent-client"
 import { getApplicantProfile } from "@/lib/applicant/actions"
 import { profileCompleteness } from "@/lib/applicant/types"
+import { getCurrentUser } from "@/lib/supabase/server"
+import { getUsageStatus, FREE_DAILY_LIMIT } from "@/lib/rate-limit"
 
 export const dynamic = "force-dynamic"
 
-export default async function AgentPage() {
-  const applicant = await getApplicantProfile()
+export default async function AgentPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ run?: string }>
+}) {
+  const [applicant, user, params] = await Promise.all([getApplicantProfile(), getCurrentUser(), searchParams])
   const completeness = profileCompleteness(applicant)
+  // Read-only balance so the mission cards can show cost vs. what's left (P1-04)
+  const usage = user ? await getUsageStatus(user.id) : null
 
   return (
     <>
@@ -18,7 +26,16 @@ export default async function AgentPage() {
           </p>
         </div>
       </header>
-      <AgentClient profileCompleteness={completeness} />
+      <AgentClient
+        profileCompleteness={completeness}
+        usage={{
+          tier: usage?.tier ?? "free",
+          remaining: usage?.remaining ?? 0,
+          bonus: usage?.bonus ?? 0,
+          limit: usage?.limit ?? FREE_DAILY_LIMIT,
+        }}
+        initialRunId={params.run ?? null}
+      />
     </>
   )
 }

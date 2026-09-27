@@ -10,12 +10,14 @@ import {
   formatScholarshipsContext,
 } from "@/lib/ai/rag"
 import { getCurrentUser } from "@/lib/supabase/server"
-import { checkUsage, recordUsage, consumeBonus } from "@/lib/rate-limit"
+import { checkUsage, recordUsage, settleBonusAfterCall, REFERRAL_BONUS } from "@/lib/rate-limit"
+import { buildTemporalBlock } from "@/lib/ai/temporal"
 import { getApplicantProfile } from "@/lib/applicant/actions"
 import { profileToContextBlock } from "@/lib/applicant/types"
 import { listApplications } from "@/lib/applications/actions"
 import { applicationsToContextBlock } from "@/lib/applications/types"
 import { getLanguageInstruction } from "@/lib/ai/language"
+import { emitOfficeEvent } from "@/lib/office"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
@@ -66,7 +68,7 @@ export async function POST(req: Request) {
     return Response.json(
       {
         error: "limit_reached",
-        message: "Дневной лимит исчерпан. Пригласи друга — получи +10 запросов.",
+        message: `Дневной лимит исчерпан. Пригласи друга — получи +${REFERRAL_BONUS} запросов.`,
         tier: usage.tier,
       },
       { status: 429 }
@@ -91,9 +93,11 @@ export async function POST(req: Request) {
     const appsBlock = applicationsToContextBlock(apps)
     if (profileBlock) systemPrompt += asUserData(profileBlock)
     if (appsBlock) systemPrompt += asUserData(appsBlock)
-    systemPrompt = `${systemPrompt}\n\n---\n\n${langInstr}`
+    // P0-02: the model never knows "today" on its own — server date, intake and plan months
+    systemPrompt = `${systemPrompt}\n\n---\n\n${langInstr}\n\n---\n\n${buildTemporalBlock(applicant)}`
   } catch (err) {
     console.error("Profile/apps context fetch failed:", err)
+    systemPrompt = `${systemPrompt}\n\n---\n\n${buildTemporalBlock(null)}`
   }
 
   // RAG: inject database context for university/scholarship tools
@@ -127,10 +131,10 @@ export async function POST(req: Request) {
         outputTokens: aiUsage?.outputTokens ?? 0,
         costUsd: 0,
       })
-      const status = await checkUsage(user.id)
-      if (status.tier === "free" && status.remaining === 0 && status.bonus > 0) {
-        await consumeBonus(user.id)
-      }
+      // Read-only check (calling checkUsage here reserved — and burned — a 2nd request per message)
+      await settleBonusAfterCall(user.id)
+      // Оживить агента в 3D-офисе (best-effort, не влияет на чат)
+      emitOfficeEvent(tool)
     },
   })
 

@@ -7,7 +7,10 @@ import {
   formatUniversitiesContext, formatScholarshipsContext,
 } from "@/lib/ai/rag"
 import { getCurrentUser } from "@/lib/supabase/server"
-import { checkUsage, recordUsage, consumeBonus } from "@/lib/rate-limit"
+import { checkUsage, recordUsage, releaseReservation, settleBonusAfterCall } from "@/lib/rate-limit"
+import { buildTemporalBlock } from "@/lib/ai/temporal"
+import { getApplicantProfile } from "@/lib/applicant/actions"
+import { outputBudgetFor } from "@/lib/agent/run-step"
 import { saveToolRun } from "@/lib/applicant/actions"
 import { getLanguageInstruction } from "@/lib/ai/language"
 
@@ -76,6 +79,15 @@ export async function POST(req: Request) {
     console.error("language instruction failed:", err)
   }
 
+  // P0-02: server date, target intake and precomputed plan months
+  try {
+    const applicant = await getApplicantProfile()
+    systemPrompt = `${systemPrompt}\n\n---\n\n${buildTemporalBlock(applicant)}`
+  } catch (err) {
+    console.error("temporal context failed:", err)
+    systemPrompt = `${systemPrompt}\n\n---\n\n${buildTemporalBlock(null)}`
+  }
+
   const startTime = Date.now()
 
   try {
@@ -84,10 +96,22 @@ export async function POST(req: Request) {
       abortSignal: req.signal, // M2: stop billing tokens if the client disconnects
       system: systemPrompt,
       messages: [{ role: "user", content: userMessage }],
-      // SECURITY (H5): always cap output server-side. Free is tightly bounded;
-      // pro may opt higher via max_tokens up to 16k.
-      maxOutputTokens: usage.tier === "pro" ? Math.min(max_tokens ?? 8000, 16000) : 2048,
+      // SECURITY (H5): always cap output server-side. Free gets the per-tool budget
+      // (a 12-month tracker plan never fit in the old 2048); pro may opt higher via
+      // max_tokens up to 16k.
+      maxOutputTokens:
+        usage.tier === "pro" ? Math.min(max_tokens ?? 8000, 16000) : outputBudgetFor(tool),
     })
+
+    // P0-01: a response cut off by the token limit is not a result — don't charge, don't save.
+    if (result.finishReason === "length") {
+      await releaseReservation(user.id)
+      console.warn(`ai route truncated: tool=${tool} tier=${usage.tier} out=${result.usage?.outputTokens}`)
+      return Response.json(
+        { error: "truncated", message: "Ответ не поместился в лимит длины. Попробуй ещё раз — запрос не списан." },
+        { status: 502 }
+      )
+    }
 
     await recordUsage({
       userId: user.id,
@@ -108,10 +132,7 @@ export async function POST(req: Request) {
       status: "success",
     }).catch((e) => console.error("saveToolRun failed:", e))
 
-    const status = await checkUsage(user.id)
-    if (status.tier === "free" && status.remaining === 0 && status.bonus > 0) {
-      await consumeBonus(user.id)
-    }
+    await settleBonusAfterCall(user.id) // read-only; the old checkUsage here double-charged
 
     return Response.json({
       text: result.text,

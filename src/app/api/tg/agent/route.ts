@@ -1,8 +1,8 @@
-import { streamText } from "ai"
 import { z } from "zod"
 import { models, MODEL_IDS } from "@/lib/ai"
 import { DATA_GUARD, asUserData } from "@/lib/ai/guard"
 import { SYSTEM_PROMPTS } from "@/lib/ai/prompts"
+import { getTemporalContext, temporalPromptBlock } from "@/lib/ai/temporal"
 import {
   searchUniversities,
   searchScholarships,
@@ -10,7 +10,7 @@ import {
   formatScholarshipsContext,
 } from "@/lib/ai/rag"
 import { supabaseAdmin } from "@/lib/supabase/admin"
-import { checkUsage, recordUsage, consumeBonus } from "@/lib/rate-limit"
+import { checkUsage, recordUsage, releaseReservation, settleBonusAfterCall } from "@/lib/rate-limit"
 import { profileToContextBlock, normalizeApplicantProfile } from "@/lib/applicant/types"
 import { applicationsToContextBlock, type Application } from "@/lib/applications/types"
 import { languageInstruction } from "@/lib/ai/language"
@@ -18,6 +18,7 @@ import { miniAppBotToken, miniAppEnabled } from "@/lib/env"
 import { validateInitData } from "@/lib/telegram/init-data"
 import { resolveTelegramUser } from "@/lib/telegram/resolve-user"
 import { findMission, type MissionId } from "@/lib/agent/missions"
+import { runMissionStep, describeStepFailure } from "@/lib/agent/run-step"
 import type { Locale } from "@/lib/i18n/dict"
 
 export const runtime = "nodejs"
@@ -36,73 +37,63 @@ const schema = z.object({
 /**
  * Telegram Mini App — initData-authenticated mission runner.
  *
- * Identical NDJSON event stream to /api/agent:
- *   {"type":"meta","totalSteps":N,"missionId":"..."}
- *   {"type":"step_start","step":1,"tool":"...","title":"...","description":"..."}
- *   {"type":"delta","step":1,"text":"..."}
- *   {"type":"step_end","step":1}
- *   ...
- *   {"type":"done"}
- *   {"type":"error","message":"..."}
+ * Same NDJSON event stream as /api/agent (step_start / delta / step_retry /
+ * step_end / step_failed / done). Steps are verified the same way (P0-01):
+ * a truncated or malformed step is retried once and, if it still fails,
+ * reported as `step_failed` — never shown as a finished result. Failed steps
+ * release their quota reservation.
  *
  * Auth: x-telegram-init-data header validated via HMAC (WebAppData scheme).
  * Profile + apps fetched via supabaseAdmin (no cookie session required).
- * saveToolRun and createNotification are intentionally omitted — they
- * depend on cookie-scoped server actions and would add coupling with no
- * Mini App benefit (notifications are delivered directly in Telegram).
+ * Persistence/notifications are intentionally omitted — results live in the
+ * Telegram chat itself.
  */
 export async function POST(req: Request) {
-  // Guard: Telegram must be configured
   if (!miniAppEnabled()) {
     return Response.json({ error: "telegram_disabled" }, { status: 503 })
   }
 
-  // Auth: validate Telegram Mini App initData
   const initData = req.headers.get("x-telegram-init-data") ?? ""
   const verdict = validateInitData(initData, miniAppBotToken())
   if (!verdict.ok) {
     return Response.json({ error: "unauthorized", reason: verdict.reason }, { status: 401 })
   }
 
-  // Parse + validate body
   const body = await req.json()
   const parsed = schema.safeParse(body)
   if (!parsed.success) {
     return Response.json({ error: "invalid_input", issues: parsed.error.issues }, { status: 400 })
   }
 
-  // Resolve mission
   const mission = findMission(parsed.data.missionId)
   if (!mission) {
     return Response.json({ error: "unknown_mission" }, { status: 404 })
   }
 
-  // Resolve Telegram user → platform user
   const resolved = await resolveTelegramUser(verdict.user)
 
-  // Pre-flight quota check
+  // Pre-flight quota: reserves ONE request (used by the first step).
   const initialUsage = await checkUsage(resolved.userId)
   if (!initialUsage.allowed) {
-    return Response.json(
-      { error: "limit_reached", tier: initialUsage.tier },
-      { status: 429 }
-    )
+    return Response.json({ error: "limit_reached", tier: initialUsage.tier }, { status: 429 })
   }
 
-  // Mission costs N requests (one per step). For free tier, refuse if not enough.
   const stepsCount = mission.steps.length
-  if (initialUsage.tier === "free" && initialUsage.remaining + initialUsage.bonus < stepsCount) {
+  const available = 1 + initialUsage.remaining + initialUsage.bonus
+  if (initialUsage.tier === "free" && available < stepsCount) {
+    await releaseReservation(resolved.userId)
     return Response.json(
       {
         error: "limit_reached",
-        message: `Эта миссия требует ${stepsCount} запросов, у тебя осталось ${initialUsage.remaining + initialUsage.bonus}. Обнови до Pro или подожди до завтра.`,
+        message: `Эта миссия стоит ${stepsCount} запрос(а/ов), а у тебя осталось ${available}. Выбери миссию короче, обнови до Pro или подожди до завтра.`,
         tier: "free",
+        need: stepsCount,
+        available,
       },
       { status: 429 }
     )
   }
 
-  // Fetch profile + applications via admin client (no cookie session)
   const applicant = normalizeApplicantProfile(resolved.applicantData)
   const profileBlock = profileToContextBlock(applicant)
 
@@ -115,6 +106,8 @@ export async function POST(req: Request) {
   const appsBlock = applicationsToContextBlock((appsRows ?? []) as Application[])
 
   const langInstr = languageInstruction((resolved.language as Locale) ?? "ru")
+  const temporal = getTemporalContext(applicant)
+  const temporalBlock = temporalPromptBlock(temporal)
 
   const model = initialUsage.tier === "pro" ? models.claudeSonnet : models.claudeHaiku
   const modelId = initialUsage.tier === "pro" ? MODEL_IDS.sonnet : MODEL_IDS.haiku
@@ -128,6 +121,10 @@ export async function POST(req: Request) {
         controller.enqueue(encoder.encode(JSON.stringify(obj) + "\n"))
       }
 
+      let reservationHeld = true
+      let completed = 0
+      let failed = 0
+
       try {
         emit({ type: "meta", totalSteps: stepsCount, missionId })
 
@@ -135,8 +132,19 @@ export async function POST(req: Request) {
           const step = mission.steps[i]
           const stepNum = i + 1
 
-          // M2: stop the pipeline if the client disconnected (don't start new steps)
           if (req.signal.aborted) break
+
+          if (!reservationHeld) {
+            const u = await checkUsage(resolved.userId)
+            if (!u.allowed) {
+              for (let j = stepNum; j <= stepsCount; j++) {
+                failed += 1
+                emit({ type: "step_failed", step: j, reason: "quota", message: describeStepFailure("quota") })
+              }
+              break
+            }
+            reservationHeld = true
+          }
 
           emit({
             type: "step_start",
@@ -146,15 +154,13 @@ export async function POST(req: Request) {
             description: step.description,
           })
 
-          // Build system prompt with profile + applications + RAG enrichment + language
           let systemPrompt: string = SYSTEM_PROMPTS[step.tool] + DATA_GUARD
           if (profileBlock) systemPrompt += asUserData(profileBlock)
           if (appsBlock) systemPrompt += asUserData(appsBlock)
-          systemPrompt = `${systemPrompt}\n\n---\n\n${langInstr}`
+          systemPrompt = `${systemPrompt}\n\n---\n\n${langInstr}\n\n---\n\n${temporalBlock}`
 
-          const userPrompt = step.buildPrompt(applicant)
+          const userPrompt = step.buildPrompt(applicant, temporal)
 
-          // RAG enrichment for university/scholarship steps
           if (step.tool === "university" || step.tool === "scholarship") {
             try {
               const ctx =
@@ -167,44 +173,51 @@ export async function POST(req: Request) {
             }
           }
 
-          const result = streamText({
+          const outcome = await runMissionStep({
             model,
-            abortSignal: req.signal, // M2: cancel generation on client disconnect
-            maxOutputTokens: 3000, // H5: cap per-step output
+            tool: step.tool,
             system: systemPrompt,
-            messages: [{ role: "user", content: userPrompt }],
+            userPrompt,
+            todayIso: temporal.todayIso,
+            signal: req.signal,
+            onDelta: (text) => emit({ type: "delta", step: stepNum, text }),
+            onRetry: (attempt, reason) => emit({ type: "step_retry", step: stepNum, attempt, reason }),
           })
 
-          for await (const delta of result.textStream) {
-            emit({ type: "delta", step: stepNum, text: delta })
+          if (outcome.status === "completed") {
+            await recordUsage({
+              userId: resolved.userId,
+              tool: `tg_mission_${missionId}`,
+              model: modelId,
+              inputTokens: outcome.usage.inputTokens,
+              outputTokens: outcome.usage.outputTokens,
+              costUsd: 0,
+            })
+            reservationHeld = false
+            await settleBonusAfterCall(resolved.userId)
+            completed += 1
+            emit({ type: "step_end", step: stepNum, text: outcome.text, warnings: outcome.warnings })
+          } else {
+            await releaseReservation(resolved.userId)
+            reservationHeld = false
+            failed += 1
+            emit({
+              type: "step_failed",
+              step: stepNum,
+              reason: outcome.reason,
+              message: describeStepFailure(outcome.reason),
+            })
+            if (outcome.reason === "aborted") break
           }
-
-          const finalUsage = await result.usage
-          await recordUsage({
-            userId: resolved.userId,
-            tool: `tg_mission_${missionId}`,
-            model: modelId,
-            inputTokens: finalUsage?.inputTokens ?? 0,
-            outputTokens: finalUsage?.outputTokens ?? 0,
-            costUsd: 0,
-          })
-
-          // Consume free-tier bonus when daily quota runs out
-          const status = await checkUsage(resolved.userId)
-          if (status.tier === "free" && status.remaining === 0 && status.bonus > 0) {
-            await consumeBonus(resolved.userId)
-          }
-
-          emit({ type: "step_end", step: stepNum })
         }
 
-        emit({ type: "done" })
+        if (reservationHeld) await releaseReservation(resolved.userId)
+
+        const status = failed === 0 && completed === stepsCount ? "completed" : completed === 0 ? "failed" : "partial"
+        emit({ type: "done", status })
       } catch (err) {
         console.error("TG agent pipeline error:", err)
-        emit({
-          type: "error",
-          message: "pipeline_failed",
-        })
+        emit({ type: "error", message: "pipeline_failed" })
       } finally {
         controller.close()
       }

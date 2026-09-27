@@ -22,7 +22,7 @@ import {
   PRIORITY_LABELS,
   summarizeApplications,
 } from "@/lib/applications/types"
-import { checkUsage } from "@/lib/rate-limit"
+import { getUsageStatus, FREE_DAILY_LIMIT } from "@/lib/rate-limit"
 import { profileCompleteness } from "@/lib/applicant/types"
 import { supabaseAdmin } from "@/lib/supabase/admin"
 import { getT } from "@/lib/i18n/server"
@@ -64,7 +64,7 @@ export default async function DashboardPage() {
 
   const t = await getT()
   const [usage, apps, recentRuns] = await Promise.all([
-    checkUsage(profile.id),
+    getUsageStatus(profile.id), // read-only: must NOT reserve a request just to display it
     listApplications(),
     getRecentRuns(profile.id, 5),
   ])
@@ -144,7 +144,7 @@ export default async function DashboardPage() {
           />
           <StatCard
             label={usage.tier === "pro" ? "План" : "Запросы"}
-            value={usage.tier === "pro" ? "Pro" : `${usage.remaining}/10`}
+            value={usage.tier === "pro" ? "Pro" : `${usage.remaining}/${usage.limit ?? FREE_DAILY_LIMIT}`}
             sub={profile.bonus_credits ? `+${profile.bonus_credits} bonus` : ""}
             icon={usage.tier === "pro" ? Crown : Zap}
             highlight={usage.tier === "pro"}

@@ -1,15 +1,7 @@
 import { supabaseAdmin } from "@/lib/supabase/admin"
+import { FREE_DAILY_LIMIT, computeRemaining, type UsageStatus } from "@/lib/quota"
 
-export const FREE_DAILY_LIMIT = 3
-export const REFERRAL_BONUS = 10
-
-export type UsageStatus = {
-  allowed: boolean
-  remaining: number
-  tier: "free" | "pro"
-  bonus: number
-  reason?: "limit_reached"
-}
+export { FREE_DAILY_LIMIT, REFERRAL_BONUS, computeRemaining, type UsageStatus } from "@/lib/quota"
 
 /**
  * Atomic quota check + reservation.
@@ -35,7 +27,91 @@ export async function checkUsage(userId: string): Promise<UsageStatus> {
     remaining: row.remaining,
     tier: row.tier as "free" | "pro",
     bonus: row.bonus,
+    limit: typeof row.daily_limit === "number" ? row.daily_limit : FREE_DAILY_LIMIT,
     reason: row.allowed ? undefined : "limit_reached",
+  }
+}
+
+/** Start of the current UTC day — matches the window used by `try_consume_quota`. */
+function utcDayStartIso(now: Date = new Date()): string {
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())).toISOString()
+}
+
+/**
+ * READ-ONLY usage status for display and post-call checks.
+ *
+ * `checkUsage()` RESERVES a request (inserts a `__reserved__` usage row). Calling
+ * it just to look at the balance — as the dashboard and the post-call bonus check
+ * used to — silently burned quota: every chat message cost 2 of the 3 daily
+ * requests and a 4-step mission cost 5 (P1-04 in the CTO TZ). Use this instead.
+ */
+export async function getUsageStatus(userId: string): Promise<UsageStatus> {
+  // Preferred: the read-only SQL function from migration 0023 (single source of truth
+  // for the limit). Falls back to a local computation until it is applied.
+  const { data, error } = await supabaseAdmin.rpc("get_usage_status", { uid: userId })
+  if (!error && data) {
+    const row = Array.isArray(data) ? data[0] : data
+    if (row && typeof row.remaining === "number") {
+      return {
+        allowed: Boolean(row.allowed),
+        remaining: row.remaining,
+        tier: row.tier === "pro" ? "pro" : "free",
+        bonus: row.bonus ?? 0,
+        limit: typeof row.daily_limit === "number" ? row.daily_limit : FREE_DAILY_LIMIT,
+        reason: row.allowed ? undefined : "limit_reached",
+      }
+    }
+  }
+
+  const [{ data: profile }, { count }] = await Promise.all([
+    supabaseAdmin
+      .from("profiles")
+      .select("tier, pro_until, bonus_credits")
+      .eq("id", userId)
+      .maybeSingle(),
+    supabaseAdmin
+      .from("usage_events")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .gte("created_at", utcDayStartIso()),
+  ])
+  return computeRemaining({
+    tier: profile?.tier,
+    proUntil: profile?.pro_until,
+    usedToday: count ?? 0,
+    bonus: profile?.bonus_credits ?? 0,
+  })
+}
+
+/**
+ * Give back the most recent unfilled reservation — used when an AI step fails
+ * technically (truncated, invalid JSON, model error). The user must not pay for
+ * a result they never received. Returns true if a reservation was released.
+ */
+export async function releaseReservation(userId: string): Promise<boolean> {
+  const { data: reserved } = await supabaseAdmin
+    .from("usage_events")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("tool", "__reserved__")
+    .gte("created_at", utcDayStartIso())
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (!reserved?.id) return false
+  const { error } = await supabaseAdmin.from("usage_events").delete().eq("id", reserved.id)
+  return !error
+}
+
+/**
+ * After a successful AI call on the free tier: if the daily quota is now exhausted
+ * and the user has referral bonus credits, spend one. Read-only check — does NOT
+ * reserve another request.
+ */
+export async function settleBonusAfterCall(userId: string): Promise<void> {
+  const status = await getUsageStatus(userId)
+  if (status.tier === "free" && status.remaining === 0 && status.bonus > 0) {
+    await consumeBonus(userId)
   }
 }
 

@@ -1,19 +1,24 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Markdown } from "@/components/markdown"
 import { MISSIONS, type Mission, type MissionId } from "@/lib/agent/missions"
+import type { MissionRunRecord, MissionRunStatus } from "@/lib/agent/run-state"
+import { describeStepFailure, type StepFailReason } from "@/lib/agent/run-step"
 import { parseTracker, TrackerView, TrackerStreaming } from "./tracker-view"
 import {
   Bot, Zap, Briefcase, ShieldCheck, Calendar,
-  Loader2, CheckCircle2, AlertCircle, Square, Play, Sparkles,
+  Loader2, CheckCircle2, AlertCircle, Square, Play, Sparkles, RotateCcw, XCircle,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const ICONS = { Zap, Briefcase, ShieldCheck, Calendar } as const
+const LAST_RUN_KEY = "entrium:agent:lastRunId"
+
+type StepStatus = "pending" | "running" | "completed" | "failed"
 
 type StepState = {
   step: number
@@ -21,132 +26,183 @@ type StepState = {
   title: string
   description: string
   text: string
-  status: "running" | "done" | "error"
+  status: StepStatus
+  reason?: StepFailReason
+  attempt?: number
+  warnings?: string[]
 }
 
 type RunState = {
+  runId: string | null
   missionId: MissionId
   totalSteps: number
   steps: StepState[]
-  status: "running" | "done" | "error" | "aborted"
+  status: "running" | MissionRunStatus | "aborted" | "error"
   errorMessage?: string
 }
 
-export function AgentClient({ profileCompleteness }: { profileCompleteness: number }) {
+type UsageProps = { tier: "free" | "pro"; remaining: number; bonus: number; limit: number }
+
+type AgentEvent = {
+  type: string
+  runId?: string
+  step?: number
+  tool?: string
+  title?: string
+  description?: string
+  text?: string
+  totalSteps?: number
+  message?: string
+  reason?: StepFailReason
+  attempt?: number
+  status?: MissionRunStatus
+  warnings?: string[]
+  steps?: MissionRunRecord["steps"]
+}
+
+function fromRecord(run: MissionRunRecord): RunState {
+  return {
+    runId: run.id,
+    missionId: run.missionId,
+    totalSteps: run.steps.length,
+    status: run.status,
+    steps: run.steps.map((s) => ({
+      step: s.step,
+      tool: s.tool,
+      title: s.title,
+      description: s.description,
+      text: s.text ?? "",
+      status: s.status,
+      reason: s.reason,
+      attempt: s.attempts,
+      warnings: s.warnings,
+    })),
+  }
+}
+
+function rememberRun(id: string | null) {
+  try {
+    if (id) localStorage.setItem(LAST_RUN_KEY, id)
+    else localStorage.removeItem(LAST_RUN_KEY)
+  } catch {
+    /* private mode etc. — restore is a convenience only */
+  }
+}
+
+function statusLabel(status: RunState["status"]): string {
+  switch (status) {
+    case "completed": return " · готово"
+    case "partial": return " · завершено с ошибками"
+    case "failed": return " · не удалось"
+    case "aborted": return " · остановлено"
+    case "error": return " · ошибка"
+    default: return ""
+  }
+}
+
+export function AgentClient({
+  profileCompleteness,
+  usage,
+  initialRunId,
+}: {
+  profileCompleteness: number
+  usage: UsageProps
+  initialRunId: string | null
+}) {
   const [run, setRun] = useState<RunState | null>(null)
+  const [restoring, setRestoring] = useState(true)
   const abortRef = useRef<AbortController | null>(null)
 
   const isRunning = run?.status === "running"
 
-  async function startMission(mission: Mission) {
-    if (isRunning) return
-
-    if (profileCompleteness < 30) {
-      toast.error("Заполни профиль хотя бы на 30% — открой Настройки или пройди онбординг")
-      return
-    }
-
-    const controller = new AbortController()
-    abortRef.current = controller
-
-    setRun({
-      missionId: mission.id,
-      totalSteps: mission.steps.length,
-      steps: [],
-      status: "running",
-    })
-
-    try {
-      const res = await fetch("/api/agent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ missionId: mission.id }),
-        signal: controller.signal,
-      })
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}))
-        const msg = err.message || err.error || `HTTP ${res.status}`
-        toast.error(msg)
-        setRun((r) => (r ? { ...r, status: "error", errorMessage: msg } : r))
-        return
-      }
-
-      if (!res.body) throw new Error("Пустой ответ от сервера")
-
-      const reader = res.body.getReader()
-      const decoder = new TextDecoder()
-      let buffer = ""
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-
-        buffer += decoder.decode(value, { stream: true })
-        const lines = buffer.split("\n")
-        buffer = lines.pop() ?? ""
-
-        for (const line of lines) {
-          if (!line.trim()) continue
-          try {
-            const evt = JSON.parse(line)
-            handleEvent(evt)
-          } catch (e) {
-            console.error("Bad NDJSON line:", line, e)
-          }
+  // ── Restore after refresh (P0-01) ──────────────────────────────────────
+  useEffect(() => {
+    let cancelled = false
+    async function restore() {
+      let id = initialRunId
+      if (!id) {
+        try {
+          id = localStorage.getItem(LAST_RUN_KEY)
+        } catch {
+          id = null
         }
       }
-    } catch (err) {
-      if (controller.signal.aborted) {
-        setRun((r) => (r ? { ...r, status: "aborted" } : r))
+      if (!id) {
+        setRestoring(false)
         return
       }
-      const msg = err instanceof Error ? err.message : "Ошибка"
-      toast.error(msg)
-      setRun((r) => (r ? { ...r, status: "error", errorMessage: msg } : r))
+      try {
+        const res = await fetch(`/api/agent/runs/${id}`, { cache: "no-store" })
+        if (res.ok) {
+          const data = (await res.json()) as { run: MissionRunRecord }
+          if (!cancelled && data.run) setRun(fromRecord(data.run))
+        } else if (res.status === 404) {
+          rememberRun(null)
+        }
+      } catch {
+        /* offline — show the picker */
+      } finally {
+        if (!cancelled) setRestoring(false)
+      }
     }
-  }
+    restore()
+    return () => {
+      cancelled = true
+    }
+  }, [initialRunId])
 
-  function handleEvent(evt: {
-    type: string
-    step?: number
-    tool?: string
-    title?: string
-    description?: string
-    text?: string
-    totalSteps?: number
-    message?: string
-  }) {
+  // ── Event handling ─────────────────────────────────────────────────────
+  const handleEvent = useCallback((evt: AgentEvent) => {
+    if (evt.type === "run" && evt.runId) rememberRun(evt.runId)
     setRun((prev) => {
       if (!prev) return prev
-
       switch (evt.type) {
+        case "run":
+          return { ...prev, runId: evt.runId ?? prev.runId }
+
         case "meta":
+          // Server sends the full step list so pending steps render with real titles.
+          if (Array.isArray(evt.steps) && prev.steps.length === 0) {
+            return {
+              ...prev,
+              totalSteps: evt.steps.length,
+              steps: evt.steps.map((s) => ({
+                step: s.step,
+                tool: s.tool,
+                title: s.title,
+                description: s.description,
+                text: s.text ?? "",
+                status: s.status,
+                reason: s.reason,
+              })),
+            }
+          }
           return prev
 
         case "step_start":
           if (evt.step === undefined) return prev
           return {
             ...prev,
-            steps: [
-              ...prev.steps,
-              {
-                step: evt.step,
-                tool: evt.tool ?? "",
-                title: evt.title ?? `Шаг ${evt.step}`,
-                description: evt.description ?? "",
-                text: "",
-                status: "running",
-              },
-            ],
+            steps: prev.steps.map((s) =>
+              s.step === evt.step
+                ? { ...s, status: "running", text: "", reason: undefined, attempt: 1, warnings: undefined }
+                : s
+            ),
           }
 
         case "delta":
           if (evt.step === undefined || !evt.text) return prev
           return {
             ...prev,
+            steps: prev.steps.map((s) => (s.step === evt.step ? { ...s, text: s.text + evt.text } : s)),
+          }
+
+        case "step_retry":
+          // The first attempt was rejected — drop the partial text, show attempt #2
+          return {
+            ...prev,
             steps: prev.steps.map((s) =>
-              s.step === evt.step ? { ...s, text: s.text + evt.text } : s
+              s.step === evt.step ? { ...s, text: "", attempt: evt.attempt ?? 2 } : s
             ),
           }
 
@@ -154,21 +210,160 @@ export function AgentClient({ profileCompleteness }: { profileCompleteness: numb
           return {
             ...prev,
             steps: prev.steps.map((s) =>
-              s.step === evt.step ? { ...s, status: "done" } : s
+              s.step === evt.step
+                ? { ...s, status: "completed", text: evt.text ?? s.text, warnings: evt.warnings }
+                : s
+            ),
+          }
+
+        case "step_failed":
+          return {
+            ...prev,
+            steps: prev.steps.map((s) =>
+              s.step === evt.step ? { ...s, status: "failed", text: "", reason: evt.reason } : s
             ),
           }
 
         case "done":
-          return { ...prev, status: "done" }
+          return { ...prev, status: evt.status ?? "completed" }
 
         case "error":
-          toast.error(evt.message ?? "Pipeline прервался")
-          return { ...prev, status: "error", errorMessage: evt.message }
+          toast.error("Pipeline прервался — незавершённые шаги можно повторить")
+          return {
+            ...prev,
+            status: "error",
+            errorMessage: evt.message,
+            steps: prev.steps.map((s) =>
+              s.status === "running" ? { ...s, status: "failed", reason: "model_error", text: "" } : s
+            ),
+          }
 
         default:
           return prev
       }
     })
+  }, [])
+
+  async function consume(res: Response, controller: AbortController) {
+    if (!res.body) throw new Error("Пустой ответ от сервера")
+    const reader = res.body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ""
+    try {
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split("\n")
+        buffer = lines.pop() ?? ""
+        for (const line of lines) {
+          if (!line.trim()) continue
+          try {
+            handleEvent(JSON.parse(line))
+          } catch (e) {
+            console.error("Bad NDJSON line:", line, e)
+          }
+        }
+      }
+    } catch (err) {
+      if (controller.signal.aborted) {
+        setRun((r) =>
+          r
+            ? {
+                ...r,
+                status: "aborted",
+                steps: r.steps.map((s) =>
+                  s.status === "running" || s.status === "pending"
+                    ? { ...s, status: "failed", reason: "aborted", text: "" }
+                    : s
+                ),
+              }
+            : r
+        )
+        return
+      }
+      throw err
+    }
+  }
+
+  async function post(body: Record<string, unknown>): Promise<Response | null> {
+    const controller = new AbortController()
+    abortRef.current = controller
+    const res = await fetch("/api/agent", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      const msg = err.message || err.error || `HTTP ${res.status}`
+      toast.error(msg)
+      setRun((r) => (r ? { ...r, status: "error", errorMessage: msg } : r))
+      return null
+    }
+    await consume(res, controller)
+    return res
+  }
+
+  async function startMission(mission: Mission) {
+    if (isRunning) return
+    if (profileCompleteness < 30) {
+      toast.error("Заполни профиль хотя бы на 30% — открой Настройки или пройди онбординг")
+      return
+    }
+    const cost = mission.steps.length
+    const available = usage.remaining + usage.bonus
+    if (usage.tier === "free" && available < cost) {
+      toast.error(`Эта миссия стоит ${cost} запроса, доступно ${available}. Выбери миссию короче или обнови до Pro.`)
+      return
+    }
+
+    setRun({
+      runId: null,
+      missionId: mission.id,
+      totalSteps: mission.steps.length,
+      steps: mission.steps.map((s, i) => ({
+        step: i + 1,
+        tool: s.tool,
+        title: s.title,
+        description: s.description,
+        text: "",
+        status: "pending",
+      })),
+      status: "running",
+    })
+
+    try {
+      await post({ missionId: mission.id })
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Ошибка"
+      toast.error(msg)
+      setRun((r) => (r ? { ...r, status: "error", errorMessage: msg } : r))
+    }
+  }
+
+  async function retryStep(stepNum: number) {
+    if (!run?.runId || isRunning) return
+    setRun((r) =>
+      r
+        ? {
+            ...r,
+            status: "running",
+            errorMessage: undefined,
+            steps: r.steps.map((s) =>
+              s.step === stepNum ? { ...s, status: "running", text: "", reason: undefined, attempt: 1 } : s
+            ),
+          }
+        : r
+    )
+    try {
+      await post({ runId: run.runId, step: stepNum })
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Ошибка"
+      toast.error(msg)
+      setRun((r) => (r ? { ...r, status: "error", errorMessage: msg } : r))
+    }
   }
 
   function abort() {
@@ -176,11 +371,13 @@ export function AgentClient({ profileCompleteness }: { profileCompleteness: numb
   }
 
   function reset() {
+    rememberRun(null)
     setRun(null)
   }
 
   // ── Mission picker ──────────────────────────────────────────────────────
   if (!run) {
+    const available = usage.tier === "pro" ? Infinity : usage.remaining + usage.bonus
     return (
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-8">
@@ -197,6 +394,11 @@ export function AgentClient({ profileCompleteness }: { profileCompleteness: numb
               Agent сам запустит нужные tools в правильном порядке, передавая контекст
               профиля между шагами. Получи комплексный ответ, а не отдельные кусочки.
             </p>
+            {restoring && (
+              <p className="font-mono-label text-[11px] text-cream-3 inline-flex items-center gap-1.5">
+                <Loader2 className="h-3 w-3 animate-spin" /> проверяю прошлую миссию…
+              </p>
+            )}
           </div>
 
           {/* Profile completeness warning */}
@@ -215,22 +417,49 @@ export function AgentClient({ profileCompleteness }: { profileCompleteness: numb
             </div>
           )}
 
+          {/* Quota line (P1-04: the same number the server enforces) */}
+          <div className="rounded-xl border border-border/60 bg-card/30 px-4 py-3 flex flex-wrap items-center justify-between gap-2">
+            <p className="font-mono-label text-[11px] text-cream-3">
+              Каждый шаг миссии = 1 запрос.
+            </p>
+            <p className="font-mono-label text-[11px]">
+              {usage.tier === "pro" ? (
+                <span className="text-gold">Pro · без лимита</span>
+              ) : (
+                <span className={cn(available === 0 ? "text-destructive" : "text-cream-2")}>
+                  Сегодня доступно {usage.remaining} из {usage.limit}
+                  {usage.bonus > 0 && ` + ${usage.bonus} бонусных`}
+                </span>
+              )}
+            </p>
+          </div>
+
           {/* Mission cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {MISSIONS.map((m) => {
               const Icon = ICONS[m.icon]
+              const cost = m.steps.length
+              const affordable = available >= cost
               return (
                 <button
                   key={m.id}
                   onClick={() => startMission(m)}
-                  className="group text-left rounded-xl border border-border bg-card/40 hover:bg-card hover:border-gold/40 transition-all p-5 space-y-3"
+                  disabled={restoring}
+                  className={cn(
+                    "group text-left rounded-xl border border-border bg-card/40 hover:bg-card hover:border-gold/40 transition-all p-5 space-y-3 disabled:opacity-60",
+                    !affordable && "opacity-70 hover:border-border"
+                  )}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="grid h-10 w-10 place-items-center rounded-lg bg-gold/15 group-hover:bg-gold/25 transition-colors">
                       <Icon className="h-5 w-5 text-gold" />
                     </div>
-                    <div className="font-mono-label text-[10px] text-cream-3 shrink-0">
+                    <div className="font-mono-label text-[10px] text-cream-3 shrink-0 text-right">
                       {m.steps.length} шага · {m.duration}
+                      <br />
+                      <span className={cn(affordable ? "text-cream-3" : "text-destructive")}>
+                        стоимость: {cost} запрос{cost === 1 ? "" : cost < 5 ? "а" : "ов"}
+                      </span>
                     </div>
                   </div>
                   <div className="space-y-1">
@@ -249,18 +478,11 @@ export function AgentClient({ profileCompleteness }: { profileCompleteness: numb
                   </div>
                   <div className="flex items-center gap-1.5 text-xs font-mono-label text-gold pt-1 group-hover:translate-x-0.5 transition-transform">
                     <Play className="h-3 w-3" />
-                    Запустить
+                    {affordable ? "Запустить" : "Не хватает запросов на сегодня"}
                   </div>
                 </button>
               )
             })}
-          </div>
-
-          {/* Footer note */}
-          <div className="text-center pt-4">
-            <p className="font-mono-label text-[11px] text-cream-3">
-              Каждый шаг = 1 запрос. Free tier: проверь лимит перед запуском.
-            </p>
           </div>
         </div>
       </div>
@@ -270,7 +492,8 @@ export function AgentClient({ profileCompleteness }: { profileCompleteness: numb
   // ── Mission running / done view ─────────────────────────────────────────
   const mission = MISSIONS.find((m) => m.id === run.missionId)!
   const Icon = ICONS[mission.icon]
-  const finishedSteps = run.steps.filter((s) => s.status === "done").length
+  const finishedSteps = run.steps.filter((s) => s.status === "completed").length
+  const failedSteps = run.steps.filter((s) => s.status === "failed").length
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -284,10 +507,9 @@ export function AgentClient({ profileCompleteness }: { profileCompleteness: numb
             <div className="flex-1 min-w-0">
               <h2 className="font-display text-lg truncate">{mission.title}</h2>
               <p className="font-mono-label text-[11px] text-cream-3">
-                {finishedSteps} / {run.totalSteps} шагов
-                {run.status === "done" && " · готово"}
-                {run.status === "error" && " · ошибка"}
-                {run.status === "aborted" && " · отменено"}
+                {finishedSteps} / {run.totalSteps} шагов готово
+                {failedSteps > 0 && ` · ${failedSteps} с ошибкой`}
+                {statusLabel(run.status)}
               </p>
             </div>
             <div className="flex gap-2">
@@ -310,7 +532,7 @@ export function AgentClient({ profileCompleteness }: { profileCompleteness: numb
             <div
               className={cn(
                 "h-full transition-all duration-500",
-                run.status === "error" ? "bg-destructive" : "bg-gold"
+                run.status === "error" || run.status === "failed" ? "bg-destructive" : "bg-gold"
               )}
               style={{ width: `${(finishedSteps / run.totalSteps) * 100}%` }}
             />
@@ -320,31 +542,13 @@ export function AgentClient({ profileCompleteness }: { profileCompleteness: numb
         {/* Steps */}
         <div className="space-y-4">
           {run.steps.map((s) => (
-            <StepCard key={s.step} step={s} />
+            <StepCard
+              key={s.step}
+              step={s}
+              canRetry={!isRunning && Boolean(run.runId) && s.status === "failed"}
+              onRetry={() => retryStep(s.step)}
+            />
           ))}
-
-          {/* Pending steps placeholder */}
-          {run.status === "running" &&
-            mission.steps
-              .slice(run.steps.length + (run.steps.at(-1)?.status === "running" ? 0 : 0))
-              .map((s, i) => {
-                const stepNum = run.steps.length + 1 + i
-                if (stepNum <= (run.steps.at(-1)?.step ?? 0)) return null
-                return (
-                  <div
-                    key={`pending-${stepNum}`}
-                    className="rounded-xl border border-dashed border-border/60 bg-card/20 p-4 flex items-center gap-3 opacity-50"
-                  >
-                    <div className="grid h-8 w-8 place-items-center rounded-lg bg-card border border-border text-xs font-mono-label text-cream-3">
-                      {stepNum}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-display text-sm truncate">{s.title}</p>
-                      <p className="font-mono-label text-[10px] text-cream-3 truncate">{s.description}</p>
-                    </div>
-                  </div>
-                )
-              })}
         </div>
 
         {run.status === "error" && run.errorMessage && (
@@ -354,7 +558,7 @@ export function AgentClient({ profileCompleteness }: { profileCompleteness: numb
           </div>
         )}
 
-        {run.status === "done" && (
+        {run.status === "completed" && (
           <div className="rounded-xl border border-gold/30 bg-gold/5 p-5 text-center space-y-2">
             <CheckCircle2 className="h-8 w-8 text-gold mx-auto" />
             <p className="font-display text-lg">Миссия выполнена</p>
@@ -367,27 +571,49 @@ export function AgentClient({ profileCompleteness }: { profileCompleteness: numb
             </p>
           </div>
         )}
+
+        {run.status === "partial" && (
+          <div className="rounded-xl border border-yellow-500/30 bg-yellow-500/5 p-5 text-center space-y-2">
+            <AlertCircle className="h-8 w-8 text-yellow-500 mx-auto" />
+            <p className="font-display text-lg">Миссия завершена частично</p>
+            <p className="font-serif text-sm text-cream-2">
+              {finishedSteps} из {run.totalSteps} шагов готовы. Неудавшиеся шаги можно повторить по одному —
+              запросы за них не списаны.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   )
 }
 
-function StepCard({ step }: { step: StepState }) {
+function StepCard({
+  step,
+  canRetry,
+  onRetry,
+}: {
+  step: StepState
+  canRetry: boolean
+  onRetry: () => void
+}) {
   return (
     <div
       className={cn(
         "rounded-xl border bg-card/40 p-4 sm:p-5 space-y-3",
-        step.status === "done" && "border-gold/30",
+        step.status === "completed" && "border-gold/30",
         step.status === "running" && "border-gold/40 shadow-[0_0_0_1px_rgb(217,176,116,0.15)]",
-        step.status === "error" && "border-destructive/40"
+        step.status === "failed" && "border-destructive/40",
+        step.status === "pending" && "border-dashed border-border/60 opacity-60"
       )}
     >
       <div className="flex items-start gap-3">
         <div className="grid h-8 w-8 place-items-center rounded-lg bg-gold/15 shrink-0">
           {step.status === "running" ? (
             <Loader2 className="h-4 w-4 text-gold animate-spin" />
-          ) : step.status === "done" ? (
+          ) : step.status === "completed" ? (
             <CheckCircle2 className="h-4 w-4 text-gold" />
+          ) : step.status === "failed" ? (
+            <XCircle className="h-4 w-4 text-destructive" />
           ) : (
             <Bot className="h-4 w-4 text-gold" />
           )}
@@ -399,28 +625,43 @@ function StepCard({ step }: { step: StepState }) {
           </h3>
           <p className="font-mono-label text-[10px] text-cream-3 truncate">
             tool · {step.tool}
+            {step.status === "running" && step.attempt && step.attempt > 1 && ` · попытка ${step.attempt}`}
           </p>
         </div>
+        {canRetry && (
+          <Button variant="outline" size="sm" onClick={onRetry}>
+            <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+            Повторить шаг
+          </Button>
+        )}
       </div>
 
-      {step.text ? (
+      {step.status === "failed" ? (
+        <p className="font-serif text-sm text-destructive border-t border-border/40 pt-3">
+          {describeStepFailure(step.reason)} Запрос за этот шаг не списан.
+        </p>
+      ) : step.text ? (
         <div className="border-t border-border/40 pt-3">
           <ToolOutput tool={step.tool} text={step.text} streaming={step.status === "running"} />
+          {step.warnings && step.warnings.length > 0 && (
+            <p className="font-mono-label text-[10px] text-cream-3 mt-2">{step.warnings.join(" · ")}</p>
+          )}
         </div>
       ) : step.status === "running" ? (
         <p className="font-mono-label text-[11px] text-cream-3 italic border-t border-border/40 pt-3">
           {step.description || "генерирую ответ..."}
         </p>
+      ) : step.status === "pending" ? (
+        <p className="font-mono-label text-[10px] text-cream-3 truncate">{step.description}</p>
       ) : null}
     </div>
   )
 }
 
 /**
- * Dispatch the right renderer per tool. The agent's universal "stream
- * markdown" approach worked for prose tools, but `tracker` returns
- * strict JSON — rendering it as Markdown shows a raw `{...}` blob.
- * Here we detect the tool and route to the structured view.
+ * Dispatch the right renderer per tool. `tracker` returns strict JSON — the
+ * server already validated and canonicalised it for completed steps, so a
+ * parse failure here only happens mid-stream.
  */
 function ToolOutput({ tool, text, streaming }: { tool: string; text: string; streaming: boolean }) {
   if (tool === "tracker") {
@@ -428,10 +669,7 @@ function ToolOutput({ tool, text, streaming }: { tool: string; text: string; str
     if (parsed && parsed.months.length > 0) {
       return <TrackerView data={parsed} />
     }
-    // Mid-stream or malformed JSON — show progress hint, not the raw blob
     if (streaming) return <TrackerStreaming partial={text} />
-    // Final but unparseable — fall back to Markdown so the user can at
-    // least read the AI's output, but in a code block (since it's JSON-ish).
     return <Markdown>{"```json\n" + text + "\n```"}</Markdown>
   }
   return <Markdown>{text}</Markdown>

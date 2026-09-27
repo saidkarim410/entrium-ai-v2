@@ -1,8 +1,8 @@
-import { streamText } from "ai"
 import { z } from "zod"
 import { models, MODEL_IDS } from "@/lib/ai"
 import { DATA_GUARD, asUserData } from "@/lib/ai/guard"
 import { SYSTEM_PROMPTS } from "@/lib/ai/prompts"
+import { getTemporalContext, temporalPromptBlock } from "@/lib/ai/temporal"
 import {
   searchUniversities,
   searchScholarships,
@@ -10,42 +10,51 @@ import {
   formatScholarshipsContext,
 } from "@/lib/ai/rag"
 import { getCurrentUser } from "@/lib/supabase/server"
-import { checkUsage, recordUsage, consumeBonus } from "@/lib/rate-limit"
-import { getApplicantProfile, saveToolRun } from "@/lib/applicant/actions"
+import { checkUsage, recordUsage, releaseReservation, settleBonusAfterCall } from "@/lib/rate-limit"
+import { getApplicantProfile } from "@/lib/applicant/actions"
 import { profileToContextBlock } from "@/lib/applicant/types"
 import { listApplications } from "@/lib/applications/actions"
 import { applicationsToContextBlock } from "@/lib/applications/types"
-import { findMission, type MissionId } from "@/lib/agent/missions"
+import { findMission, type Mission } from "@/lib/agent/missions"
+import { runMissionStep, describeStepFailure } from "@/lib/agent/run-step"
+import {
+  createMissionRun,
+  getMissionRun,
+  updateMissionStep,
+  failRemainingSteps,
+  type MissionRunRecord,
+} from "@/lib/agent/runs"
 import { createNotification } from "@/lib/notifications/actions"
 import { getLanguageInstruction } from "@/lib/ai/language"
 
 export const runtime = "nodejs"
 export const maxDuration = 300 // up to 5 minutes for full pipeline
 
-const schema = z.object({
-  missionId: z.enum([
-    "quick-assessment",
-    "full-package",
-    "pre-submission-audit",
-    "year-plan",
-  ]),
-})
+const MISSION_IDS = ["quick-assessment", "full-package", "pre-submission-audit", "year-plan"] as const
+
+const startSchema = z.object({ missionId: z.enum(MISSION_IDS) })
+const retrySchema = z.object({ runId: z.string().uuid(), step: z.number().int().min(1).max(20) })
 
 /**
- * AI Agent — runs a sequential pipeline of tool calls.
+ * AI Agent — runs a sequential pipeline of tool calls (P0-01 rework).
  *
- * Streams NDJSON events to the client:
- *   {"type":"meta","totalSteps":N,"missionId":"..."}
+ * Body: `{ missionId }` starts a new run; `{ runId, step }` re-runs ONE failed
+ * step of an existing run. Progress is persisted after every step (see
+ * `@/lib/agent/runs`), so a refresh restores the run via GET /api/agent/runs/:id.
+ *
+ * NDJSON events:
+ *   {"type":"run","runId":"..."}
+ *   {"type":"meta","totalSteps":N,"missionId":"...","steps":[...]}
  *   {"type":"step_start","step":1,"tool":"analyzer","title":"...","description":"..."}
  *   {"type":"delta","step":1,"text":"..."}
- *   {"type":"step_end","step":1}
- *   ...
- *   {"type":"done"}
+ *   {"type":"step_retry","step":1,"attempt":2,"reason":"truncated"}   ← UI clears partial text
+ *   {"type":"step_end","step":1,"text":"<canonical text>","warnings":[]}
+ *   {"type":"step_failed","step":1,"reason":"truncated","message":"..."}
+ *   {"type":"done","status":"completed"|"partial"|"failed"}
  *   {"type":"error","message":"..."}
  *
- * Each step uses the same system prompt + RAG injection as /api/chat,
- * but the user-side prompt is auto-built from the applicant profile
- * via the mission definition.
+ * A step counts as completed only when the model stopped on its own and, for
+ * structured tools, the payload validates; a failed step releases its quota.
  */
 export async function POST(req: Request) {
   const user = await getCurrentUser()
@@ -53,34 +62,54 @@ export async function POST(req: Request) {
     return Response.json({ error: "unauthorized" }, { status: 401 })
   }
 
-  const body = await req.json()
-  const parsed = schema.safeParse(body)
-  if (!parsed.success) {
-    return Response.json({ error: "invalid_input", issues: parsed.error.issues }, { status: 400 })
+  const body = await req.json().catch(() => null)
+  const retry = retrySchema.safeParse(body)
+  const start = startSchema.safeParse(body)
+  if (!retry.success && !start.success) {
+    return Response.json({ error: "invalid_input", issues: start.error?.issues }, { status: 400 })
   }
 
-  const mission = findMission(parsed.data.missionId)
-  if (!mission) {
-    return Response.json({ error: "unknown_mission" }, { status: 400 })
+  let run: MissionRunRecord | null = null
+  let mission: Mission | undefined
+  let stepNumbers: number[]
+
+  if (retry.success) {
+    run = await getMissionRun(retry.data.runId, user.id)
+    if (!run) return Response.json({ error: "run_not_found" }, { status: 404 })
+    mission = findMission(run.missionId)
+    const target = run.steps.find((s) => s.step === retry.data.step)
+    if (!mission || !target || !mission.steps[retry.data.step - 1]) {
+      return Response.json({ error: "unknown_step" }, { status: 400 })
+    }
+    if (target.status === "completed" || target.status === "running") {
+      return Response.json({ error: "step_not_retryable", status: target.status }, { status: 409 })
+    }
+    stepNumbers = [retry.data.step]
+  } else {
+    mission = findMission(start.data!.missionId)
+    if (!mission) return Response.json({ error: "unknown_mission" }, { status: 400 })
+    stepNumbers = mission.steps.map((_, i) => i + 1)
   }
 
-  // Pre-flight quota check (we re-check inside the loop for fairness)
+  // Pre-flight quota: reserves ONE request (used by the first step below).
   const initialUsage = await checkUsage(user.id)
   if (!initialUsage.allowed) {
-    return Response.json(
-      { error: "limit_reached", tier: initialUsage.tier },
-      { status: 429 }
-    )
+    return Response.json({ error: "limit_reached", tier: initialUsage.tier }, { status: 429 })
   }
 
-  // Mission costs N requests (one per step). For free tier, refuse if not enough.
-  const stepsCount = mission.steps.length
-  if (initialUsage.tier === "free" && initialUsage.remaining + initialUsage.bonus < stepsCount) {
+  // Mission costs N requests (one per step). Refuse up front if Free can't afford it —
+  // `remaining` excludes the request just reserved, hence the +1.
+  const need = stepNumbers.length
+  const available = 1 + initialUsage.remaining + initialUsage.bonus
+  if (initialUsage.tier === "free" && available < need) {
+    await releaseReservation(user.id)
     return Response.json(
       {
         error: "limit_reached",
-        message: `Эта миссия требует ${stepsCount} запросов, у тебя осталось ${initialUsage.remaining + initialUsage.bonus}. Обнови до Pro или подожди до завтра.`,
+        message: `Эта миссия стоит ${need} запрос(а/ов), а у тебя осталось ${available}. Выбери миссию короче, обнови до Pro или подожди до завтра.`,
         tier: "free",
+        need,
+        available,
       },
       { status: 429 }
     )
@@ -93,50 +122,83 @@ export async function POST(req: Request) {
   ])
   const profileBlock = profileToContextBlock(applicant)
   const appsBlock = applicationsToContextBlock(apps)
+  const temporal = getTemporalContext(applicant)
+  const temporalBlock = temporalPromptBlock(temporal)
 
   const model = initialUsage.tier === "pro" ? models.claudeSonnet : models.claudeHaiku
   const modelId = initialUsage.tier === "pro" ? MODEL_IDS.sonnet : MODEL_IDS.haiku
-  const missionId = mission.id as MissionId
+
+  if (!run) {
+    run = await createMissionRun(user.id, mission)
+    if (!run) {
+      await releaseReservation(user.id)
+      return Response.json({ error: "run_create_failed" }, { status: 500 })
+    }
+  }
 
   const encoder = new TextEncoder()
-  const aggregatedOutputs: Array<{ step: number; tool: string; title: string; text: string }> = []
+  const missionDef = mission
+  const isRetry = retry.success
 
   const stream = new ReadableStream({
     async start(controller) {
+      let current: MissionRunRecord = run!
       function emit(obj: unknown) {
         controller.enqueue(encoder.encode(JSON.stringify(obj) + "\n"))
       }
 
       try {
-        emit({ type: "meta", totalSteps: stepsCount, missionId })
+        emit({ type: "run", runId: current.id })
+        emit({ type: "meta", totalSteps: current.steps.length, missionId: current.missionId, steps: current.steps })
 
-        for (let i = 0; i < mission.steps.length; i++) {
-          const step = mission.steps[i]
-          const stepNum = i + 1
+        // The pre-flight call already reserved a request for the first step.
+        let reservationHeld = true
 
-          // M2: stop the pipeline if the client disconnected (don't start new steps)
-          if (req.signal.aborted) break
+        for (const stepNum of stepNumbers) {
+          const stepDef = missionDef.steps[stepNum - 1]
+          const record = current.steps[stepNum - 1]
 
+          if (req.signal.aborted) {
+            if (reservationHeld) await releaseReservation(user.id)
+            current = await failRemainingSteps(current, user.id, "aborted", stepNum)
+            break
+          }
+
+          if (!reservationHeld) {
+            const u = await checkUsage(user.id)
+            if (!u.allowed) {
+              current = await failRemainingSteps(current, user.id, "quota", stepNum)
+              for (const s of current.steps) {
+                if (s.step >= stepNum && s.status === "failed" && s.reason === "quota") {
+                  emit({ type: "step_failed", step: s.step, reason: "quota", message: describeStepFailure("quota") })
+                }
+              }
+              break
+            }
+            reservationHeld = true
+          }
+
+          current = await updateMissionStep(current, user.id, { ...record, status: "running", text: undefined, reason: undefined })
           emit({
             type: "step_start",
             step: stepNum,
-            tool: step.tool,
-            title: step.title,
-            description: step.description,
+            tool: stepDef.tool,
+            title: stepDef.title,
+            description: stepDef.description,
           })
 
-          // Build system prompt with profile + applications + RAG enrichment + language
-          let systemPrompt: string = SYSTEM_PROMPTS[step.tool] + DATA_GUARD
+          // System prompt: role + guard + profile + applications + RAG + language + temporal truth
+          let systemPrompt: string = SYSTEM_PROMPTS[stepDef.tool] + DATA_GUARD
           if (profileBlock) systemPrompt += asUserData(profileBlock)
           if (appsBlock) systemPrompt += asUserData(appsBlock)
-          systemPrompt = `${systemPrompt}\n\n---\n\n${langInstr}`
+          systemPrompt = `${systemPrompt}\n\n---\n\n${langInstr}\n\n---\n\n${temporalBlock}`
 
-          const userPrompt = step.buildPrompt(applicant)
+          const userPrompt = stepDef.buildPrompt(applicant, temporal)
 
-          if (step.tool === "university" || step.tool === "scholarship") {
+          if (stepDef.tool === "university" || stepDef.tool === "scholarship") {
             try {
               const ctx =
-                step.tool === "university"
+                stepDef.tool === "university"
                   ? formatUniversitiesContext(await searchUniversities(userPrompt, 12))
                   : formatScholarshipsContext(await searchScholarships(userPrompt, 12))
               if (ctx) systemPrompt += asUserData(ctx)
@@ -146,86 +208,93 @@ export async function POST(req: Request) {
           }
 
           const stepStart = Date.now()
-          let stepText = ""
-
-          const result = streamText({
+          const outcome = await runMissionStep({
             model,
-            abortSignal: req.signal, // M2: cancel generation on client disconnect
-            maxOutputTokens: 3000, // H5: cap per-step output
+            tool: stepDef.tool,
             system: systemPrompt,
-            messages: [{ role: "user", content: userPrompt }],
+            userPrompt,
+            todayIso: temporal.todayIso,
+            signal: req.signal,
+            onDelta: (text) => emit({ type: "delta", step: stepNum, text }),
+            onRetry: (attempt, reason) => emit({ type: "step_retry", step: stepNum, attempt, reason }),
           })
+          const durationMs = Date.now() - stepStart
 
-          for await (const delta of result.textStream) {
-            stepText += delta
-            emit({ type: "delta", step: stepNum, text: delta })
+          if (outcome.status === "completed") {
+            await recordUsage({
+              userId: user.id,
+              tool: stepDef.tool,
+              model: modelId,
+              inputTokens: outcome.usage.inputTokens,
+              outputTokens: outcome.usage.outputTokens,
+              costUsd: 0,
+            })
+            reservationHeld = false
+            await settleBonusAfterCall(user.id)
+            current = await updateMissionStep(current, user.id, {
+              ...record,
+              status: "completed",
+              text: outcome.text,
+              attempts: outcome.attempts,
+              warnings: outcome.warnings,
+            })
+            emit({ type: "step_end", step: stepNum, text: outcome.text, warnings: outcome.warnings, durationMs })
+          } else {
+            // Technically failed → the user does not pay for it.
+            await releaseReservation(user.id)
+            reservationHeld = false
+            console.warn(
+              `agent step failed: tool=${stepDef.tool} reason=${outcome.reason} finish=${outcome.finishReason} attempts=${outcome.attempts} tokens=${outcome.usage.outputTokens}`
+            )
+            current = await updateMissionStep(current, user.id, {
+              ...record,
+              status: "failed",
+              reason: outcome.reason,
+              detail: outcome.detail,
+              attempts: outcome.attempts,
+            })
+            emit({
+              type: "step_failed",
+              step: stepNum,
+              reason: outcome.reason,
+              message: describeStepFailure(outcome.reason),
+            })
+            if (outcome.reason === "aborted") {
+              current = await failRemainingSteps(current, user.id, "aborted", stepNum + 1)
+              break
+            }
           }
-
-          const finalUsage = await result.usage
-          await recordUsage({
-            userId: user.id,
-            tool: step.tool,
-            model: modelId,
-            inputTokens: finalUsage?.inputTokens ?? 0,
-            outputTokens: finalUsage?.outputTokens ?? 0,
-            costUsd: 0,
-          })
-
-          aggregatedOutputs.push({
-            step: stepNum,
-            tool: step.tool,
-            title: step.title,
-            text: stepText,
-          })
-
-          // Persist this individual step in tool_runs for history
-          await saveToolRun({
-            userId: user.id,
-            tool: step.tool,
-            input: { agent_mission: missionId, step: stepNum, prompt: userPrompt.slice(0, 2000) },
-            output: stepText,
-            durationMs: Date.now() - stepStart,
-            status: "success",
-          }).catch((e) => console.error("saveToolRun failed:", e))
-
-          // Consume free-tier bonus when daily quota runs out
-          const status = await checkUsage(user.id)
-          if (status.tier === "free" && status.remaining === 0 && status.bonus > 0) {
-            await consumeBonus(user.id)
-          }
-
-          emit({ type: "step_end", step: stepNum })
         }
 
-        // Save aggregate run as a "counselor" entry so it surfaces in history as one item
-        await saveToolRun({
-          userId: user.id,
-          tool: "counselor",
-          input: { agent_mission: missionId, mission_title: mission.title },
-          output: aggregatedOutputs
-            .map((o) => `# ${o.title}\n\n${o.text}`)
-            .join("\n\n---\n\n"),
-          durationMs: 0,
-          status: "success",
-        }).catch((e) => console.error("aggregate saveToolRun failed:", e))
+        if (reservationHeld) await releaseReservation(user.id)
 
-        // Notify on completion (also pushes via Telegram if linked)
-        await createNotification({
-          userId: user.id,
-          type: "agent_done",
-          title: `🤖 Миссия завершена: ${mission.title}`,
-          body: `Готовы ${aggregatedOutputs.length} разделов. Открой History чтобы вернуться к результатам.`,
-          link: "/history",
-          data: { mission_id: missionId, steps: aggregatedOutputs.length },
-        }).catch((e) => console.error("agent_done notification failed:", e))
+        if (!isRetry && (current.status === "completed" || current.status === "partial")) {
+          const done = current.steps.filter((s) => s.status === "completed").length
+          await createNotification({
+            userId: user.id,
+            type: "agent_done",
+            title:
+              current.status === "completed"
+                ? `🤖 Миссия завершена: ${missionDef.title}`
+                : `🤖 Миссия завершена частично: ${missionDef.title}`,
+            body:
+              current.status === "completed"
+                ? `Готовы ${done} разделов. Открой History чтобы вернуться к результатам.`
+                : `Готовы ${done} из ${current.steps.length} разделов. Неудавшиеся шаги можно повторить на странице Agent.`,
+            link: current.status === "completed" ? "/history" : `/agent?run=${current.id}`,
+            data: { mission_id: current.missionId, run_id: current.id, steps: done },
+          }).catch((e) => console.error("agent_done notification failed:", e))
+        }
 
-        emit({ type: "done" })
+        emit({ type: "done", status: current.status, runId: current.id })
       } catch (err) {
         console.error("Agent pipeline error:", err)
-        emit({
-          type: "error",
-          message: "pipeline_failed",
-        })
+        try {
+          await failRemainingSteps(current, user.id, "model_error")
+        } catch {
+          /* best effort */
+        }
+        emit({ type: "error", message: "pipeline_failed" })
       } finally {
         controller.close()
       }

@@ -17,6 +17,10 @@ export type ApplicantProfile = {
   academic: {
     school?: string
     schoolType?: string
+    /** Length of secondary schooling, e.g. "11" or "12" (years) */
+    schoolYears?: string
+    /** Expected graduation, free text or YYYY-MM, e.g. "июнь 2027" */
+    graduation?: string
     gpa?: string
     sat?: string
     act?: string
