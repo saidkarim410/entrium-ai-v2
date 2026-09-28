@@ -3,12 +3,8 @@ import { z } from "zod"
 import { models, MODEL_IDS } from "@/lib/ai"
 import { DATA_GUARD, asUserData } from "@/lib/ai/guard"
 import { SYSTEM_PROMPTS, type ToolKey } from "@/lib/ai/prompts"
-import {
-  searchUniversities,
-  searchScholarships,
-  formatUniversitiesContext,
-  formatScholarshipsContext,
-} from "@/lib/ai/rag"
+import { buildUniversityContext } from "@/lib/programs/context"
+import { buildScholarshipsContext } from "@/lib/scholarships/context"
 import { getCurrentUser } from "@/lib/supabase/server"
 import { checkUsage, recordUsage, settleBonusAfterCall, REFERRAL_BONUS } from "@/lib/rate-limit"
 import { buildTemporalBlock } from "@/lib/ai/temporal"
@@ -102,18 +98,19 @@ export async function POST(req: Request) {
     systemPrompt = `${systemPrompt}\n\n---\n\n${buildTemporalBlock(null)}`
   }
 
-  // RAG: inject database context for university/scholarship tools
+  // Verified programme base (P0-03) / checked scholarships (P1-01) as the only fact source
   if (tool === "university" || tool === "scholarship") {
     const query = lastUserText(body.messages)
     if (query) {
       try {
+        const applicant = await getApplicantProfile()
         const ctx =
           tool === "university"
-            ? formatUniversitiesContext(await searchUniversities(query, 12))
-            : formatScholarshipsContext(await searchScholarships(query, 12))
+            ? await buildUniversityContext(query, applicant)
+            : await buildScholarshipsContext(query, applicant)
         if (ctx) systemPrompt += asUserData(ctx)
       } catch (err) {
-        console.error("RAG search failed:", err)
+        console.error("Programme/scholarship context failed:", err)
       }
     }
   }

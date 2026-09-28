@@ -93,7 +93,16 @@ export function universityDefaults(p: ApplicantProfile) {
     major: p.goals.major ?? "",
     prog: p.goals.level ?? "Bachelor",
     countries: p.goals.countries ?? "",
-    budget: p.goals.budget ?? "",
+    language: p.goals.instructionLanguage ?? "английский",
+    budget: [
+      p.goals.budget ?? "",
+      p.goals.budgetIncludes === "tuition_living" ? "(обучение + проживание)" : p.goals.budgetIncludes === "tuition" ? "(только обучение)" : "",
+    ]
+      .filter(Boolean)
+      .join(" "),
+    schooling: [p.academic.schoolYears ? `${p.academic.schoolYears}-летняя школа` : "", p.academic.graduation ? `выпуск ${p.academic.graduation}` : ""]
+      .filter(Boolean)
+      .join(", "),
     preferences: p.goalsText ?? "",
   }
 }
@@ -109,7 +118,7 @@ export function scholarshipDefaults(p: ApplicantProfile) {
     major: p.goals.major ?? "",
     prog: p.goals.level ?? "Bachelor",
     countries: p.goals.countries ?? "",
-    needFull: "yes",
+    needFull: p.goals.fundingNeed === "none" ? "no" : "yes",
     extra: [p.weak, p.goalsText].filter(Boolean).join(" · ") || "",
   }
 }

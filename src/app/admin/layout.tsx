@@ -2,6 +2,7 @@ import Link from "next/link"
 import {
   Heart, BarChart3, Users, CreditCard, Repeat, Bot, Send,
   Activity, Mail, HeartPulse, LogOut, ChevronRight,
+  GraduationCap,
 } from "lucide-react"
 import { requireAdminPage } from "@/lib/admin/auth"
 import { logoutAction } from "@/app/(auth)/actions"
@@ -34,6 +35,7 @@ const NAV_GROUPS: Array<{
     label: "AI И КОММУНИКАЦИИ",
     items: [
       { href: "/admin/runs", label: "AI runs (история)", icon: Bot },
+      { href: "/admin/programs", label: "Программы (база)", icon: GraduationCap },
       { href: "/admin/broadcasts", label: "Рассылки", icon: Send },
       { href: "/admin/email-preview", label: "Email превью", icon: Mail },
     ],

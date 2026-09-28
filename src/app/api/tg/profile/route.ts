@@ -25,7 +25,8 @@ const applicantInputSchema = z
       .optional(),
     academic: z
       .object({
-        school: optStr(300), schoolType: optStr(120), gpa: optStr(50), sat: optStr(50),
+        school: optStr(300), schoolType: optStr(120), schoolYears: optStr(10), graduation: optStr(60),
+        educationType: optStr(60), gpa: optStr(50), gpaScale: optStr(20), sat: optStr(50),
         act: optStr(50), ielts: optStr(50), toefl: optStr(50), duolingo: optStr(50),
         apIb: optStr(500), coursework: optStr(2000),
       })
@@ -34,8 +35,11 @@ const applicantInputSchema = z
     goals: z
       .object({
         level: z.enum(["Bachelor", "Master", "PhD", "MBA", "Foundation"]).optional(),
-        year: optStr(20), major: optStr(300), region: optStr(200),
-        countries: optStr(500), targetUnis: optStr(1000), budget: optStr(100),
+        year: optStr(20), intake: optStr(60), major: optStr(300), region: optStr(200),
+        countries: optStr(500), targetUnis: optStr(1000), instructionLanguage: optStr(60),
+        budget: optStr(100),
+        budgetIncludes: z.enum(["tuition", "tuition_living"]).optional(),
+        fundingNeed: z.enum(["none", "partial", "full"]).optional(),
       })
       .strict()
       .optional(),

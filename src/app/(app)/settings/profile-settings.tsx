@@ -181,7 +181,11 @@ export function ProfileSettings({
           <div className="grid sm:grid-cols-2 gap-4">
             <Field label="Школа / университет" value={profile.academic.school ?? ""} onChange={(v) => update("academic", "school", v)} placeholder="Лицей №2, Tashkent" />
             <Field label="Тип школы" value={profile.academic.schoolType ?? ""} onChange={(v) => update("academic", "schoolType", v)} placeholder="IB / A-level / National / American" />
+            <SelectField label="Сколько классов в школе" value={profile.academic.schoolYears ?? ""} onChange={(v) => update("academic", "schoolYears", v)} options={["", "11", "12", "13"]} labels={{ "": "не указано", "11": "11 лет", "12": "12 лет", "13": "13 лет" }} />
+            <Field label="Окончание (месяц и год)" value={profile.academic.graduation ?? ""} onChange={(v) => update("academic", "graduation", v)} placeholder="июнь 2027" />
+            <SelectField label="Сейчас учусь в" value={profile.academic.educationType ?? ""} onChange={(v) => update("academic", "educationType", v)} options={["", "school", "college", "foundation", "university"]} labels={{ "": "не указано", school: "школе", college: "колледже", foundation: "foundation", university: "университете" }} />
             <Field label="GPA" value={profile.academic.gpa ?? ""} onChange={(v) => update("academic", "gpa", v)} placeholder="4.5/5 (top 5% of class)" />
+            <Field label="Шкала GPA" value={profile.academic.gpaScale ?? ""} onChange={(v) => update("academic", "gpaScale", v)} placeholder="5 / 4 / 100 / IB 45" />
             <Field label="SAT" value={profile.academic.sat ?? ""} onChange={(v) => update("academic", "sat", v)} placeholder="1450" />
             <Field label="ACT" value={profile.academic.act ?? ""} onChange={(v) => update("academic", "act", v)} placeholder="32" />
             <Field label="IELTS" value={profile.academic.ielts ?? ""} onChange={(v) => update("academic", "ielts", v)} placeholder="7.5" />
@@ -203,8 +207,11 @@ export function ProfileSettings({
             <Field label="Год поступления" value={profile.goals.year ?? ""} onChange={(v) => update("goals", "year", v)} placeholder="2027" />
             <Field label="Специальность" value={profile.goals.major ?? ""} onChange={(v) => update("goals", "major", v)} placeholder="Computer Science" />
             <Field label="Регион" value={profile.goals.region ?? ""} onChange={(v) => update("goals", "region", v)} placeholder="USA / UK / EU / Asia / Mixed" />
-            <Field label="Целевые страны" value={profile.goals.countries ?? ""} onChange={(v) => update("goals", "countries", v)} placeholder="USA, UK, Germany" />
-            <Field label="Бюджет $/год" value={profile.goals.budget ?? ""} onChange={(v) => update("goals", "budget", v)} placeholder="20000" />
+            <Field label="Целевые страны" value={profile.goals.countries ?? ""} onChange={(v) => update("goals", "countries", v)} placeholder="Италия, Германия" />
+            <SelectField label="Язык обучения" value={profile.goals.instructionLanguage ?? "английский"} onChange={(v) => update("goals", "instructionLanguage", v)} options={["английский", "любой", "немецкий", "итальянский", "французский", "русский"]} />
+            <Field label="Бюджет $/год" value={profile.goals.budget ?? ""} onChange={(v) => update("goals", "budget", v)} placeholder="10000" />
+            <SelectField label="Бюджет включает" value={profile.goals.budgetIncludes ?? ""} onChange={(v) => update("goals", "budgetIncludes", v)} options={["", "tuition_living", "tuition"]} labels={{ "": "не указано", tuition_living: "обучение + проживание", tuition: "только обучение" }} />
+            <SelectField label="Нужна стипендия" value={profile.goals.fundingNeed ?? ""} onChange={(v) => update("goals", "fundingNeed", v)} options={["", "full", "partial", "none"]} labels={{ "": "не указано", full: "полное финансирование", partial: "частично", none: "не нужна" }} />
           </div>
           <div className="mt-4">
             <FieldArea label="Целевые университеты" value={profile.goals.targetUnis ?? ""} onChange={(v) => update("goals", "targetUnis", v)} placeholder="MIT, Stanford, ETH Zurich, NUS, Cambridge, TU Munich" rows={2} />
@@ -344,12 +351,24 @@ function FieldArea({ label, value, onChange, placeholder, rows = 3 }: { label: s
   )
 }
 
-function SelectField({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: readonly string[] }) {
+function SelectField({
+  label,
+  value,
+  onChange,
+  options,
+  labels,
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  options: readonly string[]
+  labels?: Record<string, string>
+}) {
   return (
     <div className="space-y-1.5">
       <Label className="font-mono-label text-cream-3">{label}</Label>
       <select value={value} onChange={(e) => onChange(e.target.value)} className="flex h-9 w-full rounded-md border border-border bg-card px-3 text-sm text-cream">
-        {options.map((o) => <option key={o} value={o}>{o}</option>)}
+        {options.map((o) => <option key={o} value={o}>{labels?.[o] ?? o}</option>)}
       </select>
     </div>
   )

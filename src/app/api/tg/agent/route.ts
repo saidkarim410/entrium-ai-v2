@@ -3,12 +3,8 @@ import { models, MODEL_IDS } from "@/lib/ai"
 import { DATA_GUARD, asUserData } from "@/lib/ai/guard"
 import { SYSTEM_PROMPTS } from "@/lib/ai/prompts"
 import { getTemporalContext, temporalPromptBlock } from "@/lib/ai/temporal"
-import {
-  searchUniversities,
-  searchScholarships,
-  formatUniversitiesContext,
-  formatScholarshipsContext,
-} from "@/lib/ai/rag"
+import { buildUniversityContext } from "@/lib/programs/context"
+import { buildScholarshipsContext } from "@/lib/scholarships/context"
 import { supabaseAdmin } from "@/lib/supabase/admin"
 import { checkUsage, recordUsage, releaseReservation, settleBonusAfterCall } from "@/lib/rate-limit"
 import { profileToContextBlock, normalizeApplicantProfile } from "@/lib/applicant/types"
@@ -165,11 +161,11 @@ export async function POST(req: Request) {
             try {
               const ctx =
                 step.tool === "university"
-                  ? formatUniversitiesContext(await searchUniversities(userPrompt, 12))
-                  : formatScholarshipsContext(await searchScholarships(userPrompt, 12))
+                  ? await buildUniversityContext(userPrompt, applicant)
+                  : await buildScholarshipsContext(userPrompt, applicant)
               if (ctx) systemPrompt += asUserData(ctx)
             } catch (err) {
-              console.error("RAG search failed in tg agent step:", err)
+              console.error("Programme/scholarship context failed in tg agent step:", err)
             }
           }
 

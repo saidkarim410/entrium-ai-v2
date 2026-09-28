@@ -21,7 +21,11 @@ export type ApplicantProfile = {
     schoolYears?: string
     /** Expected graduation, free text or YYYY-MM, e.g. "июнь 2027" */
     graduation?: string
+    /** What the current education is: school | college | foundation | university */
+    educationType?: string
     gpa?: string
+    /** Scale the GPA is on, e.g. "5", "4", "100", "IB 45" */
+    gpaScale?: string
     sat?: string
     act?: string
     ielts?: string
@@ -33,11 +37,19 @@ export type ApplicantProfile = {
   goals: {
     level?: "Bachelor" | "Master" | "PhD" | "MBA" | "Foundation"
     year?: string
+    /** Intake label, e.g. "Fall 2027" / "осень 2027" */
+    intake?: string
     major?: string
     region?: string
     countries?: string
     targetUnis?: string
+    /** Language of instruction the applicant wants: "английский" | "any" | … */
+    instructionLanguage?: string
     budget?: string
+    /** What the budget covers */
+    budgetIncludes?: "tuition" | "tuition_living"
+    /** How much of the cost must be funded externally */
+    fundingNeed?: "none" | "partial" | "full"
   }
   experience?: string
   activities?: string
@@ -117,7 +129,10 @@ export function profileToContextBlock(p: ApplicantProfile): string {
   if (p.personal.location) parts.push(`Город: ${p.personal.location}`)
 
   if (p.academic.school) parts.push(`Школа/университет: ${p.academic.school}`)
-  if (p.academic.gpa) parts.push(`GPA: ${p.academic.gpa}`)
+  if (p.academic.educationType) parts.push(`Тип образования: ${p.academic.educationType}`)
+  if (p.academic.schoolYears) parts.push(`Длительность школы: ${p.academic.schoolYears} лет`)
+  if (p.academic.graduation) parts.push(`Окончание: ${p.academic.graduation}`)
+  if (p.academic.gpa) parts.push(`GPA: ${p.academic.gpa}${p.academic.gpaScale ? ` (шкала ${p.academic.gpaScale})` : ""}`)
   if (p.academic.sat) parts.push(`SAT: ${p.academic.sat}`)
   if (p.academic.act) parts.push(`ACT: ${p.academic.act}`)
   if (p.academic.ielts) parts.push(`IELTS: ${p.academic.ielts}`)
@@ -127,12 +142,20 @@ export function profileToContextBlock(p: ApplicantProfile): string {
   if (p.academic.coursework) parts.push(`Курсы: ${p.academic.coursework}`)
 
   if (p.goals.level) parts.push(`Уровень: ${p.goals.level}`)
-  if (p.goals.year) parts.push(`Год поступления: ${p.goals.year}`)
+  if (p.goals.year) parts.push(`Год поступления: ${p.goals.year}${p.goals.intake ? ` (${p.goals.intake})` : ""}`)
   if (p.goals.major) parts.push(`Специальность: ${p.goals.major}`)
   if (p.goals.region) parts.push(`Регион: ${p.goals.region}`)
   if (p.goals.countries) parts.push(`Страны: ${p.goals.countries}`)
+  if (p.goals.instructionLanguage) parts.push(`Язык обучения: ${p.goals.instructionLanguage}`)
   if (p.goals.targetUnis) parts.push(`Целевые вузы: ${p.goals.targetUnis}`)
-  if (p.goals.budget) parts.push(`Бюджет $/год: ${p.goals.budget}`)
+  if (p.goals.budget) {
+    const covers = p.goals.budgetIncludes === "tuition_living" ? "обучение + проживание" : p.goals.budgetIncludes === "tuition" ? "только обучение" : ""
+    parts.push(`Бюджет $/год: ${p.goals.budget}${covers ? ` (${covers})` : ""}`)
+  }
+  if (p.goals.fundingNeed) {
+    const label = { none: "не нужно", partial: "частично", full: "полное финансирование" }[p.goals.fundingNeed]
+    parts.push(`Нужна стипендия/финансирование: ${label}`)
+  }
 
   if (p.experience) parts.push(`Опыт: ${p.experience}`)
   if (p.activities) parts.push(`Активности: ${p.activities}`)

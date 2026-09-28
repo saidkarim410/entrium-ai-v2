@@ -303,12 +303,20 @@ export function OnboardingWizard({
                 onChange={(v) => update("goals", "major", v)}
                 placeholder="Computer Science · Business · Medicine"
               />
-              <Field
-                label="Целевые страны"
-                value={profile.goals.countries ?? ""}
-                onChange={(v) => update("goals", "countries", v)}
-                placeholder="USA, UK, Germany"
-              />
+              <div className="grid sm:grid-cols-2 gap-4">
+                <Field
+                  label="Целевые страны"
+                  value={profile.goals.countries ?? ""}
+                  onChange={(v) => update("goals", "countries", v)}
+                  placeholder="Италия, Германия"
+                />
+                <SelectField
+                  label="Язык обучения"
+                  value={profile.goals.instructionLanguage ?? "английский"}
+                  onChange={(v) => update("goals", "instructionLanguage", v)}
+                  options={["английский", "любой", "немецкий", "итальянский", "французский", "русский"] as const}
+                />
+              </div>
               <Textarea
                 value={profile.goals.targetUnis ?? ""}
                 onChange={(e) => update("goals", "targetUnis", e.target.value)}
@@ -316,13 +324,29 @@ export function OnboardingWizard({
                 rows={2}
                 className="font-serif"
               />
-              <Label className="font-mono-label text-cream-3">↑ Целевые университеты (через запятую)</Label>
-              <Field
-                label="Бюджет $/год"
-                value={profile.goals.budget ?? ""}
-                onChange={(v) => update("goals", "budget", v)}
-                placeholder="20000"
-              />
+              <Label className="font-mono-label text-cream-3">↑ Целевые университеты (через запятую, необязательно)</Label>
+              <div className="grid sm:grid-cols-3 gap-4">
+                <Field
+                  label="Бюджет $/год"
+                  value={profile.goals.budget ?? ""}
+                  onChange={(v) => update("goals", "budget", v)}
+                  placeholder="10000"
+                />
+                <SelectField
+                  label="Бюджет включает"
+                  value={profile.goals.budgetIncludes ?? "tuition_living"}
+                  onChange={(v) => update("goals", "budgetIncludes", v)}
+                  options={["tuition_living", "tuition"] as const}
+                  labels={{ tuition_living: "обучение + проживание", tuition: "только обучение" }}
+                />
+                <SelectField
+                  label="Нужна стипендия"
+                  value={profile.goals.fundingNeed ?? "partial"}
+                  onChange={(v) => update("goals", "fundingNeed", v)}
+                  options={["full", "partial", "none"] as const}
+                  labels={{ full: "полное финансирование", partial: "частично", none: "не нужна" }}
+                />
+              </div>
             </div>
           </Card>
         )}
@@ -343,9 +367,31 @@ export function OnboardingWizard({
                 autofilled={autofilledSet.has("academic.school")}
                 sourceLabel={sourceLabel}
               />
+              <div className="grid sm:grid-cols-3 gap-4">
+                <SelectField
+                  label="Сколько классов в школе"
+                  value={profile.academic.schoolYears ?? "11"}
+                  onChange={(v) => update("academic", "schoolYears", v)}
+                  options={["11", "12", "13"] as const}
+                  labels={{ "11": "11 лет", "12": "12 лет", "13": "13 лет" }}
+                />
+                <Field
+                  label="Окончание (месяц и год)"
+                  value={profile.academic.graduation ?? ""}
+                  onChange={(v) => update("academic", "graduation", v)}
+                  placeholder="июнь 2027"
+                />
+                <SelectField
+                  label="Сейчас учусь в"
+                  value={profile.academic.educationType ?? "school"}
+                  onChange={(v) => update("academic", "educationType", v)}
+                  options={["school", "college", "foundation", "university"] as const}
+                  labels={{ school: "школе", college: "колледже", foundation: "foundation", university: "университете" }}
+                />
+              </div>
               <div className="grid sm:grid-cols-2 gap-4">
                 <Field
-                  label="GPA"
+                  label="GPA (укажи шкалу: 4.6/5)"
                   value={profile.academic.gpa ?? ""}
                   onChange={(v) => update("academic", "gpa", v)}
                   placeholder="4.5/5 или 3.8/4.0"
@@ -538,12 +584,25 @@ function Field({
   )
 }
 
-function SelectField<T extends string>({ label, value, onChange, options }: { label: string; value: string; onChange: (v: T) => void; options: readonly T[] }) {
+function SelectField<T extends string>({
+  label,
+  value,
+  onChange,
+  options,
+  labels,
+}: {
+  label: string
+  value: string
+  onChange: (v: T) => void
+  options: readonly T[]
+  /** Optional display labels per option value */
+  labels?: Partial<Record<T, string>>
+}) {
   return (
     <div className="space-y-1.5">
       <Label className="font-mono-label text-cream-3">{label}</Label>
       <select value={value} onChange={(e) => onChange(e.target.value as T)} className="flex h-9 w-full rounded-md border border-border bg-card px-3 text-sm text-cream">
-        {options.map((o) => <option key={o} value={o}>{o}</option>)}
+        {options.map((o) => <option key={o} value={o}>{labels?.[o] ?? o}</option>)}
       </select>
     </div>
   )

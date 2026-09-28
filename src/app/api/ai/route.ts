@@ -2,10 +2,9 @@ import { generateText } from "ai"
 import { z } from "zod"
 import { models, MODEL_IDS } from "@/lib/ai"
 import { SYSTEM_PROMPTS, type ToolKey } from "@/lib/ai/prompts"
-import {
-  searchUniversities, searchScholarships,
-  formatUniversitiesContext, formatScholarshipsContext,
-} from "@/lib/ai/rag"
+import { DATA_GUARD, asUserData } from "@/lib/ai/guard"
+import { buildUniversityContext } from "@/lib/programs/context"
+import { buildScholarshipsContext } from "@/lib/scholarships/context"
 import { getCurrentUser } from "@/lib/supabase/server"
 import { checkUsage, recordUsage, releaseReservation, settleBonusAfterCall } from "@/lib/rate-limit"
 import { buildTemporalBlock } from "@/lib/ai/temporal"
@@ -57,17 +56,18 @@ export async function POST(req: Request) {
   const model = usage.tier === "pro" ? models.claudeSonnet : models.claudeHaiku
   const modelId = usage.tier === "pro" ? MODEL_IDS.sonnet : MODEL_IDS.haiku
 
-  // RAG enrichment for scholarship/university tools + language
+  // Verified programme base (P0-03) / checked scholarships (P1-01) as the only fact source
   let systemPrompt: string = SYSTEM_PROMPTS[tool]
   if (tool === "university" || tool === "scholarship") {
     try {
+      const applicant = await getApplicantProfile()
       const ctx =
         tool === "university"
-          ? formatUniversitiesContext(await searchUniversities(userMessage, 12))
-          : formatScholarshipsContext(await searchScholarships(userMessage, 12))
-      if (ctx) systemPrompt = `${SYSTEM_PROMPTS[tool]}\n\n---\n\n${ctx}`
+          ? await buildUniversityContext(userMessage, applicant)
+          : await buildScholarshipsContext(userMessage, applicant)
+      if (ctx) systemPrompt = `${SYSTEM_PROMPTS[tool]}${DATA_GUARD}${asUserData(ctx)}`
     } catch (err) {
-      console.error("RAG search failed:", err)
+      console.error("Programme/scholarship context failed:", err)
     }
   }
 

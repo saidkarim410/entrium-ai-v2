@@ -3,10 +3,8 @@ import { z } from "zod"
 import { models, MODEL_IDS } from "@/lib/ai"
 import { DATA_GUARD, asUserData } from "@/lib/ai/guard"
 import { SYSTEM_PROMPTS, type ToolKey } from "@/lib/ai/prompts"
-import {
-  searchUniversities, searchScholarships,
-  formatUniversitiesContext, formatScholarshipsContext,
-} from "@/lib/ai/rag"
+import { buildUniversityContext } from "@/lib/programs/context"
+import { buildScholarshipsContext } from "@/lib/scholarships/context"
 import { supabaseAdmin } from "@/lib/supabase/admin"
 import { checkUsage, recordUsage, settleBonusAfterCall } from "@/lib/rate-limit"
 import { buildTemporalBlock } from "@/lib/ai/temporal"
@@ -80,15 +78,15 @@ export async function POST(req: Request) {
   if (tool === "university" || tool === "scholarship") {
     try {
       const q = lastUserText(uiMessages)
-      if (q && tool === "university") {
-        const unis = await searchUniversities(q, 12)
-        if (unis?.length) system += asUserData(formatUniversitiesContext(unis))
-      } else if (q) {
-        const sch = await searchScholarships(q, 12)
-        if (sch?.length) system += asUserData(formatScholarshipsContext(sch))
+      if (q) {
+        const ctx =
+          tool === "university"
+            ? await buildUniversityContext(q, applicant)
+            : await buildScholarshipsContext(q, applicant)
+        if (ctx) system += asUserData(ctx)
       }
     } catch (e) {
-      console.error("tg rag failed", e)
+      console.error("tg programme/scholarship context failed", e)
     }
   }
 

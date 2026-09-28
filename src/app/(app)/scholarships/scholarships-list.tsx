@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { daysFromToday, formatIsoDate } from "@/lib/dates"
+import { daysFromToday, formatIsoDate, localTodayIso } from "@/lib/dates"
 
 export type Scholarship = {
   id: string
@@ -47,11 +47,15 @@ export function ScholarshipsList({
   const [level, setLevel] = useState("")
   const [fullOnly, setFullOnly] = useState(false)
   const [hasDeadlineOnly, setHasDeadlineOnly] = useState(false)
+  // P1-01: expired contests are hidden by default — they are not opportunities
+  const [showClosed, setShowClosed] = useState(false)
   const [sort, setSort] = useState<SortKey>("deadline")
+  const today = localTodayIso()
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
     let out = items.filter((s) => {
+      if (!showClosed && s.deadline && s.deadline < today) return false
       if (country && s.country !== country) return false
       if (level && s.level !== level) return false
       if (fullOnly && !s.full_funding) return false
@@ -83,9 +87,10 @@ export function ScholarshipsList({
     })
 
     return out
-  }, [items, search, country, level, fullOnly, hasDeadlineOnly, sort])
+  }, [items, search, country, level, fullOnly, hasDeadlineOnly, showClosed, today, sort])
 
-  const hasFilter = search.trim() || country || level || fullOnly || hasDeadlineOnly
+  const closedCount = useMemo(() => items.filter((s) => s.deadline && s.deadline < today).length, [items, today])
+  const hasFilter = search.trim() || country || level || fullOnly || hasDeadlineOnly || showClosed
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -147,6 +152,15 @@ export function ScholarshipsList({
             <label className="inline-flex items-center gap-1.5 px-2 h-8 rounded-md border border-border bg-card text-xs font-mono-label cursor-pointer hover:border-gold/40">
               <input
                 type="checkbox"
+                checked={showClosed}
+                onChange={(e) => setShowClosed(e.target.checked)}
+                className="h-3 w-3 accent-gold"
+              />
+              Показать закрытые ({closedCount})
+            </label>
+            <label className="inline-flex items-center gap-1.5 px-2 h-8 rounded-md border border-border bg-card text-xs font-mono-label cursor-pointer hover:border-gold/40">
+              <input
+                type="checkbox"
                 checked={hasDeadlineOnly}
                 onChange={(e) => setHasDeadlineOnly(e.target.checked)}
                 className="h-3 w-3 accent-gold"
@@ -164,6 +178,7 @@ export function ScholarshipsList({
                   setLevel("")
                   setFullOnly(false)
                   setHasDeadlineOnly(false)
+                  setShowClosed(false)
                 }}
                 className="gap-1 text-xs h-8"
               >
@@ -235,12 +250,19 @@ function ScholarshipCard({ s }: { s: Scholarship }) {
             <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">{s.provider}</p>
           )}
         </div>
-        {s.full_funding && (
-          <Badge variant="default" className="text-[10px] shrink-0 bg-gold/15 text-gold border-gold/30">
-            <Trophy className="h-2.5 w-2.5 mr-0.5" />
-            FULL
-          </Badge>
-        )}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {passed && (
+            <Badge variant="outline" className="text-[10px] border-rose-500/40 text-rose-300">
+              КОНКУРС ЗАКРЫТ
+            </Badge>
+          )}
+          {s.full_funding && (
+            <Badge variant="default" className="text-[10px] bg-gold/15 text-gold border-gold/30">
+              <Trophy className="h-2.5 w-2.5 mr-0.5" />
+              FULL
+            </Badge>
+          )}
+        </div>
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
