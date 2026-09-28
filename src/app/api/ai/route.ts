@@ -3,7 +3,8 @@ import { z } from "zod"
 import { models, MODEL_IDS } from "@/lib/ai"
 import { SYSTEM_PROMPTS, type ToolKey } from "@/lib/ai/prompts"
 import { DATA_GUARD, asUserData } from "@/lib/ai/guard"
-import { buildUniversityContext } from "@/lib/programs/context"
+import { buildUniversityContextWithItems } from "@/lib/programs/context"
+import type { Program, ProgramMatch } from "@/lib/programs/types"
 import { buildScholarshipsContext } from "@/lib/scholarships/context"
 import { getCurrentUser } from "@/lib/supabase/server"
 import { checkUsage, recordUsage, releaseReservation, settleBonusAfterCall } from "@/lib/rate-limit"
@@ -58,13 +59,21 @@ export async function POST(req: Request) {
 
   // Verified programme base (P0-03) / checked scholarships (P1-01) as the only fact source
   let systemPrompt: string = SYSTEM_PROMPTS[tool]
+  // Matched programme rows are returned to the UI so it can offer actions (P1-03)
+  let programs: Array<{ program: Program; match: ProgramMatch }> = []
+  let programBaseAvailable = true
   if (tool === "university" || tool === "scholarship") {
     try {
       const applicant = await getApplicantProfile()
-      const ctx =
-        tool === "university"
-          ? await buildUniversityContext(userMessage, applicant)
-          : await buildScholarshipsContext(userMessage, applicant)
+      let ctx = ""
+      if (tool === "university") {
+        const r = await buildUniversityContextWithItems(userMessage, applicant)
+        ctx = r.context
+        programs = r.items
+        programBaseAvailable = r.available
+      } else {
+        ctx = await buildScholarshipsContext(userMessage, applicant)
+      }
       if (ctx) systemPrompt = `${SYSTEM_PROMPTS[tool]}${DATA_GUARD}${asUserData(ctx)}`
     } catch (err) {
       console.error("Programme/scholarship context failed:", err)
@@ -154,6 +163,8 @@ export async function POST(req: Request) {
 
     return Response.json({
       text: result.text,
+      programs: tool === "university" ? programs.map(({ program, match }) => ({ program, match })) : undefined,
+      program_base_available: tool === "university" ? programBaseAvailable : undefined,
       finish_reason: result.finishReason,
       usage: {
         input_tokens: result.usage?.inputTokens ?? 0,

@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Markdown } from "@/components/markdown"
+import { ProgramCards } from "@/components/program-cards"
+import type { Program, ProgramMatch } from "@/lib/programs/types"
 import { GraduationCap, Loader2, Sparkles, Copy, Check } from "lucide-react"
 
 type UniversityDefaults = {
@@ -18,6 +20,7 @@ type UniversityDefaults = {
 export function UniversityTool({ initial }: { initial?: UniversityDefaults } = {}) {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState("")
+  const [programs, setPrograms] = useState<Array<{ program: Program; match: ProgramMatch }>>([])
   const [copied, setCopied] = useState(false)
 
   const [form, setForm] = useState<UniversityDefaults>(initial ?? {
@@ -56,6 +59,7 @@ SAT/ACT: ${form.sat || "не указан"}
       const data = await res.json()
       if (!res.ok) throw new Error(data.message ?? data.error ?? "Ошибка")
       setResult(data.text)
+      setPrograms(Array.isArray(data.programs) ? data.programs : [])
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Что-то пошло не так")
     } finally {
@@ -115,6 +119,7 @@ SAT/ACT: ${form.sat || "не указан"}
               </Button>
             </div>
             <Markdown>{result}</Markdown>
+            <ProgramCards items={programs} />
           </div>
         )}
       </div>

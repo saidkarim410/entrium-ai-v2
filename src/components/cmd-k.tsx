@@ -32,6 +32,7 @@ const TOOLS: Array<{ slug: string; label: string; icon: LucideIcon; href: string
 const PAGES: Array<{ label: string; href: string; icon: LucideIcon; aliases: string[] }> = [
   { label: "Dashboard", href: "/dashboard", icon: Sparkles, aliases: ["главная", "home"] },
   { label: "Заявки · Application Tracker", href: "/applications", icon: ListChecks, aliases: ["apps", "applications"] },
+  { label: "План · задачи", href: "/plan", icon: ListChecks, aliases: ["plan", "tasks", "задачи"] },
   { label: "Calendar · Календарь дедлайнов", href: "/calendar", icon: GraduationCap, aliases: ["calendar", "deadlines"] },
   { label: "Activities · Common App", href: "/activities", icon: Award, aliases: ["activities", "common app"] },
   { label: "Все университеты · QS Rankings", href: "/universities", icon: GraduationCap, aliases: ["unis"] },

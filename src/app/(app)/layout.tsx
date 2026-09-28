@@ -31,7 +31,7 @@ import { unreadCount } from "@/lib/notifications/actions"
 import {
   Brain, Sparkles as SparklesIcon, Map, FileText,
   MessageSquare, Award, GraduationCap, LogOut, LayoutDashboard, Mail, FileUser, Wallet, ShieldCheck,
-  History, UserCog, Bot, ListChecks, Crown, Gift, CalendarDays, Trophy, Heart,
+  History, UserCog, Bot, ListChecks, Crown, Gift, CalendarDays, CalendarCheck, Trophy, Heart,
 } from "lucide-react"
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -63,6 +63,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     { href: "/activities", name: "Activities (Common App)", icon: Trophy },
     { href: "/essays", name: "Эссе", icon: FileText },
     { href: "/applications", name: "Мои заявки", icon: ListChecks },
+    { href: "/plan", name: "План · задачи", icon: CalendarCheck },
     { href: "/calendar", name: "Календарь", icon: CalendarDays },
     { href: "/history", name: "История", icon: History },
     { href: "/refer", name: "Рефералы · +10", icon: Gift },

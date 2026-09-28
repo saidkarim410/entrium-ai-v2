@@ -11,8 +11,9 @@ import { describeStepFailure, type StepFailReason } from "@/lib/agent/run-step"
 import { parseTracker, TrackerView, TrackerStreaming } from "./tracker-view"
 import {
   Bot, Zap, Briefcase, ShieldCheck, Calendar,
-  Loader2, CheckCircle2, AlertCircle, Square, Play, Sparkles, RotateCcw, XCircle,
+  Loader2, CheckCircle2, AlertCircle, Square, Play, Sparkles, RotateCcw, XCircle, ListChecks,
 } from "lucide-react"
+import { savePlanFromRun } from "@/lib/plan/actions"
 import { cn } from "@/lib/utils"
 
 const ICONS = { Zap, Briefcase, ShieldCheck, Calendar } as const
@@ -113,6 +114,7 @@ export function AgentClient({
 }) {
   const [run, setRun] = useState<RunState | null>(null)
   const [restoring, setRestoring] = useState(true)
+  const [planSaved, setPlanSaved] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
 
   const isRunning = run?.status === "running"
@@ -372,6 +374,20 @@ export function AgentClient({
     abortRef.current?.abort()
   }
 
+  // P1-03: the plan step becomes editable tasks in /plan
+  function savePlan() {
+    if (!run?.runId) return
+    const runId = run.runId
+    savePlanFromRun(runId).then((res) => {
+      if (!res.ok) {
+        toast.error(res.error === "plan_table_missing" ? "Раздел «План» ещё не активирован (миграция 0026)" : res.error)
+        return
+      }
+      setPlanSaved(true)
+      toast.success(res.already ? "План уже сохранён — открой раздел «План»" : `Сохранено задач: ${res.inserted}. Открой раздел «План».`)
+    })
+  }
+
   function reset() {
     rememberRun(null)
     setRun(null)
@@ -554,6 +570,8 @@ export function AgentClient({
               step={s}
               canRetry={!isRunning && Boolean(run.runId) && s.status === "failed"}
               onRetry={() => retryStep(s.step)}
+              canSavePlan={!isRunning && Boolean(run.runId) && s.tool === "tracker" && s.status === "completed" && !planSaved}
+              onSavePlan={savePlan}
             />
           ))}
         </div>
@@ -598,10 +616,14 @@ function StepCard({
   step,
   canRetry,
   onRetry,
+  canSavePlan,
+  onSavePlan,
 }: {
   step: StepState
   canRetry: boolean
   onRetry: () => void
+  canSavePlan?: boolean
+  onSavePlan?: () => void
 }) {
   return (
     <div
@@ -639,6 +661,12 @@ function StepCard({
           <Button variant="outline" size="sm" onClick={onRetry}>
             <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
             Повторить шаг
+          </Button>
+        )}
+        {canSavePlan && onSavePlan && (
+          <Button size="sm" onClick={onSavePlan} className="bg-gold text-background hover:bg-gold-soft">
+            <ListChecks className="h-3.5 w-3.5 mr-1.5" />
+            Сохранить как задачи
           </Button>
         )}
       </div>

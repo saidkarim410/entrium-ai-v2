@@ -1,6 +1,6 @@
 import { searchUniversities, formatUniversitiesContext } from "@/lib/ai/rag"
 import type { ApplicantProfile } from "@/lib/applicant/types"
-import { findProgramsForProfile, NO_PROGRAM_BASE_INSTRUCTION } from "./search"
+import { findProgramsForProfile, NO_PROGRAM_BASE_INSTRUCTION, type ProgramSearch } from "./search"
 
 /**
  * Everything the `university` tool may rely on (P0-03):
@@ -10,6 +10,14 @@ import { findProgramsForProfile, NO_PROGRAM_BASE_INSTRUCTION } from "./search"
  *      confirmation of a programme, its price or its requirements.
  */
 export async function buildUniversityContext(query: string, profile: ApplicantProfile): Promise<string> {
+  return (await buildUniversityContextWithItems(query, profile)).context
+}
+
+/** Same as above, plus the matched programme rows so a UI can render action cards (P1-03). */
+export async function buildUniversityContextWithItems(
+  query: string,
+  profile: ApplicantProfile
+): Promise<{ context: string; available: boolean; items: ProgramSearch["items"] }> {
   const [programs, qs] = await Promise.all([
     findProgramsForProfile(profile),
     searchUniversities(query, 12).catch((err) => {
@@ -27,5 +35,5 @@ export async function buildUniversityContext(query: string, profile: ApplicantPr
         qsBlock
     )
   }
-  return parts.join("\n\n")
+  return { context: parts.join("\n\n"), available: programs.available, items: programs.items }
 }

@@ -8,6 +8,8 @@ import {
   Trophy, Globe,
 } from "lucide-react"
 import { ScholarshipMatchClient } from "./match-client"
+import { AddDeadlineToPlan } from "@/components/add-deadline-to-plan"
+import { formatIsoDate, localTodayIso } from "@/lib/dates"
 
 export const dynamic = "force-dynamic"
 
@@ -138,7 +140,18 @@ export default async function ScholarshipDetailPage({ params }: { params: Promis
                 {sch.deadline && (
                   <div className="mt-2 inline-flex items-center gap-1.5 text-xs font-mono-label text-cream-3">
                     <Calendar className="h-3 w-3" />
-                    {new Date(sch.deadline).toLocaleDateString("ru-RU", { day: "2-digit", month: "short", year: "numeric" })}
+                    {formatIsoDate(sch.deadline)}
+                    {sch.deadline < localTodayIso() && <span className="text-rose-300">· конкурс закрыт</span>}
+                  </div>
+                )}
+                {user && (
+                  <div className="mt-2">
+                    <AddDeadlineToPlan
+                      title={`Подать на ${sch.name}`}
+                      dueDate={sch.deadline && sch.deadline >= localTodayIso() ? sch.deadline : null}
+                      scholarshipId={sch.id}
+                      source="scholarship"
+                    />
                   </div>
                 )}
               </div>

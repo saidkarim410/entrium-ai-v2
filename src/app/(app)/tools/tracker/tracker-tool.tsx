@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Map, Loader2, CheckSquare, Square, Sparkles, Printer } from "lucide-react"
+import { Map, Loader2, CheckSquare, Square, Sparkles, Printer, Check, ListChecks } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { savePlanFromTracker } from "@/lib/plan/actions"
 
 type Task = {
   id: string
@@ -51,6 +52,8 @@ export function TrackerTool({ initial }: { initial?: TrackerDefaults } = {}) {
   const [loading, setLoading] = useState(false)
   const [plan, setPlan] = useState<Plan | null>(null)
   const [done, setDone] = useState<Set<string>>(new Set())
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
 
   const [form, setForm] = useState<TrackerDefaults>(initial ?? {
     name: "", age: "", level: "11 класс", year: "2027",
@@ -217,6 +220,26 @@ SAT/ACT: ${form.sat || "—"}
               </div>
 
               <div className="flex flex-wrap gap-2 mt-4 print-hide">
+                <Button
+                  onClick={() => {
+                    setSaving(true)
+                    savePlanFromTracker(JSON.stringify(plan))
+                      .then((res) => {
+                        if (!res.ok) {
+                          toast.error(res.error === "plan_table_missing" ? "Раздел «План» ещё не активирован (миграция 0026)" : res.error)
+                          return
+                        }
+                        setSaved(true)
+                        toast.success(`Сохранено задач: ${res.inserted}. Открой раздел «План».`)
+                      })
+                      .finally(() => setSaving(false))
+                  }}
+                  disabled={saving || saved}
+                  size="sm"
+                  className="gap-2 bg-gold text-background hover:bg-gold-soft"
+                >
+                  {saved ? <><Check className="h-3.5 w-3.5" /> В плане</> : <><ListChecks className="h-3.5 w-3.5" /> Сохранить как задачи</>}
+                </Button>
                 <Button onClick={() => setPlan(null)} variant="ghost" size="sm">
                   ← Изменить профиль и регенерировать
                 </Button>
