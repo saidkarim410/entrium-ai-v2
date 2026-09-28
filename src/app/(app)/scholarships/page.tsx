@@ -7,6 +7,8 @@ export default async function ScholarshipsPage() {
   const { data, error } = await supabaseAdmin
     .from("scholarships")
     .select("id, name, provider, country, level, amount_usd, full_funding, deadline, description, url")
+    // Archived = duplicates merged away (0028) — never shown
+    .neq("status", "archived")
     // Default ordering: known deadlines first (chronological), then highest amounts
     .order("deadline", { ascending: true, nullsFirst: false })
     .order("amount_usd", { ascending: false, nullsFirst: false })
