@@ -24,7 +24,19 @@ AI может рекомендовать только строки этой ба
   Правило 11 классов для этих стран на официальных страницах не описано — везде `conditional` с пояснением в `notes`
   (Корея: принимают аттестат СНГ по практике; Турция: denklik; Венгрия/Польша: признание аттестата; Чехия: нострификация;
   Малайзия: эквивалентность MQA или Foundation; ОАЭ: сертификат эквивалентности Минобразования). Дедлайны 2027 в основном
-  `estimated` по графику 2026 — уточнять, когда вузы опубликуют цикл 2027. Итого в базе: **38 программ** (30 verified).
+  `estimated` по графику 2026 — уточнять, когда вузы опубликуют цикл 2027.
+- `programs-seed-2026-09-28-wave3.csv` — **третья волна (22 программы, импортирована 28.09.2026)** — страны, которые реально
+  просят пользователи прода (USA 7, UK 5, Germany 5, Italy 3, Canada/Finland/France по 2 из 14 профилей с целями): США (ASU Economics,
+  Alabama Economics, UT Dallas Economics, Purdue CS, Berea College — No-Tuition Promise, Minerva), UK (LSE, Warwick, Manchester,
+  Glasgow — Economics), Канада (Toronto Economics, UBC Economics, McGill BA Economics и BCom, Alberta Computing Science), Финляндия
+  (Aalto Economics и International Business, Helsinki Science), Франция (Sciences Po, ESSEC Global BBA, ESCP BSc), Германия
+  (Constructor University). 18 `verified`, 4 `needs_review` (Minerva — дедлайны/тесты; Toronto и Alberta — точная стоимость;
+  ESSEC — официальная стоимость). Правило 11 классов: **UK — только через International Foundation Year или 1 курс университета**
+  (страница Warwick для Узбекистана: «Warwick IFP required»); Toronto и Alberta прямо перечисляют узбекский аттестат → `yes`;
+  Aalto/Helsinki — общее правило «право на вуз в стране выдачи» → `yes`; США/Франция/остальная Канада — `conditional`.
+  Дедлайны 2027 в основном `published` (UCAS 13.01.2027, Канада 15.01.2027, Финляндия 19/22.01.2027, Purdue 15.01.2027,
+  Alabama 04.12.2026, Berea 30.11.2026, Sciences Po 01.03.2027, Constructor 01.02.2027).
+  Итого в базе: **60 программ** (48 verified).
 
 ## Как импортировать
 Админка → **Программы (база)** → вставить CSV или выбрать файл → «Импортировать».
