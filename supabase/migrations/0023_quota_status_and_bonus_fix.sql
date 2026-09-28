@@ -12,7 +12,11 @@
 -- Safe to apply after the app code that reads `daily_limit` is deployed: the app
 -- tolerates the old 4-column shape and falls back to its own constant.
 
-create or replace function entrium.try_consume_quota(uid uuid)
+-- The return type gains a column, which `create or replace` cannot do → drop first.
+-- (Callers see a fail-closed "limit_reached" for the milliseconds in between; the app
+-- tolerates it.)
+drop function if exists entrium.try_consume_quota(uuid);
+create function entrium.try_consume_quota(uid uuid)
 returns table (allowed boolean, remaining int, tier text, bonus int, daily_limit int)
 language plpgsql security definer set search_path = entrium, public as $$
 declare

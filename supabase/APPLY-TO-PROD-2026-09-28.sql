@@ -1,12 +1,7 @@
 -- ============================================================
--- APPLY TO PROD SUPABASE: SQL Editor -> paste ALL -> Run (idempotent, in order)
--- Project ref: zcbbpqfdyqavdubzrgaf
--- Migrations 0022 (free limit 3) + 0023 (quota read-only fn, bonus fix)
---            + 0024 (programs table) + 0025 (scholarship quality)
---            + 0026 (plan tasks)
--- Prepared 2026-09-28. App code on branch fix/cto-tz-2026-09 tolerates
--- both states (before/after), so order of deploy vs SQL does not matter.
--- After running: `npx tsx scripts/import-programs.ts data/programs/programs-seed-2026-09-28.csv`
+-- APPLIED TO PROD 2026-09-28 via Management API (scripts/apply-migrations.py) — kept for the record.
+-- Idempotent: safe to re-run. Project ref: zcbbpqfdyqavdubzrgaf
+-- Migrations 0022 + 0023 + 0024 + 0025 + 0026
 -- ============================================================
 
 
@@ -72,7 +67,11 @@ grant execute on function entrium.try_consume_quota(uuid) to authenticated, serv
 -- Safe to apply after the app code that reads `daily_limit` is deployed: the app
 -- tolerates the old 4-column shape and falls back to its own constant.
 
-create or replace function entrium.try_consume_quota(uid uuid)
+-- The return type gains a column, which `create or replace` cannot do → drop first.
+-- (Callers see a fail-closed "limit_reached" for the milliseconds in between; the app
+-- tolerates it.)
+drop function if exists entrium.try_consume_quota(uuid);
+create function entrium.try_consume_quota(uid uuid)
 returns table (allowed boolean, remaining int, tier text, bonus int, daily_limit int)
 language plpgsql security definer set search_path = entrium, public as $$
 declare
@@ -373,10 +372,3 @@ create policy "plan_tasks_self" on entrium.plan_tasks
 
 grant select, insert, update, delete on entrium.plan_tasks to authenticated, service_role;
 
-
--- ─────────────────────────────── verification (expect value = 1 in every row) ───────────────────────────────
-select 'try_consume_quota returns daily_limit' as check_name, count(*)::text as value from information_schema.parameters where specific_schema='entrium' and specific_name like 'try_consume_quota%' and parameter_name='daily_limit'
-union all select 'get_usage_status exists', count(*)::text from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='entrium' and p.proname='get_usage_status'
-union all select 'programs table', count(*)::text from information_schema.tables where table_schema='entrium' and table_name='programs'
-union all select 'scholarships.status column', count(*)::text from information_schema.columns where table_schema='entrium' and table_name='scholarships' and column_name='status'
-union all select 'plan_tasks table', count(*)::text from information_schema.tables where table_schema='entrium' and table_name='plan_tasks';
