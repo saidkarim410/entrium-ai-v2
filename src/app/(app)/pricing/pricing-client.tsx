@@ -28,9 +28,14 @@ const PRO_FEATURES = [
 
 type Plan = "monthly" | "yearly"
 
+// Owner's decision 2026-09-28: Pro is $6.99/month. Yearly = $4.99/month billed
+// $59.88 once a year (−29%). The Stripe price objects must match these numbers.
+export const PRO_PRICE_MONTHLY_USD = 6.99
+export const PRO_PRICE_YEARLY_USD = 59.88
+
 const PRICES = {
-  monthly: { price: 19, period: "/мес", savings: null },
-  yearly: { price: 15, period: "/мес", savings: "Экономия $48/год" },
+  monthly: { price: PRO_PRICE_MONTHLY_USD, period: "/мес", savings: null },
+  yearly: { price: 4.99, period: "/мес", savings: "Экономия $24/год" },
 }
 
 export function PricingClient({
@@ -125,7 +130,7 @@ export function PricingClient({
               )}
             >
               Год
-              <span className="ml-2 text-[10px] text-emerald-400">−20%</span>
+              <span className="ml-2 text-[10px] text-emerald-400">−29%</span>
             </button>
           </div>
         </div>
@@ -169,7 +174,7 @@ export function PricingClient({
               </p>
               <p className="font-serif text-sm text-cream-2 mt-2">
                 {plan === "yearly"
-                  ? "$180 в год · списывается раз в 12 мес."
+                  ? `$${PRO_PRICE_YEARLY_USD} в год · списывается раз в 12 мес.`
                   : "Списывается ежемесячно · отмена в любое время"}
               </p>
               {p.savings && (

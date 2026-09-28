@@ -121,7 +121,7 @@ export default async function AdminCostsPage() {
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="Всего за период" value={formatUsd(total)} sub={`${Math.round(total * USD_TO_UZS).toLocaleString("ru-RU")} сум`} />
         <Stat label="На активного пользователя" value={formatUsd(perActive)} sub={`${Math.round(perActive * USD_TO_UZS).toLocaleString("ru-RU")} сум · ${users.size} чел.`} />
-        <Stat label="На Pro-пользователя" value={formatUsd(perPro)} sub={`${proUsers.length} чел. · Pro $18/мес`} />
+        <Stat label="На Pro-пользователя" value={formatUsd(perPro)} sub={`${proUsers.length} чел. · Pro $6.99/мес`} />
         <Stat label="На Free-пользователя" value={formatUsd(perFree)} sub={`${freeUsers.length} чел.`} />
       </div>
       <p className="font-mono-label text-[11px] text-cream-3">

@@ -118,7 +118,7 @@ export const LANDING: Record<Locale, LandingCopy> = {
       tag: "Вопросы",
       h2: "Частые вопросы",
       items: [
-        { q: "Сколько стоит?", a: "Бесплатный старт — 3 AI-запроса в день, навсегда. Этого хватает большинству до финальных месяцев. Pro — $18/мес (Entrium AI Pro + безлимит, отписка в один клик) или $5 за разовый глубокий анализ. Карту просим только когда сам решаешь подключить Pro." },
+        { q: "Сколько стоит?", a: "Бесплатный старт — 3 AI-запроса в день, навсегда. Этого хватает большинству до финальных месяцев. Pro — $6.99/мес (Entrium AI Pro + безлимит + AI Agent, отписка в один клик), при оплате за год — $4.99/мес. Карту просим только когда сам решаешь подключить Pro." },
         { q: "Это просто ChatGPT с другим интерфейсом?", a: "Нет. У нас специализированный promptarium, натренированный под admission (а не general chat). База QS 2026 с реальными данными. Знание реалий поступления из СНГ. Tracker дедлайнов, Telegram-бот, парсер документов. ChatGPT не знает твой профиль и забывает контекст." },
         { q: "Кто за этим стоит?", a: "Команда Entrium — консалтинговое агентство в Узбекистане, помогающее ребятам из СНГ поступать в зарубежные вузы. 100+ поступивших за всё время, 2000+ диагностик. AI-платформа — это наш продукт, в который мы зашили опыт всех консультаций." },
         { q: "А если AI ошибётся?", a: "AI даёт оценку, не диагноз. Все выводы можно проверить и обсудить с живым консультантом — мы добавим контакт после первого анализа. Refund-политика: если разовый анализ не помог — деньги возвращаем." },
@@ -221,7 +221,7 @@ export const LANDING: Record<Locale, LandingCopy> = {
       tag: "FAQ",
       h2: "Frequently asked",
       items: [
-        { q: "How much does it cost?", a: "Free gives you 3 AI requests a day, forever — enough for most students starting out. Pro is $18/month (unlimited requests, the stronger model, AI Agent) for the final 1-2 months before deadlines, when load peaks. Cancel anytime." },
+        { q: "How much does it cost?", a: "Free gives you 3 AI requests a day, forever — enough for most students starting out. Pro is $6.99/month (unlimited requests, the stronger model, AI Agent) — or $4.99/month billed yearly — for the final 1-2 months before deadlines, when load peaks. Cancel anytime." },
         { q: "How is this different from ChatGPT?", a: "ChatGPT doesn't know your profile, doesn't remember context across sessions, has no DB of 1500+ universities with QS rankings, and doesn't track deadlines. Here, everything is connected: profile → tools → applications → notifications." },
         { q: "Which model do you use?", a: "Pro — Entrium AI Pro (strongest for academic analysis). Free — Entrium AI (fast, free for you). Voice interview uses real-time speech models. Documents are parsed via the same vision-enabled AI." },
         { q: "What about privacy?", a: "Your profile lives in Supabase Postgres with RLS — only you see it. Documents are parsed in memory and never stored. Essays go through our AI provider under a ZDR (zero-data-retention) policy. Deleting your account deletes everything." },
@@ -323,7 +323,7 @@ export const LANDING: Record<Locale, LandingCopy> = {
       tag: "Savollar",
       h2: "Tez-tez beriladigan savollar",
       items: [
-        { q: "Narxi qancha?", a: "Free versiya kuniga 10 ta so'rov beradi — boshlanishda ko'pchilikka yetadi. Pro yakuniy 1-2 oyda muddatlardan oldin yuklama eng yuqori bo'lganda kerak. Istalgan vaqtda bekor qilish mumkin." },
+        { q: "Narxi qancha?", a: "Free versiya kuniga 3 ta AI so'rov beradi — boshlanishda ko'pchilikka yetadi. Pro — oyiga $6.99 (cheksiz so'rovlar, kuchliroq model, AI Agent), yillik to'lovda oyiga $4.99 — yakuniy 1-2 oyda muddatlardan oldin yuklama eng yuqori bo'lganda kerak. Istalgan vaqtda bekor qilish mumkin." },
         { q: "Bu ChatGPT'dan qanday farq qiladi?", a: "ChatGPT sizning profilingizni bilmaydi, sessiyalararo kontekstni eslab qolmaydi, 1500+ universitet bazasi yo'q va muddatlarni kuzatmaydi. Bu yerda hammasi bog'langan: profil → vositalar → arizalar → xabarnomalar." },
         { q: "Qaysi modeldan foydalaniladi?", a: "Pro — Entrium AI Pro (akademik tahlil uchun eng kuchli). Free — Entrium AI (tez, siz uchun bepul). Ovozli interview uchun real-time nutq modeli. Hujjatlar bir xil vision-imkoniyatli AI orqali tahlil qilinadi." },
         { q: "Maxfiylik bilan nima bo'ladi?", a: "Profil RLS bilan Supabase Postgres'da saqlanadi — faqat siz ko'rasiz. Hujjatlar xotirada tahlil qilinib, saqlanmaydi. Esselar AI-provayder tomonidan ZDR (zero-data-retention) siyosati doirasida qayta ishlanadi. Akkauntni o'chirish hammasini o'chiradi." },

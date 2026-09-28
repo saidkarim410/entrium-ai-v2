@@ -34,7 +34,7 @@
 | Tier | Price | What's in |
 |---|---|---|
 | **One-time AI Analysis** | $5 | AI-анализ профиля по 10 параметрам · Реалистичная оценка по каждому вузу · Конкретные next steps на 3 месяца · Доступ навсегда |
-| **Subscription (Pro)** | $18/мес | Всё из разовой + AI-тренер для эссе (3 режима) + Тренировка интервью + Персональный трекер с месячным планом |
+| **Subscription (Pro)** | $6.99/мес ($4.99/мес при оплате за год — решение владельца 2026-09-28; было $18) | Всё из разовой + AI-тренер для эссе (3 режима) + Тренировка интервью + Персональный трекер с месячным планом |
 
 Payments: Stripe. Cancel anytime. No hidden fees.
 
@@ -578,7 +578,7 @@ Based on the production model at entrium.ai:
 
 | # | Feature | Status | Why |
 |---|---|---|---|
-| 1 | **Stripe** ($5 one-time + $18/mo Pro) | Not started | Core monetization model from entrium.ai |
+| 1 | **Stripe** ($5 one-time + $6.99/mo Pro, $59.88/yr) | Not started | Core monetization model from entrium.ai |
 | 2 | **Custom domain `entrium.ai`** + transfer DNS | Not started | Brand consolidation |
 | 3 | **Onboarding flow** (port `obProfile` from v1: 5-step wizard) | Not started | Required for AI Analyzer to work |
 | 4 | **AI Analyzer** with radar chart (`DIAG_CATS` from v1) | Not started | Hero feature on landing |
@@ -610,3 +610,13 @@ Based on the production model at entrium.ai:
 ---
 
 *Last updated: 2026-05-07 — generated from v1 logic extraction + current v2 state.*
+
+## graphify
+
+This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+
+Rules:
+- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
+- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
