@@ -134,7 +134,7 @@ export function normalizeLevel(raw: string | undefined | null): ProgramLevel | n
 }
 
 /** Rough FX to USD for budget comparison only (not shown as a price). */
-export const USD_RATES: Record<string, number> = { USD: 1, EUR: 1.1, GBP: 1.3, CHF: 1.15, PLN: 0.25, CZK: 0.044, HUF: 0.0027, TRY: 0.03, KRW: 0.00075, JPY: 0.0067, AED: 0.27, SGD: 0.75, CAD: 0.73, AUD: 0.66 }
+export const USD_RATES: Record<string, number> = { USD: 1, EUR: 1.1, GBP: 1.3, CHF: 1.15, PLN: 0.25, CZK: 0.044, HUF: 0.0027, TRY: 0.03, KRW: 0.00075, MYR: 0.24, JPY: 0.0067, AED: 0.27, SGD: 0.75, CAD: 0.73, AUD: 0.66 }
 
 export function toUsd(amount: number, currency: string | null | undefined): number | null {
   const rate = USD_RATES[(currency ?? "USD").toUpperCase()]

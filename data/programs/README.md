@@ -12,6 +12,19 @@ AI может рекомендовать только строки этой ба
   (B2) → язык `de`; Ca' Foscari — фикс €1 300/год для non-EU; Bologna — Узбекистан не в списке MUR «особо бедных» → ставка
   €1 000 + €157; Bocconi — IELTS 6.5 (не ниже 6.0 по секциям); Cattolica — IELTS 6.0; Luiss — B2 (IELTS 6.0).
   Данные на набор 2027 всё равно нужно перепроверять весной 2027, когда вузы опубликуют дедлайны и стоимость 2027/28.
+- `programs-seed-2026-09-28-wave2.csv` — **вторая волна (29 программ, импортирована 28.09.2026)**: Корея (Yonsei UIC Economics,
+  KAIST, SKKU Global Business Administration, Korea University DIS), Турция (Koç, Bilkent, Boğaziçi, Sabancı — Economics),
+  Венгрия (Corvinus BSc Business & Management, Debrecen BSc BAM, ELTE Computer Science, BME Computer Science Engineering),
+  Польша (UW Finance & International Investment, WUT Computer Science, SGH Global Business Finance & Governance),
+  Чехия (Charles BEF, CTU EECS, VŠE BBA), Малайзия (UM Computer Science и BBA, APU Computer Science, Taylor's Business),
+  ОАЭ (Khalifa Computer Engineering, AUS BSBA, NYU Abu Dhabi) и 4 магистратуры (Corvinus MSc Finance, TUM Management &
+  Technology, PoliMi Computer Science & Engineering, KAIST MS School of Computing). Статусы: 21 `verified` (стоимость,
+  требования, английский и дедлайны сверены с официальными страницами), 8 `needs_review` — там, где официальная страница не
+  открылась или ключевая цифра взята из стороннего источника (SKKU, Korea University, Koç, Boğaziçi, CTU, NYUAD, PoliMi).
+  Правило 11 классов для этих стран на официальных страницах не описано — везде `conditional` с пояснением в `notes`
+  (Корея: принимают аттестат СНГ по практике; Турция: denklik; Венгрия/Польша: признание аттестата; Чехия: нострификация;
+  Малайзия: эквивалентность MQA или Foundation; ОАЭ: сертификат эквивалентности Минобразования). Дедлайны 2027 в основном
+  `estimated` по графику 2026 — уточнять, когда вузы опубликуют цикл 2027. Итого в базе: **38 программ** (30 verified).
 
 ## Как импортировать
 Админка → **Программы (база)** → вставить CSV или выбрать файл → «Импортировать».
