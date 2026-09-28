@@ -1,6 +1,6 @@
 import { AgentClient } from "./agent-client"
 import { getApplicantProfile } from "@/lib/applicant/actions"
-import { profileCompleteness } from "@/lib/applicant/types"
+import { profileCompleteness, missingProfileFields } from "@/lib/applicant/types"
 import { getCurrentUser } from "@/lib/supabase/server"
 import { getUsageStatus, FREE_DAILY_LIMIT } from "@/lib/rate-limit"
 
@@ -28,6 +28,7 @@ export default async function AgentPage({
       </header>
       <AgentClient
         profileCompleteness={completeness}
+        missingFields={missingProfileFields(applicant)}
         usage={{
           tier: usage?.tier ?? "free",
           remaining: usage?.remaining ?? 0,

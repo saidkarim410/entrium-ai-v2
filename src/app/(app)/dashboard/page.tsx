@@ -23,7 +23,8 @@ import {
   summarizeApplications,
 } from "@/lib/applications/types"
 import { getUsageStatus, FREE_DAILY_LIMIT } from "@/lib/rate-limit"
-import { profileCompleteness } from "@/lib/applicant/types"
+import { formatIsoDate } from "@/lib/dates"
+import { profileCompleteness, missingProfileFields } from "@/lib/applicant/types"
 import { supabaseAdmin } from "@/lib/supabase/admin"
 import { getT } from "@/lib/i18n/server"
 import { Badge } from "@/components/ui/badge"
@@ -123,6 +124,7 @@ export default async function DashboardPage() {
           upcomingApp={upcomingApp}
           upcomingDays={upcomingDays}
           completeness={completeness}
+          missingFields={missingProfileFields(applicant)}
           totalApps={stats.total}
         />
 
@@ -339,11 +341,13 @@ function FocusCard({
   upcomingApp,
   upcomingDays,
   completeness,
+  missingFields,
   totalApps,
 }: {
   upcomingApp: { id: string; university_name: string; status: string } | undefined
   upcomingDays: number | null
   completeness: number
+  missingFields: string[]
   totalApps: number
 }) {
   // Pick most relevant focus
@@ -424,6 +428,11 @@ function FocusCard({
             <p className="font-serif text-sm text-cream-2 mt-1">
               AI работает точнее, когда знает GPA, тесты и цели. Загрузи transcript — заполнится автоматически.
             </p>
+            {missingFields.length > 0 && (
+              <p className="font-mono-label text-[11px] text-cream-3 mt-2">
+                Не хватает: {missingFields.join(" · ")}
+              </p>
+            )}
           </div>
         </div>
         <Link
@@ -606,5 +615,6 @@ function timeAgo(iso: string): string {
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("ru-RU", { day: "2-digit", month: "short" })
+  // Deadlines are calendar dates (YYYY-MM-DD) — never route them through UTC parsing
+  return formatIsoDate(iso, { day: "2-digit", month: "short" })
 }

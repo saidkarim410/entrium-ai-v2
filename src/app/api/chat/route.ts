@@ -27,6 +27,8 @@ const toolSchema = z.enum([
   "analyzer",
   "tracker",
   "essay",
+  "essay_analyze",
+  "essay_rewrite",
   "humanizer",
   "interview",
   "scholarship",

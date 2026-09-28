@@ -78,19 +78,30 @@ export function normalizeApplicantProfile(raw: unknown): ApplicantProfile {
 /**
  * Calculate completeness percentage to show onboarding progress.
  */
+/**
+ * The checks behind the "profile N%" number, with human labels — so the UI can
+ * say WHICH fields are missing instead of a bare percentage (P1-05).
+ * Order = importance for the first recommendation.
+ */
+export const PROFILE_CHECKS: ReadonlyArray<{ key: string; label: string; test: (p: ApplicantProfile) => boolean }> = [
+  { key: "level", label: "уровень обучения (бакалавр / магистр…)", test: (p) => !!p.goals.level },
+  { key: "major", label: "специальность", test: (p) => !!p.goals.major },
+  { key: "citizenship", label: "гражданство", test: (p) => !!p.personal.citizenship },
+  { key: "gpa", label: "GPA / средний балл", test: (p) => !!p.academic.gpa },
+  { key: "english", label: "английский (IELTS / TOEFL / Duolingo)", test: (p) => !!(p.academic.ielts || p.academic.toefl || p.academic.duolingo) },
+  { key: "name", label: "имя", test: (p) => !!p.personal.name },
+  { key: "targetUnis", label: "целевые университеты", test: (p) => !!p.goals.targetUnis },
+  { key: "activities", label: "активности или опыт", test: (p) => !!(p.activities || p.experience) },
+]
+
 export function profileCompleteness(p: ApplicantProfile): number {
-  const checks: boolean[] = [
-    !!p.personal.name,
-    !!p.personal.citizenship,
-    !!p.academic.gpa,
-    !!(p.academic.ielts || p.academic.toefl || p.academic.duolingo),
-    !!p.goals.level,
-    !!p.goals.major,
-    !!p.goals.targetUnis,
-    !!(p.activities || p.experience),
-  ]
-  const done = checks.filter(Boolean).length
-  return Math.round((done / checks.length) * 100)
+  const done = PROFILE_CHECKS.filter((c) => c.test(p)).length
+  return Math.round((done / PROFILE_CHECKS.length) * 100)
+}
+
+/** Labels of the checks that are still empty, most important first. */
+export function missingProfileFields(p: ApplicantProfile): string[] {
+  return PROFILE_CHECKS.filter((c) => !c.test(p)).map((c) => c.label)
 }
 
 /**

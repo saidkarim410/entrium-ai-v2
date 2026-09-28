@@ -16,7 +16,8 @@ import {
 import { cn } from "@/lib/utils"
 
 const TOTAL_STEPS = 5
-const STEP_LABELS = ["Знакомство", "Академика", "Цели", "Опыт", "Готово"] as const
+// Labels follow the actual step order (goals BEFORE academics) — they used to be swapped (P1-05)
+const STEP_LABELS = ["Знакомство", "Цели", "Академика", "Опыт", "Рефлексия"] as const
 
 type AutosaveState = "idle" | "saving" | "saved" | "error"
 

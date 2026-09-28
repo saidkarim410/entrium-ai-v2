@@ -7,10 +7,24 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Markdown } from "@/components/markdown"
-import { Sparkles, Loader2, Wand2, Microscope, Copy, Check } from "lucide-react"
+import { Sparkles, Loader2, Wand2, Microscope, PenLine, Copy, Check } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-type Mode = "coach" | "analyze" | "humanize"
+// P1-06: four separate behaviours — Coach improves WITH the author, Analyze only
+// audits, Rewrite is an explicit action that keeps every fact, Humanize strips AI tone.
+type Mode = "coach" | "analyze" | "rewrite" | "humanize"
+
+const ESSAY_TYPES = [
+  "Common App Personal Statement",
+  "Why This College",
+  "Why This Major",
+  "Supplemental Essay",
+  "UCAS Personal Statement",
+  "Motivation Letter (EU)",
+  "Diversity / Background",
+  "Challenge / Failure",
+  "Activity",
+]
 
 const FOCUS_TAGS = [
   "academic strength", "leadership", "personal narrative", "uniqueness",
@@ -40,6 +54,11 @@ export function EssayTool() {
   const [analyzeText, setAnalyzeText] = useState("")
   const [target, setTarget] = useState("")
   const [essayType, setEssayType] = useState("Common App Personal Statement")
+  const [wordLimit, setWordLimit] = useState("")
+  const [promptText, setPromptText] = useState("")
+
+  // Rewrite inputs
+  const [rewriteText, setRewriteText] = useState("")
 
   // Humanize inputs
   const [humanizeText, setHumanizeText] = useState("")
@@ -59,15 +78,23 @@ export function EssayTool() {
     let user = ""
     let tool = "essay"
 
+    const words = (t: string) => t.trim().split(/\s+/).filter(Boolean).length
+    const limitLine = wordLimit ? `Лимит слов: ${wordLimit}` : "Лимит слов: не задан"
+    const promptLine = promptText.trim() ? `Задание (prompt) эссе: ${promptText.trim()}` : ""
+
     if (mode === "coach") {
       if (!draft.trim()) return toast.error("Добавь черновик эссе или хотя бы идею")
       const focus = [...focusTags].join(", ") || "general improvement"
-      user = `Специальность: ${major || "не указана"}\nЦелевой университет: ${uni || "топовый университет"}\nФокус улучшения: ${focus}\n\nЧЕРНОВИК ЭССЕ:\n${draft}\n\nСделай полный разбор и напиши переработанную версию на английском в стиле Ivy League.`
+      user = `Специальность: ${major || "не указана"}\nЦелевой университет: ${uni || "топовый университет"}\nФокус улучшения: ${focus}\nТип эссе: ${essayType}\n${limitLine} (сейчас ${words(draft)} слов)\n${promptLine}\n\nЧЕРНОВИК ЭССЕ:\n${draft}\n\nРазбери черновик и предложи точечные правки и вопросы. Не переписывай эссе целиком и не добавляй факты, которых нет в тексте.`
       tool = "essay"
     } else if (mode === "analyze") {
       if (!analyzeText.trim()) return toast.error("Вставь текст эссе")
-      user = `Тип эссе: ${essayType}\nЦелевой университет: ${target || "Ivy League"}\n\nЭССЕ:\n${analyzeText}`
-      tool = "essay"
+      user = `Тип эссе: ${essayType}\nЦелевой университет: ${target || "не указан"}\n${limitLine} (сейчас ${words(analyzeText)} слов)\n${promptLine}\n\nЭССЕ:\n${analyzeText}\n\nОцени, дай замечания и вопросы. Переписанный текст не нужен.`
+      tool = "essay_analyze"
+    } else if (mode === "rewrite") {
+      if (!rewriteText.trim()) return toast.error("Вставь текст эссе для переработки")
+      user = `Тип эссе: ${essayType}\nЦелевой университет: ${target || "не указан"}\n${limitLine} (сейчас ${words(rewriteText)} слов)\n${promptLine}\n\nИСХОДНЫЙ ТЕКСТ:\n${rewriteText}\n\nПерепиши, сохранив все факты исходника. Недостающие детали — плейсхолдерами [уточни: …], ничего не выдумывай.`
+      tool = "essay_rewrite"
     } else {
       if (!humanizeText.trim()) return toast.error("Вставь текст для гуманизации")
       const toneDesc = TONES.find((t) => t.id === tone)?.label ?? "Ivy League"
@@ -104,10 +131,11 @@ export function EssayTool() {
     <div className="flex-1 overflow-y-auto">
       <div className="container max-w-4xl mx-auto px-6 py-8">
         {/* Mode tabs */}
-        <div className="grid grid-cols-3 gap-2 mb-8 p-1 rounded-lg border border-border bg-card/30">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-8 p-1 rounded-lg border border-border bg-card/30">
           {[
-            { id: "coach", label: "Coach", icon: Sparkles, hint: "Полный разбор + переработка" },
-            { id: "analyze", label: "Analyze", icon: Microscope, hint: "Профессиональный аудит" },
+            { id: "coach", label: "Coach", icon: Sparkles, hint: "Правки и вопросы — вместе с тобой" },
+            { id: "analyze", label: "Analyze", icon: Microscope, hint: "Оценка и замечания, без переписывания" },
+            { id: "rewrite", label: "Rewrite", icon: PenLine, hint: "Переработка с сохранением фактов" },
             { id: "humanize", label: "Humanize", icon: Wand2, hint: "Убрать AI-почерк" },
           ].map(({ id, label, icon: Icon, hint }) => (
             <button
@@ -163,6 +191,15 @@ export function EssayTool() {
               </div>
             </div>
 
+            <EssayMeta
+              essayType={essayType}
+              setEssayType={setEssayType}
+              wordLimit={wordLimit}
+              setWordLimit={setWordLimit}
+              promptText={promptText}
+              setPromptText={setPromptText}
+            />
+
             <div className="space-y-1.5">
               <Label className="font-mono-label text-cream-3">Черновик эссе</Label>
               <Textarea
@@ -170,6 +207,38 @@ export function EssayTool() {
                 onChange={(e) => setDraft(e.target.value)}
                 placeholder="Вставь свой черновик или опиши идею..."
                 rows={10}
+                className="font-serif"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* REWRITE FORM */}
+        {mode === "rewrite" && (
+          <div className="space-y-5">
+            <div className="rounded-lg border border-border/60 bg-card/30 px-4 py-3 text-xs font-serif text-cream-2">
+              Rewrite сохраняет каждый факт исходника и ничего не придумывает: там, где не хватает детали,
+              появится плейсхолдер <span className="font-mono text-gold">[уточни: …]</span>, который заполнишь ты.
+            </div>
+            <div className="space-y-1.5">
+              <Label className="font-mono-label text-cream-3">Целевой университет</Label>
+              <Input value={target} onChange={(e) => setTarget(e.target.value)} placeholder="Bocconi" />
+            </div>
+            <EssayMeta
+              essayType={essayType}
+              setEssayType={setEssayType}
+              wordLimit={wordLimit}
+              setWordLimit={setWordLimit}
+              promptText={promptText}
+              setPromptText={setPromptText}
+            />
+            <div className="space-y-1.5">
+              <Label className="font-mono-label text-cream-3">Исходный текст эссе</Label>
+              <Textarea
+                value={rewriteText}
+                onChange={(e) => setRewriteText(e.target.value)}
+                placeholder="Вставь полный текст эссе..."
+                rows={12}
                 className="font-serif"
               />
             </div>
@@ -185,23 +254,24 @@ export function EssayTool() {
                 <Input value={target} onChange={(e) => setTarget(e.target.value)} placeholder="Harvard" />
               </div>
               <div className="space-y-1.5">
-                <Label className="font-mono-label text-cream-3">Тип эссе</Label>
-                <select
-                  value={essayType}
-                  onChange={(e) => setEssayType(e.target.value)}
-                  className="flex h-9 w-full rounded-md border border-border bg-card px-3 text-sm text-cream"
-                >
-                  <option>Common App Personal Statement</option>
-                  <option>Why This College</option>
-                  <option>Why This Major</option>
-                  <option>Supplemental Essay</option>
-                  <option>UCAS Personal Statement</option>
-                  <option>Diversity / Background</option>
-                  <option>Challenge / Failure</option>
-                  <option>Activity</option>
-                </select>
+                <Label className="font-mono-label text-cream-3">Лимит слов (если задан)</Label>
+                <Input
+                  value={wordLimit}
+                  onChange={(e) => setWordLimit(e.target.value.replace(/\D/g, ""))}
+                  placeholder="650"
+                  inputMode="numeric"
+                />
               </div>
             </div>
+            <EssayMeta
+              essayType={essayType}
+              setEssayType={setEssayType}
+              wordLimit={wordLimit}
+              setWordLimit={setWordLimit}
+              promptText={promptText}
+              setPromptText={setPromptText}
+              hideWordLimit
+            />
             <div className="space-y-1.5">
               <Label className="font-mono-label text-cream-3">Текст эссе</Label>
               <Textarea
@@ -267,7 +337,13 @@ export function EssayTool() {
           <div className="mt-10 rounded-xl border border-border bg-card/40 p-7 accent-strip">
             <div className="flex items-center justify-between mb-5">
               <span className="font-mono-label text-gold">
-                {mode === "coach" ? "✦ РЕЗУЛЬТАТ ТРЕНЕРА" : mode === "analyze" ? "🔬 АНАЛИЗ ЭССЕ" : "🧠 HUMANIZED ВЕРСИЯ"}
+                {mode === "coach"
+                  ? "✦ ПРАВКИ ТРЕНЕРА"
+                  : mode === "analyze"
+                    ? "🔬 АНАЛИЗ ЭССЕ"
+                    : mode === "rewrite"
+                      ? "✍️ ПЕРЕРАБОТАННАЯ ВЕРСИЯ"
+                      : "🧠 HUMANIZED ВЕРСИЯ"}
               </span>
               <Button onClick={copyResult} variant="ghost" size="sm" className="gap-2">
                 {copied ? <><Check className="h-3.5 w-3.5" /> Скопировано</> : <><Copy className="h-3.5 w-3.5" /> Копировать</>}
@@ -276,6 +352,63 @@ export function EssayTool() {
             <Markdown>{result}</Markdown>
           </div>
         )}
+      </div>
+    </div>
+  )
+}
+
+/** Essay type / word limit / prompt — the assignment context every mode needs (P1-06). */
+function EssayMeta({
+  essayType,
+  setEssayType,
+  wordLimit,
+  setWordLimit,
+  promptText,
+  setPromptText,
+  hideWordLimit,
+}: {
+  essayType: string
+  setEssayType: (v: string) => void
+  wordLimit: string
+  setWordLimit: (v: string) => void
+  promptText: string
+  setPromptText: (v: string) => void
+  hideWordLimit?: boolean
+}) {
+  return (
+    <div className="space-y-4">
+      <div className={cn("grid gap-4", hideWordLimit ? "sm:grid-cols-1" : "sm:grid-cols-2")}>
+        <div className="space-y-1.5">
+          <Label className="font-mono-label text-cream-3">Тип эссе</Label>
+          <select
+            value={essayType}
+            onChange={(e) => setEssayType(e.target.value)}
+            className="flex h-9 w-full rounded-md border border-border bg-card px-3 text-sm text-cream"
+          >
+            {ESSAY_TYPES.map((t) => (
+              <option key={t}>{t}</option>
+            ))}
+          </select>
+        </div>
+        {!hideWordLimit && (
+          <div className="space-y-1.5">
+            <Label className="font-mono-label text-cream-3">Лимит слов (если задан)</Label>
+            <Input
+              value={wordLimit}
+              onChange={(e) => setWordLimit(e.target.value.replace(/\D/g, ""))}
+              placeholder="650"
+              inputMode="numeric"
+            />
+          </div>
+        )}
+      </div>
+      <div className="space-y-1.5">
+        <Label className="font-mono-label text-cream-3">Задание (prompt) эссе — если есть</Label>
+        <Input
+          value={promptText}
+          onChange={(e) => setPromptText(e.target.value)}
+          placeholder="Describe a challenge you overcame and what you learned…"
+        />
       </div>
     </div>
   )

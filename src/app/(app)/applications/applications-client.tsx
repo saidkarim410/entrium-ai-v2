@@ -45,6 +45,7 @@ import { BulkAddDialog } from "./bulk-add-dialog"
 import { VoiceInputButton } from "@/components/voice-input-button"
 import { AiLoadingSkeleton, AiErrorCard } from "@/components/ai-state"
 import { DeadlineChip } from "@/components/deadline-chip"
+import { parseDateInput, formatIsoDate } from "@/lib/dates"
 import { EmptyState } from "@/components/empty-state"
 import { CsvImportDialog } from "./csv-import-dialog"
 import { analyzePortfolio, type Verdict } from "@/lib/applications/analytics"
@@ -157,10 +158,21 @@ export function ApplicationsClient({
       toast.error("Укажи университет")
       return
     }
+    // P0-04: a date that can't be parsed is an error here, not a silent NULL on save
+    const deadline = parseDateInput(editing.deadline)
+    if (deadline === null) {
+      toast.error("Дедлайн не распознан — введи дату в формате ДД.ММ.ГГГГ")
+      return
+    }
     startTransition(async () => {
-      const res = await upsertApplication(editing)
+      const res = await upsertApplication({ ...editing, deadline })
       if (!res.ok) {
         toast.error(res.error ?? "Не удалось сохранить")
+        return
+      }
+      // Verify what the server actually persisted before announcing success
+      if (deadline && res.application && res.application.deadline !== deadline) {
+        toast.error(`Дедлайн не сохранился (в базе: ${res.application.deadline ?? "пусто"}). Попробуй ещё раз.`)
         return
       }
       // optimistic refresh: refetch via server action would be cleaner;
@@ -347,6 +359,9 @@ export function ApplicationsClient({
                       value={editing.deadline}
                       onChange={(e) => setEditing({ ...editing, deadline: e.target.value })}
                     />
+                    <p className="text-[10px] font-mono-label text-cream-3 mt-1">
+                      Выбери дату в календаре или введи ДД.ММ.ГГГГ — сохраняется только дата, без времени
+                    </p>
                   </FormField>
                   <FormField label="Статус">
                     <Select
@@ -934,8 +949,8 @@ function Select({
 }
 
 function formatDate(iso: string): string {
-  const d = new Date(iso)
-  return d.toLocaleDateString("ru-RU", { day: "2-digit", month: "short", year: "numeric" })
+  // Calendar date — never parsed as UTC midnight (P0-04)
+  return formatIsoDate(iso)
 }
 
 function EssaysForApp({ essays, app }: { essays: EssayPreview[]; app: Application }) {

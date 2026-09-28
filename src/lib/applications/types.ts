@@ -100,6 +100,8 @@ export const PRIORITY_COLORS: Record<AppPriority, string> = {
   safety: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
 }
 
+import { daysFromToday, localTodayIso } from "@/lib/dates"
+
 /** Build summary stats for header */
 export function summarizeApplications(apps: Application[]) {
   const total = apps.length
@@ -107,22 +109,21 @@ export function summarizeApplications(apps: Application[]) {
     ["submitted", "interview", "accepted", "rejected", "waitlisted", "deferred"].includes(a.status)
   ).length
   const accepted = apps.filter((a) => a.status === "accepted").length
+  // Calendar comparison on the ISO string — a deadline today still counts as upcoming
+  const today = localTodayIso()
   const upcoming = apps
-    .filter((a) => a.deadline && new Date(a.deadline) > new Date())
+    .filter((a) => a.deadline && a.deadline >= today)
     .sort((a, b) => (a.deadline! < b.deadline! ? -1 : 1))
   const nextDeadline = upcoming[0]?.deadline ?? null
   return { total, submitted, accepted, nextDeadline }
 }
 
-/** Days until deadline, negative if past. Coerces -0 → 0 for stable equality checks. */
+/**
+ * Days until deadline, negative if past. Calendar-date arithmetic in the local
+ * zone (P0-04): "2026-10-15" is the 15th everywhere, never UTC midnight.
+ */
 export function daysUntil(iso: string | null): number | null {
-  if (!iso) return null
-  const target = new Date(iso)
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  // Math.ceil(-0) returns -0 — break Object.is comparisons in tests/UI.
-  // Adding +0 normalises to canonical 0.
-  return Math.ceil((target.getTime() - today.getTime()) / 86_400_000) + 0
+  return daysFromToday(iso)
 }
 
 /**

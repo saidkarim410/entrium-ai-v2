@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { daysFromToday, formatIsoDate } from "@/lib/dates"
 
 export type Scholarship = {
   id: string
@@ -293,13 +294,11 @@ function ScholarshipCard({ s }: { s: Scholarship }) {
   )
 }
 
+// Calendar-date helpers shared with applications (P0-04: no UTC day shift)
 function daysUntil(iso: string): number {
-  const target = new Date(iso + "T00:00:00Z").getTime()
-  const today = new Date()
-  today.setUTCHours(0, 0, 0, 0)
-  return Math.ceil((target - today.getTime()) / 86_400_000)
+  return daysFromToday(iso) ?? 0
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("ru-RU", { day: "2-digit", month: "short", year: "numeric" })
+  return formatIsoDate(iso)
 }

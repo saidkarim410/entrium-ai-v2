@@ -102,10 +102,12 @@ function statusLabel(status: RunState["status"]): string {
 
 export function AgentClient({
   profileCompleteness,
+  missingFields,
   usage,
   initialRunId,
 }: {
   profileCompleteness: number
+  missingFields: string[]
   usage: UsageProps
   initialRunId: string | null
 }) {
@@ -413,6 +415,11 @@ export function AgentClient({
                     Заполни профиль →
                   </Link>
                 </p>
+                {missingFields.length > 0 && (
+                  <p className="font-mono-label text-[11px] text-cream-3">
+                    Не хватает: {missingFields.join(" · ")}
+                  </p>
+                )}
               </div>
             </div>
           )}

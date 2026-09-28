@@ -5,14 +5,13 @@ import { supabaseAdmin } from "@/lib/supabase/admin"
 import { getCurrentUser } from "@/lib/supabase/server"
 import {
   APP_STATUSES,
-  APP_PRIORITIES,
-  APP_LEVELS,
   type Application,
   type AppStatus,
-  type AppPriority,
-  type AppLevel,
   type ChecklistItem,
 } from "./types"
+import { normalizeApplicationInput, type AppInput } from "./normalize"
+
+export type { AppInput } from "./normalize"
 
 export async function listApplications(): Promise<Application[]> {
   const user = await getCurrentUser()
@@ -32,88 +31,46 @@ export async function listApplications(): Promise<Application[]> {
   return (data ?? []) as Application[]
 }
 
-export type AppInput = {
-  id?: string
-  university_name: string
-  university_country?: string
-  program?: string
-  level?: AppLevel | ""
-  round?: string
-  deadline?: string // YYYY-MM-DD or ""
-  status?: AppStatus
-  priority?: AppPriority
-  application_fee_usd?: number | string
-  notes?: string
-  checklist?: ChecklistItem[]
-  result_decision?: string
-}
-
-function clean(input: AppInput) {
-  const status: AppStatus = APP_STATUSES.includes(input.status as AppStatus)
-    ? (input.status as AppStatus)
-    : "planning"
-  const priority: AppPriority = APP_PRIORITIES.includes(input.priority as AppPriority)
-    ? (input.priority as AppPriority)
-    : "match"
-  const level: AppLevel | null =
-    input.level && APP_LEVELS.includes(input.level as AppLevel)
-      ? (input.level as AppLevel)
-      : null
-
-  const fee =
-    typeof input.application_fee_usd === "number"
-      ? input.application_fee_usd
-      : input.application_fee_usd
-        ? Number(input.application_fee_usd) || null
-        : null
-
-  return {
-    university_name: input.university_name.trim(),
-    university_country: input.university_country?.trim() || null,
-    program: input.program?.trim() || null,
-    level,
-    round: input.round?.trim() || null,
-    deadline: input.deadline?.trim() || null,
-    status,
-    priority,
-    application_fee_usd: fee,
-    notes: input.notes?.trim() || null,
-    checklist: Array.isArray(input.checklist) ? input.checklist : [],
-    result_decision: input.result_decision?.trim() || null,
-  }
-}
-
+/**
+ * Create or update one application (P0-04).
+ *  - the deadline is validated on the server: a date that can't be parsed is an
+ *    error the user sees, never a silent NULL;
+ *  - updates are PARTIAL — only keys present in the input are written, so the
+ *    edit dialog (which has no checklist field) no longer wipes the checklist;
+ *  - the saved row is returned so the client can verify what was persisted.
+ */
 export async function upsertApplication(
   input: AppInput
-): Promise<{ ok: boolean; error?: string; id?: string }> {
+): Promise<{ ok: boolean; error?: string; id?: string; application?: Application }> {
   const user = await getCurrentUser()
   if (!user) return { ok: false, error: "unauthorized" }
-  if (!input.university_name?.trim()) {
-    return { ok: false, error: "university_name required" }
-  }
 
-  const payload = { ...clean(input), user_id: user.id }
+  const normalized = normalizeApplicationInput(input, { partial: Boolean(input.id) })
+  if (!normalized.ok) return { ok: false, error: normalized.error }
 
   if (input.id) {
-    const { error } = await supabaseAdmin
+    const { data, error } = await supabaseAdmin
       .from("applications")
-      .update(payload)
+      .update(normalized.row)
       .eq("id", input.id)
       .eq("user_id", user.id)
+      .select("*")
+      .maybeSingle()
     if (error) return { ok: false, error: error.message }
+    if (!data) return { ok: false, error: "Заявка не найдена" }
     revalidatePath("/applications")
-    return { ok: true, id: input.id }
+    return { ok: true, id: input.id, application: data as Application }
   }
 
   const { data, error } = await supabaseAdmin
     .from("applications")
-    .insert(payload)
-    .select("id")
+    .insert({ ...normalized.row, user_id: user.id })
+    .select("*")
     .single()
 
   if (error) return { ok: false, error: error.message }
   revalidatePath("/applications")
-  return { ok: true, id: data.id as string }
+  return { ok: true, id: data.id as string, application: data as Application }
 }
 
 export async function bulkInsertApplications(
@@ -125,7 +82,11 @@ export async function bulkInsertApplications(
   const valid = inputs.filter((i) => i.university_name?.trim()).slice(0, 20)
   if (valid.length === 0) return { ok: true, inserted: 0 }
 
-  const rows = valid.map((i) => ({ ...clean(i), user_id: user.id }))
+  // Rows with an unparseable deadline are skipped rather than saved with a silent NULL
+  const rows = valid
+    .map((i) => normalizeApplicationInput(i))
+    .flatMap((r) => (r.ok ? [{ ...r.row, user_id: user.id }] : []))
+  if (rows.length === 0) return { ok: false, inserted: 0, error: "Ни одна строка не прошла проверку дат" }
   const { data, error } = await supabaseAdmin
     .from("applications")
     .insert(rows)

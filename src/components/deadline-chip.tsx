@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils"
 import { daysUntil, deadlineUrgency, URGENCY_STYLES } from "@/lib/applications/types"
+import { formatIsoDate } from "@/lib/dates"
 
 /**
  * Color-coded deadline chip (F-4 from TZ_FULLSTACK.md).
@@ -34,7 +35,8 @@ export function DeadlineChip({
   const urgency = deadlineUrgency(iso)
   const styles = URGENCY_STYLES[urgency]
 
-  const date = new Date(iso).toLocaleDateString("ru-RU", { day: "numeric", month: "short" })
+  // Calendar date, not a timestamp — must not shift a day west of Greenwich (P0-04)
+  const date = formatIsoDate(iso, { day: "numeric", month: "short" })
 
   return (
     <span className={cn("inline-flex items-center gap-1.5 font-mono", className)}>

@@ -8,6 +8,12 @@ import {
   type Application,
 } from "@/lib/applications/types"
 
+function localIso(d: Date): string {
+  // Calendar date in the LOCAL zone — toISOString() would give the UTC date, which is
+  // yesterday for the first hours of the day east of Greenwich (the app compares local dates).
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+}
+
 function mkApp(over: Partial<Application> = {}): Application {
   return {
     id: "id-" + Math.random().toString(36).slice(2),
@@ -40,7 +46,7 @@ describe("daysUntil", () => {
   it("returns ≤1 for today (TZ-tolerant)", () => {
     // The implementation mixes UTC ISO and local midnight, which means
     // "today" can map to 0 or 1 depending on the runner's timezone.
-    const today = new Date().toISOString().slice(0, 10)
+    const today = localIso(new Date())
     const v = daysUntil(today)
     expect(v).not.toBeNull()
     expect(v).toBeGreaterThanOrEqual(0)
@@ -48,21 +54,21 @@ describe("daysUntil", () => {
   })
 
   it("returns ≥1 for tomorrow", () => {
-    const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10)
+    const tomorrow = localIso(new Date(Date.now() + 86_400_000))
     const v = daysUntil(tomorrow) ?? -999
     expect(v).toBeGreaterThanOrEqual(1)
     expect(v).toBeLessThanOrEqual(2)
   })
 
   it("returns ≤0 for yesterday", () => {
-    const yesterday = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10)
+    const yesterday = localIso(new Date(Date.now() - 86_400_000))
     const v = daysUntil(yesterday) ?? 999
     expect(v).toBeLessThanOrEqual(0)
     expect(v).toBeGreaterThanOrEqual(-1)
   })
 
   it("returns ~365 for one year out", () => {
-    const oneYear = new Date(Date.now() + 365 * 86_400_000).toISOString().slice(0, 10)
+    const oneYear = localIso(new Date(Date.now() + 365 * 86_400_000))
     const v = daysUntil(oneYear) ?? 0
     expect(Math.abs(v - 365)).toBeLessThan(2)
   })
@@ -104,9 +110,9 @@ describe("summarizeApplications", () => {
 
   it("picks soonest future deadline", () => {
     const today = new Date()
-    const tomorrow = new Date(today.getTime() + 86_400_000).toISOString().slice(0, 10)
-    const nextWeek = new Date(today.getTime() + 7 * 86_400_000).toISOString().slice(0, 10)
-    const yesterday = new Date(today.getTime() - 86_400_000).toISOString().slice(0, 10)
+    const tomorrow = localIso(new Date(today.getTime() + 86_400_000))
+    const nextWeek = localIso(new Date(today.getTime() + 7 * 86_400_000))
+    const yesterday = localIso(new Date(today.getTime() - 86_400_000))
 
     const apps = [
       mkApp({ deadline: nextWeek }),

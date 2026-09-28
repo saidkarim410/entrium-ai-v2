@@ -8,11 +8,17 @@
 import { describe, it, expect } from "vitest"
 import { daysUntil, deadlineUrgency } from "@/lib/applications/types"
 
+function localIso(d: Date): string {
+  // Calendar date in the LOCAL zone — toISOString() would give the UTC date, which is
+  // yesterday for the first hours of the day east of Greenwich (the app compares local dates).
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+}
+
 function isoDaysFromNow(days: number): string {
   const d = new Date()
   d.setHours(0, 0, 0, 0)
   d.setDate(d.getDate() + days)
-  return d.toISOString().slice(0, 10)
+  return localIso(d)
 }
 
 describe("daysUntil", () => {

@@ -19,7 +19,7 @@ export const maxDuration = 120
 
 const requestSchema = z.object({
   tool: z.enum([
-    "profile", "analyzer", "tracker", "essay",
+    "profile", "analyzer", "tracker", "essay", "essay_analyze", "essay_rewrite",
     "humanizer", "interview", "scholarship", "university",
     "recommendation", "cv", "cost", "reviewer", "counselor",
   ]) satisfies z.ZodType<ToolKey>,
