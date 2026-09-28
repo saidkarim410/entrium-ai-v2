@@ -319,9 +319,9 @@ export function matchProgram(program: Program, f: ApplicantFilters): ProgramMatc
         conditions = true
         reasons.push(`требуется ${exam} — в профиле нет результата`)
       }
-    } else if (/TOLC|IMAT|TESTDAF|DSH|SELECTIVITY|ENTRANCE/.test(e)) {
+    } else if (/TOLC|IMAT|TESTDAF|DSH|SELECTIVITY|ENTRANCE|\bTEST\b|VPI|FSP|STUDIENKOLLEG/.test(e)) {
       conditions = true
-      reasons.push(`требуется вступительный тест ${exam}`)
+      reasons.push(`требуется вступительный тест: ${exam}`)
     }
   }
 

@@ -9,7 +9,7 @@ import { getCurrentUser } from "@/lib/supabase/server"
 import { checkUsage, recordUsage, releaseReservation, settleBonusAfterCall } from "@/lib/rate-limit"
 import { buildTemporalBlock } from "@/lib/ai/temporal"
 import { getApplicantProfile } from "@/lib/applicant/actions"
-import { outputBudgetFor } from "@/lib/agent/run-step"
+import { outputBudgetFor, retryInstruction, MAX_STEP_OUTPUT_TOKENS } from "@/lib/agent/run-step"
 import { saveToolRun } from "@/lib/applicant/actions"
 import { getLanguageInstruction } from "@/lib/ai/language"
 
@@ -91,24 +91,42 @@ export async function POST(req: Request) {
   const startTime = Date.now()
 
   try {
-    const result = await generateText({
+    // SECURITY (H5): always cap output server-side. Free gets the per-tool budget
+    // (a 12-month tracker plan never fit in the old 2048); pro may opt higher via
+    // max_tokens up to 16k.
+    let budget = usage.tier === "pro" ? Math.min(max_tokens ?? 8000, 16000) : outputBudgetFor(tool)
+    let prompt = userMessage
+    let result = await generateText({
       model,
       abortSignal: req.signal, // M2: stop billing tokens if the client disconnects
       system: systemPrompt,
-      messages: [{ role: "user", content: userMessage }],
-      // SECURITY (H5): always cap output server-side. Free gets the per-tool budget
-      // (a 12-month tracker plan never fit in the old 2048); pro may opt higher via
-      // max_tokens up to 16k.
-      maxOutputTokens:
-        usage.tier === "pro" ? Math.min(max_tokens ?? 8000, 16000) : outputBudgetFor(tool),
+      messages: [{ role: "user", content: prompt }],
+      maxOutputTokens: budget,
     })
+    const totalUsage = { input: result.usage?.inputTokens ?? 0, output: result.usage?.outputTokens ?? 0 }
 
-    // P0-01: a response cut off by the token limit is not a result — don't charge, don't save.
+    // P0-01: a response cut off by the token limit is not a result. Retry ONCE with a
+    // compaction instruction and a larger budget (same policy as agent steps).
+    if (result.finishReason === "length" && !req.signal.aborted) {
+      console.warn(`ai route truncated (attempt 1): tool=${tool} tier=${usage.tier} out=${totalUsage.output}`)
+      budget = Math.min(Math.round(budget * 1.5), MAX_STEP_OUTPUT_TOKENS)
+      prompt = userMessage + retryInstruction("truncated", tool)
+      result = await generateText({
+        model,
+        abortSignal: req.signal,
+        system: systemPrompt,
+        messages: [{ role: "user", content: prompt }],
+        maxOutputTokens: budget,
+      })
+      totalUsage.input += result.usage?.inputTokens ?? 0
+      totalUsage.output += result.usage?.outputTokens ?? 0
+    }
+
     if (result.finishReason === "length") {
       await releaseReservation(user.id)
-      console.warn(`ai route truncated: tool=${tool} tier=${usage.tier} out=${result.usage?.outputTokens}`)
+      console.warn(`ai route truncated (attempt 2): tool=${tool} tier=${usage.tier} out=${totalUsage.output}`)
       return Response.json(
-        { error: "truncated", message: "Ответ не поместился в лимит длины. Попробуй ещё раз — запрос не списан." },
+        { error: "truncated", message: "Ответ не поместился в лимит длины даже в сжатом виде. Сузь запрос и попробуй ещё раз — запрос не списан." },
         { status: 502 }
       )
     }
@@ -117,8 +135,8 @@ export async function POST(req: Request) {
       userId: user.id,
       tool,
       model: modelId,
-      inputTokens: result.usage?.inputTokens ?? 0,
-      outputTokens: result.usage?.outputTokens ?? 0,
+      inputTokens: totalUsage.input,
+      outputTokens: totalUsage.output,
       costUsd: 0,
     })
 

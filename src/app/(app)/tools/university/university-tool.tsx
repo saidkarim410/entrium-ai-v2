@@ -102,7 +102,7 @@ SAT/ACT: ${form.sat || "не указан"}
 
         <Button onClick={recommend} disabled={loading} className="w-full mt-6 h-12 bg-gold text-background hover:bg-gold-soft font-cinzel">
           {loading
-            ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> AI подбирает из базы 1504 универов...</>
+            ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> AI сверяет профиль с проверенной базой программ...</>
             : <><Sparkles className="h-4 w-4 mr-2" /> Подобрать университеты</>}
         </Button>
 
