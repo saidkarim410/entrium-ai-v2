@@ -67,7 +67,7 @@ describe("run-step — classification (P0-01)", () => {
   })
 
   it("every reason has a human message", () => {
-    for (const reason of ["truncated", "invalid_json", "empty", "aborted", "model_error", "quota"] as const) {
+    for (const reason of ["truncated", "invalid_json", "empty", "aborted", "interrupted", "skipped", "model_error", "quota"] as const) {
       expect(describeStepFailure(reason).length).toBeGreaterThan(10)
     }
   })

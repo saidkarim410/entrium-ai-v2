@@ -199,11 +199,54 @@ export type ProgramMatch = {
   /** Annual funding gap in USD when the budget is known and too small (null = unknown / none) */
   fundingGapUsd: number | null
   /** Which mandatory filters this programme fails (empty = within the request) */
-  outsideRequest: Array<"level" | "country" | "language" | "intake" | "budget">
+  outsideRequest: Array<"level" | "field" | "country" | "language" | "intake" | "budget">
+}
+
+/**
+ * Coarse field of study, derived from free text (programme name or the applicant's
+ * target major). Used so a Computer Science programme is never offered as an
+ * "alternative" to an Economics applicant once the base spans many fields.
+ */
+export type StudyField =
+  | "computer_science"
+  | "engineering"
+  | "economics_business"
+  | "law"
+  | "medicine"
+  | "social_sciences"
+  | "natural_sciences"
+
+const FIELD_PATTERNS: Array<[StudyField, RegExp]> = [
+  ["computer_science", /computer|informati|software|data science|artificial intelligence|\bai\b|\bit\b|information technology|cyber|программир|информатик|компьютер|дата.?сайенс/i],
+  ["engineering", /engineering|mechanical|electrical|civil|aerospace|mechatronic|инженер/i],
+  ["economics_business", /econom|financ|business|management|accounting|marketing|\bbwl\b|\bvwl\b|эконом|финанс|бизнес|менеджмент|бухгалт|маркетинг/i],
+  ["law", /\blaw\b|legal|jurisprud|юрид|правовед/i],
+  ["medicine", /medicine|medical|dentist|pharmac|nursing|медицин|стоматолог|фармац/i],
+  ["social_sciences", /international relations|political|sociolog|psycholog|международные отношения|политолог|социолог|психолог/i],
+  ["natural_sciences", /physics|chemistry|biolog|mathematics|физик|\bхими|биолог|математик/i],
+]
+
+export function fieldOf(text: string | null | undefined): StudyField | null {
+  const t = (text ?? "").trim()
+  if (!t) return null
+  for (const [field, re] of FIELD_PATTERNS) if (re.test(t)) return field
+  return null
+}
+
+export const FIELD_LABELS: Record<StudyField, string> = {
+  computer_science: "IT / Computer Science",
+  engineering: "инженерия",
+  economics_business: "экономика / бизнес / финансы",
+  law: "право",
+  medicine: "медицина",
+  social_sciences: "социальные науки",
+  natural_sciences: "естественные науки",
 }
 
 export type ApplicantFilters = {
   level: ProgramLevel | null
+  /** Coarse target field from the applicant's major (null = unknown → no field filter) */
+  field: StudyField | null
   countries: string[]
   language: string // "en" | "any" | ...
   intakeYear: number | null
@@ -218,6 +261,7 @@ export function filtersFromProfile(p: ApplicantProfile): ApplicantFilters {
   const yearMatch = (p.goals.year ?? "").match(/20\d{2}/)
   return {
     level: normalizeLevel(p.goals.level),
+    field: fieldOf(p.goals.major),
     countries: parseCountries(p.goals.countries),
     language: normalizeLanguage(p.goals.instructionLanguage || "en"),
     intakeYear: yearMatch ? Number(yearMatch[0]) : null,
@@ -256,6 +300,11 @@ export function matchProgram(program: Program, f: ApplicantFilters): ProgramMatc
   if (f.level && program.level !== f.level) {
     outsideRequest.push("level")
     reasons.push(`уровень программы ${program.level}, а цель — ${f.level}`)
+  }
+  const programField = fieldOf(program.program_name)
+  if (f.field && programField && programField !== f.field) {
+    outsideRequest.push("field")
+    reasons.push(`направление программы — ${FIELD_LABELS[programField]}, а цель — ${FIELD_LABELS[f.field]}`)
   }
   if (f.countries.length > 0 && !f.countries.includes(program.country)) {
     outsideRequest.push("country")
@@ -320,12 +369,13 @@ export function matchProgram(program: Program, f: ApplicantFilters): ProgramMatc
   const exams = program.required_exams ?? []
   for (const exam of exams) {
     const e = exam.toUpperCase()
-    if (e === "SAT" || e === "ACT") {
+    // One entry = one requirement; "Bocconi online test or SAT/ACT" is satisfied by a SAT/ACT score
+    if (/\b(SAT|ACT)\b/.test(e)) {
       if (f.sat === null) {
         conditions = true
-        reasons.push(`требуется ${exam} — в профиле нет результата`)
+        reasons.push(`требуется ${exam} — в профиле нет результата SAT/ACT`)
       }
-    } else if (/TOLC|IMAT|TESTDAF|DSH|SELECTIVITY|ENTRANCE|\bTEST\b|VPI|FSP|STUDIENKOLLEG/.test(e)) {
+    } else if (/TOLC|IMAT|TESTDAF|DSH|SELECTIVITY|ENTRANCE|\bTEST\b|VPI|FSP|STUDIENKOLLEG|EXAM|INTERVIEW|ЭКЗАМЕН|ТЕСТ/.test(e)) {
       conditions = true
       reasons.push(`требуется вступительный тест: ${exam}`)
     }
@@ -401,7 +451,9 @@ export function formatProgramsContext(
   const inside = items.filter((i) => i.match.outsideRequest.length === 0)
   // A single deviation (other country / language / intake / budget) is a legitimate alternative;
   // a different degree level is not.
-  const alternatives = items.filter((i) => i.match.outsideRequest.length === 1 && !i.match.outsideRequest.includes("level"))
+  const alternatives = items.filter(
+    (i) => i.match.outsideRequest.length === 1 && !i.match.outsideRequest.includes("level") && !i.match.outsideRequest.includes("field")
+  )
   const header =
     `ПРОВЕРЕННАЯ БАЗА ПРОГРАММ — ЕДИНСТВЕННЫЙ ДОПУСТИМЫЙ ИСТОЧНИК РЕКОМЕНДАЦИЙ.\n` +
     `Фильтры запроса: уровень ${f.level ?? "—"}, страны ${f.countries.join(", ") || "любые"}, язык ${f.language.toUpperCase()}, набор ${f.intakeYear ?? "—"}, бюджет ${f.budgetUsd ? "$" + f.budgetUsd.toLocaleString("en-US") + "/год" + (f.budgetIncludesLiving ? " включая проживание" : "") : "не указан"}.\n` +

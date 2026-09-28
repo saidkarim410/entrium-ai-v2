@@ -26,7 +26,9 @@ const STATUS_CHIP: Record<ProgramMatch["status"], string> = {
 export function ProgramCards({ items }: { items: Array<{ program: Program; match: ProgramMatch }> }) {
   if (!items.length) return null
   const inside = items.filter((i) => i.match.outsideRequest.length === 0)
-  const alternatives = items.filter((i) => i.match.outsideRequest.length > 0 && !i.match.outsideRequest.includes("level"))
+  const alternatives = items.filter(
+    (i) => i.match.outsideRequest.length > 0 && !i.match.outsideRequest.includes("level") && !i.match.outsideRequest.includes("field")
+  )
   return (
     <div className="mt-8 space-y-4">
       <p className="font-mono-label text-[11px] uppercase tracking-wider text-cream-3">

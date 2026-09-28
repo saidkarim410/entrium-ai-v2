@@ -1,5 +1,6 @@
 import { streamText, type LanguageModel } from "ai"
 import type { ToolKey } from "@/lib/ai/prompts"
+import { stripChancePercents, PERCENT_WARNING } from "@/lib/ai/sanitize"
 import { validateTrackerOutput, type TrackerOutput } from "./tracker-parse"
 
 /**
@@ -30,7 +31,7 @@ export function outputBudgetFor(tool: string): number {
   return (STEP_OUTPUT_BUDGET as Record<string, number>)[tool] ?? STEP_OUTPUT_BUDGET.default
 }
 
-export type StepFailReason = "truncated" | "invalid_json" | "empty" | "aborted" | "model_error" | "quota"
+export type StepFailReason = "truncated" | "invalid_json" | "empty" | "aborted" | "interrupted" | "skipped" | "model_error" | "quota"
 
 export type StepClassification =
   | { status: "completed"; text: string; plan?: TrackerOutput; warnings: string[] }
@@ -61,6 +62,10 @@ export function classifyStepResult(params: {
     return { status: "completed", text: JSON.stringify(v.plan), plan: v.plan, warnings: v.warnings }
   }
 
+  if (tool === "analyzer" || tool === "university") {
+    const { text: clean, removed } = stripChancePercents(text)
+    if (removed > 0) return { status: "completed", text: clean, warnings: [PERCENT_WARNING] }
+  }
   return { status: "completed", text, warnings: [] }
 }
 
@@ -196,7 +201,11 @@ export function describeStepFailure(reason: StepFailReason | undefined): string 
     case "empty":
       return "Модель вернула пустой ответ."
     case "aborted":
-      return "Шаг остановлен пользователем."
+      return "Шаг прерван: остановлен кнопкой «Стоп» или страница была закрыта/обновлена."
+    case "interrupted":
+      return "Соединение прервалось до завершения шага (страница закрыта или сервер перезапущен)."
+    case "skipped":
+      return "Не запускался: предыдущий шаг не завершён."
     case "quota":
       return "Закончился дневной лимит запросов."
     case "model_error":

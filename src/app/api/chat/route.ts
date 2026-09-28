@@ -6,7 +6,7 @@ import { SYSTEM_PROMPTS, type ToolKey } from "@/lib/ai/prompts"
 import { buildUniversityContext } from "@/lib/programs/context"
 import { buildScholarshipsContext } from "@/lib/scholarships/context"
 import { getCurrentUser } from "@/lib/supabase/server"
-import { checkUsage, recordUsage, settleBonusAfterCall, REFERRAL_BONUS } from "@/lib/rate-limit"
+import { checkUsage, recordUsage, REFERRAL_BONUS } from "@/lib/rate-limit"
 import { buildTemporalBlock } from "@/lib/ai/temporal"
 import { getApplicantProfile } from "@/lib/applicant/actions"
 import { profileToContextBlock } from "@/lib/applicant/types"
@@ -130,8 +130,6 @@ export async function POST(req: Request) {
         outputTokens: aiUsage?.outputTokens ?? 0,
         costUsd: 0,
       })
-      // Read-only check (calling checkUsage here reserved — and burned — a 2nd request per message)
-      await settleBonusAfterCall(user.id)
       // Оживить агента в 3D-офисе (best-effort, не влияет на чат)
       emitOfficeEvent(tool)
     },

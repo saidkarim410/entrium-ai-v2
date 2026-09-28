@@ -6,12 +6,13 @@ import { supabaseAdmin } from "@/lib/supabase/admin"
 import { checkUsage, recordUsage } from "@/lib/rate-limit"
 import { profileToContextBlock, EMPTY_PROFILE, type ApplicantProfile } from "@/lib/applicant/types"
 import { getLanguageInstruction } from "@/lib/ai/language"
+import { buildTemporalBlock } from "@/lib/ai/temporal"
 
 export const runtime = "nodejs"
 export const maxDuration = 45
 
 const MatchSchema = z.object({
-  match_score: z.number().int().min(0).max(100).describe("Realistic chance applicant gets this scholarship, 0-100"),
+  match_score: z.number().int().min(0).max(100).describe("Fit score 0-100: how well the applicant meets the published criteria (level, citizenship, field, academics, deadline still open). NOT a probability of winning."),
   category: z.enum(["strong", "viable", "stretch"]).describe("strong = profile checks all boxes; viable = competitive; stretch = uphill"),
   verdict: z.string().describe("1-sentence honest verdict"),
   fits: z.array(z.string()).min(2).max(5).describe("Where the applicant fits the criteria — concrete, evidence-based"),
@@ -59,8 +60,9 @@ export async function POST(
   ].filter(Boolean).join("\n")
 
   const system = [
-    "You assess whether a specific applicant has a realistic shot at a specific scholarship.",
-    "Be honest, signal-driven, not encouraging. Match score is your real read of odds, anchored on:",
+    "You assess whether a specific applicant fits a specific scholarship's published criteria.",
+    "Be honest, signal-driven, not encouraging. Match score = fit with the criteria (not a probability of winning), anchored on:",
+    "- Whether the contest is still open for this applicant's intake (use the temporal context below; a past deadline = level of fit 0-10 and say so)",
     "- Citizenship requirements (often hard cutoff)",
     "- Academic threshold (GPA, test scores) vs typical past awardees",
     "- Field of study match",
@@ -76,6 +78,8 @@ export async function POST(
     "next_actions: imperative, deadline-aware. NOT 'work on essay' — instead 'request rec letter from physics teacher by Nov 15'.",
     "",
     profileBlock ? `Applicant context:\n${profileBlock}` : "",
+    "",
+    buildTemporalBlock(applicant),
     "",
     langInstr,
   ].filter(Boolean).join("\n")

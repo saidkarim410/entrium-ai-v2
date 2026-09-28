@@ -6,7 +6,7 @@ import { getTemporalContext, temporalPromptBlock } from "@/lib/ai/temporal"
 import { buildUniversityContext } from "@/lib/programs/context"
 import { buildScholarshipsContext } from "@/lib/scholarships/context"
 import { supabaseAdmin } from "@/lib/supabase/admin"
-import { checkUsage, recordUsage, releaseReservation, settleBonusAfterCall } from "@/lib/rate-limit"
+import { checkUsage, recordUsage, releaseReservation } from "@/lib/rate-limit"
 import { profileToContextBlock, normalizeApplicantProfile } from "@/lib/applicant/types"
 import { applicationsToContextBlock, type Application } from "@/lib/applications/types"
 import { languageInstruction } from "@/lib/ai/language"
@@ -157,12 +157,12 @@ export async function POST(req: Request) {
 
           const userPrompt = step.buildPrompt(applicant, temporal)
 
-          if (step.tool === "university" || step.tool === "scholarship") {
+          if (step.tool === "university" || step.tool === "scholarship" || step.tool === "analyzer") {
             try {
               const ctx =
-                step.tool === "university"
-                  ? await buildUniversityContext(userPrompt, applicant)
-                  : await buildScholarshipsContext(userPrompt, applicant)
+                step.tool === "scholarship"
+                  ? await buildScholarshipsContext(userPrompt, applicant)
+                  : await buildUniversityContext(userPrompt, applicant)
               if (ctx) systemPrompt += asUserData(ctx)
             } catch (err) {
               console.error("Programme/scholarship context failed in tg agent step:", err)
@@ -190,7 +190,6 @@ export async function POST(req: Request) {
               costUsd: 0,
             })
             reservationHeld = false
-            await settleBonusAfterCall(resolved.userId)
             completed += 1
             emit({ type: "step_end", step: stepNum, text: outcome.text, warnings: outcome.warnings })
           } else {

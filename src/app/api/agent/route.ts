@@ -6,7 +6,7 @@ import { getTemporalContext, temporalPromptBlock } from "@/lib/ai/temporal"
 import { buildUniversityContext } from "@/lib/programs/context"
 import { buildScholarshipsContext } from "@/lib/scholarships/context"
 import { getCurrentUser } from "@/lib/supabase/server"
-import { checkUsage, recordUsage, releaseReservation, settleBonusAfterCall } from "@/lib/rate-limit"
+import { checkUsage, recordUsage, releaseReservation } from "@/lib/rate-limit"
 import { getApplicantProfile } from "@/lib/applicant/actions"
 import { profileToContextBlock } from "@/lib/applicant/types"
 import { listApplications } from "@/lib/applications/actions"
@@ -193,12 +193,12 @@ export async function POST(req: Request) {
 
           const userPrompt = stepDef.buildPrompt(applicant, temporal)
 
-          if (stepDef.tool === "university" || stepDef.tool === "scholarship") {
+          if (stepDef.tool === "university" || stepDef.tool === "scholarship" || stepDef.tool === "analyzer") {
             try {
               const ctx =
-                stepDef.tool === "university"
-                  ? await buildUniversityContext(userPrompt, applicant)
-                  : await buildScholarshipsContext(userPrompt, applicant)
+                stepDef.tool === "scholarship"
+                  ? await buildScholarshipsContext(userPrompt, applicant)
+                  : await buildUniversityContext(userPrompt, applicant)
               if (ctx) systemPrompt += asUserData(ctx)
             } catch (err) {
               console.error("Programme/scholarship context failed in agent step:", err)
@@ -228,7 +228,6 @@ export async function POST(req: Request) {
               costUsd: 0,
             })
             reservationHeld = false
-            await settleBonusAfterCall(user.id)
             current = await updateMissionStep(current, user.id, {
               ...record,
               status: "completed",
@@ -258,7 +257,7 @@ export async function POST(req: Request) {
               message: describeStepFailure(outcome.reason),
             })
             if (outcome.reason === "aborted") {
-              current = await failRemainingSteps(current, user.id, "aborted", stepNum + 1)
+              current = await failRemainingSteps(current, user.id, "skipped", stepNum + 1)
               break
             }
           }

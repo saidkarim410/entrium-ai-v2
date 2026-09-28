@@ -8,7 +8,7 @@
  * crash instead of a clean "limit reached" message.
  *
  * This file mocks supabaseAdmin.rpc and exercises every branch of
- * checkUsage / consumeBonus / recordUsage.
+ * checkUsage / releaseReservation / recordUsage.
  */
 import { describe, it, expect, beforeEach, vi } from "vitest"
 
@@ -29,6 +29,8 @@ function makeChain() {
   chain.maybeSingle = maybeSingleMock
   chain.insert = insertMock
   chain.update = updateMock
+  chain.delete = () => chain
+  chain.gte = () => chain
   return chain
 }
 
@@ -39,7 +41,7 @@ vi.mock("@/lib/supabase/admin", () => ({
   },
 }))
 
-const { checkUsage, consumeBonus, recordUsage } = await import("@/lib/rate-limit")
+const { checkUsage, releaseReservation, recordUsage } = await import("@/lib/rate-limit")
 
 beforeEach(() => {
   rpcMock.mockReset()
@@ -130,23 +132,24 @@ describe("checkUsage", () => {
   })
 })
 
-describe("consumeBonus", () => {
-  it("returns the new balance from the atomic decrement", async () => {
-    rpcMock.mockResolvedValueOnce({ data: 2, error: null })
-    const r = await consumeBonus("user-1")
-    expect(r).toBe(2)
+describe("releaseReservation (0029: bonus-funded reservations refund the credit)", () => {
+  it("returns false when there is nothing to release", async () => {
+    maybeSingleMock.mockResolvedValueOnce({ data: null, error: null })
+    expect(await releaseReservation("user-1")).toBe(false)
+    expect(rpcMock).not.toHaveBeenCalled()
   })
 
-  it("returns null when there is no bonus to consume", async () => {
-    rpcMock.mockResolvedValueOnce({ data: null, error: null })
-    const r = await consumeBonus("user-1")
-    expect(r).toBeNull()
+  it("deletes a base-quota reservation without touching the bonus", async () => {
+    maybeSingleMock.mockResolvedValueOnce({ data: { id: 7, bonus_funded: false }, error: null })
+    expect(await releaseReservation("user-1")).toBe(true)
+    expect(rpcMock).not.toHaveBeenCalled()
   })
 
-  it("returns null on RPC error rather than throwing", async () => {
-    rpcMock.mockResolvedValueOnce({ data: null, error: { message: "boom" } })
-    const r = await consumeBonus("user-1")
-    expect(r).toBeNull()
+  it("gives the referral credit back when the released reservation was bonus-funded", async () => {
+    maybeSingleMock.mockResolvedValueOnce({ data: { id: 8, bonus_funded: true }, error: null })
+    rpcMock.mockResolvedValueOnce({ data: 3, error: null })
+    expect(await releaseReservation("user-1")).toBe(true)
+    expect(rpcMock).toHaveBeenCalledWith("refund_bonus", { uid: "user-1" })
   })
 })
 

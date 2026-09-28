@@ -8,8 +8,9 @@ import { buildUniversityContextWithItems } from "@/lib/programs/context"
 import type { Program, ProgramMatch } from "@/lib/programs/types"
 import { buildScholarshipsContext } from "@/lib/scholarships/context"
 import { getCurrentUser } from "@/lib/supabase/server"
-import { checkUsage, recordUsage, releaseReservation, settleBonusAfterCall } from "@/lib/rate-limit"
+import { checkUsage, recordUsage, releaseReservation } from "@/lib/rate-limit"
 import { buildTemporalBlock } from "@/lib/ai/temporal"
+import { stripChancePercents, PERCENT_WARNING } from "@/lib/ai/sanitize"
 import { getApplicantProfile } from "@/lib/applicant/actions"
 import { outputBudgetFor, retryInstruction, MAX_STEP_OUTPUT_TOKENS } from "@/lib/agent/run-step"
 import { saveToolRun } from "@/lib/applicant/actions"
@@ -63,17 +64,20 @@ export async function POST(req: Request) {
   // Matched programme rows are returned to the UI so it can offer actions (P1-03)
   let programs: Array<{ program: Program; match: ProgramMatch }> = []
   let programBaseAvailable = true
-  if (tool === "university" || tool === "scholarship") {
+  if (tool === "university" || tool === "scholarship" || tool === "analyzer") {
     try {
       const applicant = await getApplicantProfile()
       let ctx = ""
-      if (tool === "university") {
+      if (tool === "scholarship") {
+        ctx = await buildScholarshipsContext(userMessage, applicant)
+      } else {
+        // university → cards + actions; analyzer → same verified base, context only
         const r = await buildUniversityContextWithItems(userMessage, applicant)
         ctx = r.context
-        programs = r.items
-        programBaseAvailable = r.available
-      } else {
-        ctx = await buildScholarshipsContext(userMessage, applicant)
+        if (tool === "university") {
+          programs = r.items
+          programBaseAvailable = r.available
+        }
       }
       if (ctx) systemPrompt = `${SYSTEM_PROMPTS[tool]}${DATA_GUARD}${asUserData(ctx)}`
     } catch (err) {
@@ -169,10 +173,20 @@ export async function POST(req: Request) {
       status: "success",
     }).catch((e) => console.error("saveToolRun failed:", e))
 
-    await settleBonusAfterCall(user.id) // read-only; the old checkUsage here double-charged
+    // P0-03 guard: the cheaper model still writes "REACH (10–25%)" now and then
+    let text = result.text
+    let warnings: string[] | undefined
+    if (tool === "analyzer" || tool === "university") {
+      const s = stripChancePercents(text)
+      if (s.removed > 0) {
+        text = s.text
+        warnings = [PERCENT_WARNING]
+      }
+    }
 
     return Response.json({
-      text: result.text,
+      text,
+      warnings,
       programs: tool === "university" ? programs.map(({ program, match }) => ({ program, match })) : undefined,
       program_base_available: tool === "university" ? programBaseAvailable : undefined,
       finish_reason: result.finishReason,

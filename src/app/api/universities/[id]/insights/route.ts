@@ -6,12 +6,13 @@ import { supabaseAdmin } from "@/lib/supabase/admin"
 import { checkUsage, recordUsage } from "@/lib/rate-limit"
 import { profileToContextBlock, EMPTY_PROFILE, type ApplicantProfile } from "@/lib/applicant/types"
 import { getLanguageInstruction } from "@/lib/ai/language"
+import { buildTemporalBlock } from "@/lib/ai/temporal"
 
 export const runtime = "nodejs"
 export const maxDuration = 45
 
 const InsightsSchema = z.object({
-  match_score: z.number().int().min(0).max(100).describe("Estimated match score 0-100 — your realistic odds of admission"),
+  match_score: z.number().int().min(0).max(100).describe("Fit score 0-100: how well the applicant's profile matches this university's selectivity tier and typical requirements. NOT a probability of admission — there is no validated model for that."),
   category: z.enum(["reach", "match", "safety"]).describe("Reach (selective above your level), match (right tier), safety"),
   verdict: z.string().describe("1-sentence honest verdict on whether this uni makes sense for this applicant"),
   strengths: z.array(z.string()).min(2).max(5).describe("Why this applicant is a credible fit — 2-5 short bullets"),
@@ -59,13 +60,16 @@ export async function POST(
 
   const system = [
     "You are a senior admission advisor giving a brutally honest fit-analysis.",
-    "Match score: anchor it on QS rank vs typical applicant profile (e.g. top-50 ≠ realistic for GPA 3.2 / no SAT).",
+    "Match score = fit, not odds: anchor it on QS rank vs typical applicant profile (e.g. top-50 ≠ realistic for GPA 3.2 / no SAT). Never state a percentage chance of admission in text fields.",
+    "Dates: use the temporal context below — every deadline or action date you mention must be in the future relative to today.",
     "Be specific to THIS university — no generic advice.",
     "Weaknesses must be concrete gaps, not platitudes.",
     "Focus areas = imperative actions ('Take SAT Subject Math II', 'Add 1 research project in CS').",
     "If applicant profile is sparse, say so + which fields to fill first.",
     "",
     profileBlock,
+    "",
+    buildTemporalBlock(applicant),
     "",
     langInstr,
   ].join("\n")

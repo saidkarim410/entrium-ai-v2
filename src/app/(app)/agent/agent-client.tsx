@@ -18,6 +18,8 @@ import { cn } from "@/lib/utils"
 
 const ICONS = { Zap, Briefcase, ShieldCheck, Calendar } as const
 const LAST_RUN_KEY = "entrium:agent:lastRunId"
+/** A failed/partial mission is offered for retry on reload for this long. */
+const RESTORE_WINDOW_MS = 24 * 60 * 60 * 1000
 
 type StepStatus = "pending" | "running" | "completed" | "failed"
 
@@ -116,6 +118,8 @@ export function AgentClient({
   const [restoring, setRestoring] = useState(true)
   const [planSaved, setPlanSaved] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
+  // Set once the user starts a mission — a slow restore must not overwrite it.
+  const startedRef = useRef(false)
 
   const isRunning = run?.status === "running"
 
@@ -139,7 +143,22 @@ export function AgentClient({
         const res = await fetch(`/api/agent/runs/${id}`, { cache: "no-store" })
         if (res.ok) {
           const data = (await res.json()) as { run: MissionRunRecord }
-          if (!cancelled && data.run) setRun(fromRecord(data.run))
+          // Only an interrupted or recently failed mission is worth putting back on
+          // screen. A completed run belongs to History — restoring yesterday's result
+          // as the "current mission" (found by the manual regression run) is confusing,
+          // especially when the prompts have changed since. An explicit ?run= link
+          // always shows the run.
+          const rec = data.run
+          const ageMs = rec ? Date.now() - new Date(rec.updatedAt || rec.createdAt).getTime() : Infinity
+          const worthRestoring =
+            Boolean(initialRunId) ||
+            rec?.status === "running" ||
+            ((rec?.status === "partial" || rec?.status === "failed") && ageMs < RESTORE_WINDOW_MS)
+          if (!rec || !worthRestoring) {
+            rememberRun(null)
+          } else if (!cancelled && !startedRef.current) {
+            setRun(fromRecord(rec))
+          }
         } else if (res.status === 404) {
           rememberRun(null)
         }
@@ -323,6 +342,7 @@ export function AgentClient({
       return
     }
 
+    startedRef.current = true
     setRun({
       runId: null,
       missionId: mission.id,

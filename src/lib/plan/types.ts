@@ -124,12 +124,29 @@ export function planProgress(tasks: PlanTask[], todayIso: string): PlanProgress 
 }
 
 /** Group by month label preserving plan order (undated/manual tasks last). */
+const MONTHS_RU = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"]
+
+/** "2027-01" (tasks added from an official deadline) → "Январь 2027", same style as tracker months. */
+function monthGroupLabel(key: string): string {
+  const m = key.match(/^(\d{4})-(\d{2})$/)
+  return m ? `${MONTHS_RU[Number(m[2]) - 1] ?? m[2]} ${m[1]}` : key
+}
+
 export function groupTasksByMonth(tasks: PlanTask[]): Array<{ label: string; tasks: PlanTask[] }> {
+  // Earliest due date first, then the tracker's own order. (The previous comparator
+  // returned a position difference for a > b, which is not a consistent ordering and
+  // put a January group between September and October in the 2026-09-28 run.)
+  const sorted = [...tasks].sort((a, b) => {
+    const da = a.due_date ?? "9999"
+    const db = b.due_date ?? "9999"
+    if (da !== db) return da < db ? -1 : 1
+    return a.position - b.position
+  })
   const groups = new Map<string, PlanTask[]>()
-  for (const t of [...tasks].sort((a, b) => (a.due_date ?? "9999") < (b.due_date ?? "9999") ? -1 : a.position - b.position)) {
+  for (const t of sorted) {
     const key = t.month_label ?? (t.due_date ? t.due_date.slice(0, 7) : "Без даты")
     if (!groups.has(key)) groups.set(key, [])
     groups.get(key)!.push(t)
   }
-  return Array.from(groups.entries()).map(([label, list]) => ({ label, tasks: list }))
+  return Array.from(groups.entries()).map(([key, list]) => ({ label: monthGroupLabel(key), tasks: list }))
 }

@@ -56,6 +56,7 @@ export default async function ScholarshipDetailPage({ params }: { params: Promis
           .select("id, name, provider, country, level, amount_usd, full_funding, deadline, url, description, requirements")
           .eq("country", sch.country)
           .neq("id", sch.id)
+          .neq("status", "archived") // merged duplicates (0028) must not resurface as "similar"
           .order("amount_usd", { ascending: false, nullsFirst: false })
           .limit(5)
       ).data ?? []) as never

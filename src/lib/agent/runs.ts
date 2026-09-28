@@ -108,7 +108,7 @@ export async function getMissionRun(runId: string, userId: string): Promise<Miss
   if (stale) {
     const steps = mission.steps.map((s): MissionStepRecord =>
       s.status === "running" || s.status === "pending"
-        ? { ...s, status: "failed", reason: "model_error", detail: "interrupted" }
+        ? { ...s, status: "failed", reason: s.status === "running" ? "interrupted" : "skipped" }
         : s
     )
     const fixed: MissionRunRecord = { ...mission, id: data.id as string, steps, status: missionStatusFrom(steps) }

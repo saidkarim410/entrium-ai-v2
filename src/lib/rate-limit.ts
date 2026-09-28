@@ -92,7 +92,7 @@ export async function getUsageStatus(userId: string): Promise<UsageStatus> {
 export async function releaseReservation(userId: string): Promise<boolean> {
   const { data: reserved } = await supabaseAdmin
     .from("usage_events")
-    .select("id")
+    .select("id, bonus_funded")
     .eq("user_id", userId)
     .eq("tool", "__reserved__")
     .gte("created_at", utcDayStartIso())
@@ -101,19 +101,10 @@ export async function releaseReservation(userId: string): Promise<boolean> {
     .maybeSingle()
   if (!reserved?.id) return false
   const { error } = await supabaseAdmin.from("usage_events").delete().eq("id", reserved.id)
-  return !error
-}
-
-/**
- * After a successful AI call on the free tier: if the daily quota is now exhausted
- * and the user has referral bonus credits, spend one. Read-only check — does NOT
- * reserve another request.
- */
-export async function settleBonusAfterCall(userId: string): Promise<void> {
-  const status = await getUsageStatus(userId)
-  if (status.tier === "free" && status.remaining === 0 && status.bonus > 0) {
-    await consumeBonus(userId)
-  }
+  if (error) return false
+  // A reservation paid with a referral credit (0029) gives the credit back too.
+  if (reserved.bonus_funded) await supabaseAdmin.rpc("refund_bonus", { uid: userId })
+  return true
 }
 
 /**
@@ -160,16 +151,6 @@ export async function recordUsage(params: {
   }
 
   await supabaseAdmin.from("usage_events").insert({ user_id: params.userId, ...row })
-}
-
-/**
- * Atomic bonus consumption. Returns the new balance, or null if there
- * was no bonus to consume (so caller knows to fall back to free quota).
- */
-export async function consumeBonus(userId: string): Promise<number | null> {
-  const { data, error } = await supabaseAdmin.rpc("try_consume_bonus", { uid: userId })
-  if (error) return null
-  return typeof data === "number" ? data : null
 }
 
 /**

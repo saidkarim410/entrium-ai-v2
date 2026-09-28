@@ -7,12 +7,15 @@ describe("rate-limit — computeRemaining (mirror of migration 0023)", () => {
     expect(s).toMatchObject({ allowed: true, remaining: FREE_DAILY_LIMIT, tier: "free", limit: FREE_DAILY_LIMIT })
   })
 
-  it("bonus EXTENDS the allowance instead of reducing it", () => {
+  it("bonus EXTENDS the allowance instead of reducing it (0029: base usage + separate bonus balance)", () => {
     const s = computeRemaining({ tier: "free", proUntil: null, usedToday: FREE_DAILY_LIMIT, bonus: 2 })
     expect(s.allowed).toBe(true)
     expect(s.remaining).toBe(0)
     expect(s.bonus).toBe(2)
-    const exhausted = computeRemaining({ tier: "free", proUntil: null, usedToday: FREE_DAILY_LIMIT + 2, bonus: 2 })
+    // bonus-funded calls decrement the bonus and are NOT counted in usedToday
+    const lastCredit = computeRemaining({ tier: "free", proUntil: null, usedToday: FREE_DAILY_LIMIT, bonus: 1 })
+    expect(lastCredit.allowed).toBe(true)
+    const exhausted = computeRemaining({ tier: "free", proUntil: null, usedToday: FREE_DAILY_LIMIT, bonus: 0 })
     expect(exhausted.allowed).toBe(false)
     expect(exhausted.reason).toBe("limit_reached")
   })

@@ -152,7 +152,7 @@ export default async function DashboardPage() {
           <StatCard
             label={usage.tier === "pro" ? "План" : "Запросы"}
             value={usage.tier === "pro" ? "Pro" : `${usage.remaining}/${usage.limit ?? FREE_DAILY_LIMIT}`}
-            sub={profile.bonus_credits ? `+${profile.bonus_credits} bonus` : ""}
+            sub={usage.tier === "pro" ? "" : `осталось сегодня${usage.bonus ? ` · +${usage.bonus} бонусных` : ""}`}
             icon={usage.tier === "pro" ? Crown : Zap}
             highlight={usage.tier === "pro"}
             href="/pricing"

@@ -17,7 +17,12 @@ export type UsageStatus = {
   reason?: "limit_reached"
 }
 
-/** Remaining free requests given today's usage. Bonus credits EXTEND the limit. */
+/**
+ * Remaining free requests given today's BASE usage (bonus-funded calls are not
+ * counted — they already decremented `bonus`, see migration 0029). A referral
+ * credit is spent only when the base quota is exhausted, so `remaining + bonus`
+ * is exactly what the user can still run today.
+ */
 export function computeRemaining(params: {
   tier: string | null | undefined
   proUntil: string | null | undefined
@@ -33,6 +38,6 @@ export function computeRemaining(params: {
     params.tier === "pro" && (!params.proUntil || new Date(params.proUntil).getTime() > nowMs)
   if (isPro) return { allowed: true, remaining: 2147483647, tier: "pro", bonus, limit }
   const remaining = Math.max(0, limit - params.usedToday)
-  const allowed = params.usedToday < limit + bonus
+  const allowed = params.usedToday < limit || bonus > 0
   return { allowed, remaining, tier: "free", bonus, limit, reason: allowed ? undefined : "limit_reached" }
 }
