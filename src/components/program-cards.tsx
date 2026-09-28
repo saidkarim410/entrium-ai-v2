@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { upsertApplication } from "@/lib/applications/actions"
 import { addPlanTask } from "@/lib/plan/actions"
+import { logEvent } from "@/lib/analytics/actions"
 import { MATCH_LABELS, type Program, type ProgramMatch } from "@/lib/programs/types"
 import { formatIsoDate } from "@/lib/dates"
 import { ExternalLink, FilePlus2, CalendarPlus, Check } from "lucide-react"
@@ -73,6 +74,7 @@ function ProgramCard({ program: p, match: m, alternative }: { program: Program; 
         return
       }
       setDrafted(true)
+      void logEvent("program_draft_created", { country: p.country, status: m.status, has_deadline: Boolean(officialDeadline) })
       toast.success("Черновик заявки создан — раздел «Заявки»")
     })
   }
@@ -93,6 +95,7 @@ function ProgramCard({ program: p, match: m, alternative }: { program: Program; 
         return
       }
       setPlanned(true)
+      void logEvent("program_deadline_saved", { country: p.country, kind: officialDeadline ? "official" : "estimate" })
       toast.success("Добавлено в план")
     })
   }

@@ -4,6 +4,7 @@ import {
   Activity, Mail, HeartPulse, LogOut, ChevronRight,
   GraduationCap,
   Coins,
+  Filter,
 } from "lucide-react"
 import { requireAdminPage } from "@/lib/admin/auth"
 import { logoutAction } from "@/app/(auth)/actions"
@@ -38,6 +39,7 @@ const NAV_GROUPS: Array<{
       { href: "/admin/runs", label: "AI runs (история)", icon: Bot },
       { href: "/admin/programs", label: "Программы (база)", icon: GraduationCap },
       { href: "/admin/costs", label: "Себестоимость AI", icon: Coins },
+      { href: "/admin/funnel", label: "Воронка", icon: Filter },
       { href: "/admin/broadcasts", label: "Рассылки", icon: Send },
       { href: "/admin/email-preview", label: "Email превью", icon: Mail },
     ],

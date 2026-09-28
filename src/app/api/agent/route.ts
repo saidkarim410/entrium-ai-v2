@@ -22,6 +22,7 @@ import {
 } from "@/lib/agent/runs"
 import { createNotification } from "@/lib/notifications/actions"
 import { getLanguageInstruction } from "@/lib/ai/language"
+import { trackEvent } from "@/lib/analytics/events"
 
 export const runtime = "nodejs"
 export const maxDuration = 300 // up to 5 minutes for full pipeline
@@ -126,6 +127,7 @@ export async function POST(req: Request) {
 
   if (!run) {
     run = await createMissionRun(user.id, mission, { model: modelId, promptVersion: PROMPT_VERSION })
+    trackEvent(user.id, "mission_started", { mission: mission.id, tier: initialUsage.tier })
     if (!run) {
       await releaseReservation(user.id)
       return Response.json({ error: "run_create_failed" }, { status: 500 })
@@ -282,6 +284,11 @@ export async function POST(req: Request) {
           }).catch((e) => console.error("agent_done notification failed:", e))
         }
 
+        trackEvent(
+          user.id,
+          current.status === "completed" ? "mission_completed" : current.status === "partial" ? "mission_partial" : "mission_failed",
+          { mission: current.missionId, retry: isRetry, steps: current.steps.length, failed: current.steps.filter((s) => s.status === "failed").length }
+        )
         emit({ type: "done", status: current.status, runId: current.id })
       } catch (err) {
         console.error("Agent pipeline error:", err)

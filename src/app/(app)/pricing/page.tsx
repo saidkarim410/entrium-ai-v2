@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 import { getCurrentProfile } from "@/lib/supabase/server"
 import { stripeEnabled } from "@/lib/env"
 import { PricingClient } from "./pricing-client"
+import { trackEvent } from "@/lib/analytics/events"
 
 export const dynamic = "force-dynamic"
 
@@ -12,6 +13,7 @@ export default async function PricingPage() {
 
   const enabled = stripeEnabled()
   const isPro = profile.tier === "pro"
+  trackEvent(profile.id, "pricing_viewed", { tier: profile.tier, stripe_enabled: enabled })
 
   return (
     <>

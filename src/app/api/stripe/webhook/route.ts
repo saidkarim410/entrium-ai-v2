@@ -2,6 +2,7 @@ import type Stripe from "stripe"
 import { getStripe, STRIPE_METADATA_USER_ID } from "@/lib/stripe"
 import { stripeEnabled, env } from "@/lib/env"
 import { supabaseAdmin } from "@/lib/supabase/admin"
+import { trackEvent } from "@/lib/analytics/events"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -173,9 +174,11 @@ async function syncSubscription(sub: Stripe.Subscription) {
   if (isActive) {
     update.tier = "pro"
     if (proUntilIso) update.pro_until = proUntilIso
+    trackEvent(userId, "subscription_activated", { status: sub.status }, "server")
   } else if (sub.status === "canceled" || sub.status === "incomplete_expired") {
     update.tier = "free"
     update.pro_until = null
+    trackEvent(userId, "subscription_canceled", { status: sub.status }, "server")
   }
 
   await supabaseAdmin.from("profiles").update(update).eq("id", userId)

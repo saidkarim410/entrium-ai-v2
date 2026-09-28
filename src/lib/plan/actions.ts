@@ -7,6 +7,7 @@ import { todayIso } from "@/lib/ai/temporal"
 import { parseDateInput } from "@/lib/dates"
 import { validateTrackerOutput } from "@/lib/agent/tracker-parse"
 import { getMissionRun } from "@/lib/agent/runs"
+import { trackEvent } from "@/lib/analytics/events"
 import { tasksFromTrackerPlan, type NewPlanTask, type PlanTask, type TaskStatus } from "./types"
 
 /**
@@ -74,6 +75,7 @@ export async function savePlanFromRun(runId: string): Promise<Result<{ inserted:
 
   const rows = tasksFromTrackerPlan(validated.plan, { source: "agent", sourceRunId: runId, todayIso: today })
   const res = await insertTasks(user.id, rows)
+  if (res.ok) trackEvent(user.id, "plan_saved", { source: "agent", tasks: res.inserted })
   return res.ok ? { ok: true, inserted: res.inserted, already: false } : res
 }
 
@@ -85,7 +87,9 @@ export async function savePlanFromTracker(planJson: string): Promise<Result<{ in
   const today = todayIso()
   const validated = validateTrackerOutput(planJson, { todayIso: today })
   if (!validated.ok) return { ok: false, error: `plan_invalid:${validated.reason}` }
-  return insertTasks(user.id, tasksFromTrackerPlan(validated.plan, { source: "tracker", todayIso: today }))
+  const res = await insertTasks(user.id, tasksFromTrackerPlan(validated.plan, { source: "tracker", todayIso: today }))
+  if (res.ok) trackEvent(user.id, "plan_saved", { source: "tracker", tasks: res.inserted })
+  return res
 }
 
 export async function addPlanTask(input: {

@@ -24,7 +24,8 @@ export default async function PlanPage() {
           </p>
         </div>
         <Link href="/tools/tracker" className="text-xs font-mono-label text-gold hover:underline shrink-0">
-          Сгенерировать план →
+          <span className="hidden sm:inline">Сгенерировать план →</span>
+          <span className="sm:hidden">+ План</span>
         </Link>
       </header>
       {!available ? (

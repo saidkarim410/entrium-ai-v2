@@ -2,6 +2,7 @@ import { z } from "zod"
 import { getStripe, STRIPE_METADATA_USER_ID } from "@/lib/stripe"
 import { stripeEnabled, env } from "@/lib/env"
 import { getCurrentUser } from "@/lib/supabase/server"
+import { trackEvent } from "@/lib/analytics/events"
 import { supabaseAdmin } from "@/lib/supabase/admin"
 
 export const runtime = "nodejs"
@@ -24,6 +25,7 @@ export async function POST(req: Request) {
 
   const user = await getCurrentUser()
   if (!user) return Response.json({ error: "unauthorized" }, { status: 401 })
+  trackEvent(user.id, "checkout_started")
 
   const body = await req.json().catch(() => ({}))
   const parsed = schema.safeParse(body)

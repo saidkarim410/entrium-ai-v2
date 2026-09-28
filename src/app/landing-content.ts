@@ -221,7 +221,7 @@ export const LANDING: Record<Locale, LandingCopy> = {
       tag: "FAQ",
       h2: "Frequently asked",
       items: [
-        { q: "How much does it cost?", a: "Free gives you 10 AI requests a day — enough for most students starting out. Pro is for the final 1-2 months before deadlines, when load peaks. Cancel anytime." },
+        { q: "How much does it cost?", a: "Free gives you 3 AI requests a day, forever — enough for most students starting out. Pro is $18/month (unlimited requests, the stronger model, AI Agent) for the final 1-2 months before deadlines, when load peaks. Cancel anytime." },
         { q: "How is this different from ChatGPT?", a: "ChatGPT doesn't know your profile, doesn't remember context across sessions, has no DB of 1500+ universities with QS rankings, and doesn't track deadlines. Here, everything is connected: profile → tools → applications → notifications." },
         { q: "Which model do you use?", a: "Pro — Entrium AI Pro (strongest for academic analysis). Free — Entrium AI (fast, free for you). Voice interview uses real-time speech models. Documents are parsed via the same vision-enabled AI." },
         { q: "What about privacy?", a: "Your profile lives in Supabase Postgres with RLS — only you see it. Documents are parsed in memory and never stored. Essays go through our AI provider under a ZDR (zero-data-retention) policy. Deleting your account deletes everything." },

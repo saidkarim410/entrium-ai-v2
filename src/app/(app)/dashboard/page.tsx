@@ -25,6 +25,8 @@ import {
 import { getUsageStatus, FREE_DAILY_LIMIT } from "@/lib/rate-limit"
 import { formatIsoDate } from "@/lib/dates"
 import { profileCompleteness, missingProfileFields } from "@/lib/applicant/types"
+import { applicationReadiness } from "@/lib/applicant/readiness"
+import { listPlanTasks } from "@/lib/plan/actions"
 import { supabaseAdmin } from "@/lib/supabase/admin"
 import { getT } from "@/lib/i18n/server"
 import { Badge } from "@/components/ui/badge"
@@ -64,11 +66,14 @@ export default async function DashboardPage() {
   if (!applicant._completed) redirect("/onboarding")
 
   const t = await getT()
-  const [usage, apps, recentRuns] = await Promise.all([
+  const [usage, apps, recentRuns, plan] = await Promise.all([
     getUsageStatus(profile.id), // read-only: must NOT reserve a request just to display it
     listApplications(),
     getRecentRuns(profile.id, 5),
+    listPlanTasks(),
   ])
+  // P1-05: "готовность к подаче" is a separate metric from "профиль заполнен"
+  const readiness = applicationReadiness({ profile: applicant, applicationsCount: apps.length, planTasksCount: plan.tasks.length })
 
   const stats = summarizeApplications(apps)
   const completeness = profileCompleteness(applicant)
@@ -162,6 +167,24 @@ export default async function DashboardPage() {
             href="/applications"
             highlight={Boolean(stats.nextDeadline && daysUntil(stats.nextDeadline)! <= 14)}
           />
+        </div>
+
+        {/* ── Readiness to apply (separate from profile completeness) ── */}
+        <div className="rounded-xl border border-border/60 bg-card/30 px-4 py-3 space-y-2">
+          <div className="flex items-center justify-between gap-3">
+            <p className="font-mono-label text-[11px] uppercase tracking-wide text-cream-3">
+              Готовность к подаче · {readiness.score}/{readiness.total}
+            </p>
+            <span className="font-display text-sm">{readiness.percent}%</span>
+          </div>
+          <div className="h-1 rounded-full bg-border/40 overflow-hidden">
+            <div className="h-full bg-gold transition-all" style={{ width: `${readiness.percent}%` }} />
+          </div>
+          {readiness.missing.length > 0 ? (
+            <p className="font-serif text-xs text-cream-2">Не хватает: {readiness.missing.join(" · ")}</p>
+          ) : (
+            <p className="font-serif text-xs text-cream-2">Всё для подачи собрано — осталось выполнить задачи плана.</p>
+          )}
         </div>
 
         {/* ── Agent CTA ───────────────────────────────────────────────── */}

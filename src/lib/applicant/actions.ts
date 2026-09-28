@@ -5,7 +5,8 @@ import { supabaseAdmin } from "@/lib/supabase/admin"
 import { getCurrentUser } from "@/lib/supabase/server"
 import { awardReferralOnCompletion } from "@/lib/referrals/actions"
 import { captureSnapshot } from "@/lib/profile-snapshots/actions"
-import { EMPTY_PROFILE, type ApplicantProfile } from "./types"
+import { EMPTY_PROFILE, profileCompleteness, type ApplicantProfile } from "./types"
+import { trackEvent } from "@/lib/analytics/events"
 
 export async function getApplicantProfile(): Promise<ApplicantProfile> {
   const user = await getCurrentUser()
@@ -144,8 +145,9 @@ export async function saveApplicantProfile(profile: ApplicantProfile): Promise<{
 
   if (error) return { ok: false, error: error.message }
 
-  // First-time completion → award referrer (if any) + notify
+  // First-time completion → award referrer (if any) + notify + funnel event
   if (!wasCompleted) {
+    trackEvent(user.id, "onboarding_completed", { completeness: profileCompleteness(merged) })
     awardReferralOnCompletion(user.id).catch((e) =>
       console.error("awardReferralOnCompletion failed:", e)
     )

@@ -4,6 +4,7 @@ import { useState, useTransition } from "react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { addPlanTask } from "@/lib/plan/actions"
+import { logEvent } from "@/lib/analytics/actions"
 import { CalendarPlus, Check } from "lucide-react"
 
 /**
@@ -48,6 +49,7 @@ export function AddDeadlineToPlan({
         return
       }
       setAdded(true)
+      if (source === "scholarship") void logEvent("scholarship_deadline_saved", { has_deadline: Boolean(dueDate) })
       toast.success("Добавлено в план")
     })
   }

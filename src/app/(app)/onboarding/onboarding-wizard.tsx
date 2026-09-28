@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { saveApplicantProfile, saveOnboardingProgress } from "@/lib/applicant/actions"
+import { logEvent } from "@/lib/analytics/actions"
 import { type ApplicantProfile } from "@/lib/applicant/types"
 import {
   Sparkles, ArrowRight, ArrowLeft, Loader2, Check,
@@ -40,6 +41,11 @@ export function OnboardingWizard({
   source?: string | null
 }) {
   const router = useRouter()
+
+  // Funnel: the wizard was opened (completion is logged server-side on first save)
+  useEffect(() => {
+    void logEvent("onboarding_started")
+  }, [])
   const [step, setStep] = useState(1)
   const [profile, setProfile] = useState<ApplicantProfile>(initial)
   const autofilledSet = new Set(autofilled)
