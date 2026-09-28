@@ -199,7 +199,7 @@ export type ProgramMatch = {
   /** Annual funding gap in USD when the budget is known and too small (null = unknown / none) */
   fundingGapUsd: number | null
   /** Which mandatory filters this programme fails (empty = within the request) */
-  outsideRequest: Array<"country" | "language" | "intake" | "budget">
+  outsideRequest: Array<"level" | "country" | "language" | "intake" | "budget">
 }
 
 export type ApplicantFilters = {
@@ -250,7 +250,13 @@ export function matchProgram(program: Program, f: ApplicantFilters): ProgramMatc
   let conditions = false
   let unknown = false
 
-  // Mandatory request filters (country / language / intake / budget)
+  // Mandatory request filters (level / country / language / intake / budget).
+  // Level is also filtered in SQL, but the matcher must never trust the caller for it:
+  // a bachelor programme is never a match — or an alternative — for a master applicant.
+  if (f.level && program.level !== f.level) {
+    outsideRequest.push("level")
+    reasons.push(`уровень программы ${program.level}, а цель — ${f.level}`)
+  }
   if (f.countries.length > 0 && !f.countries.includes(program.country)) {
     outsideRequest.push("country")
     reasons.push(`страна ${program.country} не входит в запрошенные (${f.countries.join(", ")})`)
@@ -393,7 +399,9 @@ export function formatProgramsContext(
   f: ApplicantFilters
 ): string {
   const inside = items.filter((i) => i.match.outsideRequest.length === 0)
-  const alternatives = items.filter((i) => i.match.outsideRequest.length === 1)
+  // A single deviation (other country / language / intake / budget) is a legitimate alternative;
+  // a different degree level is not.
+  const alternatives = items.filter((i) => i.match.outsideRequest.length === 1 && !i.match.outsideRequest.includes("level"))
   const header =
     `ПРОВЕРЕННАЯ БАЗА ПРОГРАММ — ЕДИНСТВЕННЫЙ ДОПУСТИМЫЙ ИСТОЧНИК РЕКОМЕНДАЦИЙ.\n` +
     `Фильтры запроса: уровень ${f.level ?? "—"}, страны ${f.countries.join(", ") || "любые"}, язык ${f.language.toUpperCase()}, набор ${f.intakeYear ?? "—"}, бюджет ${f.budgetUsd ? "$" + f.budgetUsd.toLocaleString("en-US") + "/год" + (f.budgetIncludesLiving ? " включая проживание" : "") : "не указан"}.\n` +

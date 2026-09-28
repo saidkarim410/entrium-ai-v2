@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase/admin"
 import { FREE_DAILY_LIMIT, computeRemaining, type UsageStatus } from "@/lib/quota"
+import { estimateCostUsd } from "@/lib/ai/pricing"
 
 export { FREE_DAILY_LIMIT, REFERRAL_BONUS, computeRemaining, type UsageStatus } from "@/lib/quota"
 
@@ -130,14 +131,15 @@ export async function recordUsage(params: {
   model: string
   inputTokens: number
   outputTokens: number
-  costUsd: number
+  /** Optional — when omitted or 0 the cost is computed from the model price table */
+  costUsd?: number
 }) {
   const row = {
     tool: params.tool,
     model: params.model,
     input_tokens: params.inputTokens,
     output_tokens: params.outputTokens,
-    cost_usd: params.costUsd,
+    cost_usd: params.costUsd || estimateCostUsd(params.model, params.inputTokens, params.outputTokens),
   }
 
   const { data: reserved } = await supabaseAdmin

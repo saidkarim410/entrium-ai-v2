@@ -19,10 +19,13 @@ function openaiClient() {
 }
 
 // Model IDs centralised so the actual model and the logged `modelId` can never drift.
-// Sonnet bumped 4.5 -> 4.6 (adaptive thinking + 1M context, same price tier).
+// Overridable from the environment so the owner can switch tiers without a deploy
+// (e.g. AI_MODEL_PRO=claude-sonnet-5 — cheaper than 4.6 at $2/$10 vs $3/$15 per 1M):
+//   AI_MODEL_PRO  — Pro tier (default claude-sonnet-4-6)
+//   AI_MODEL_FREE — Free tier (default claude-haiku-4-5)
 export const MODEL_IDS = {
-  sonnet: "claude-sonnet-4-6",
-  haiku: "claude-haiku-4-5",
+  sonnet: process.env.AI_MODEL_PRO?.trim() || "claude-sonnet-4-6",
+  haiku: process.env.AI_MODEL_FREE?.trim() || "claude-haiku-4-5",
 } as const
 
 export const models = {

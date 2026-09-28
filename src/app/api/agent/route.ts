@@ -1,7 +1,7 @@
 import { z } from "zod"
 import { models, MODEL_IDS } from "@/lib/ai"
 import { DATA_GUARD, asUserData } from "@/lib/ai/guard"
-import { SYSTEM_PROMPTS } from "@/lib/ai/prompts"
+import { SYSTEM_PROMPTS, PROMPT_VERSION } from "@/lib/ai/prompts"
 import { getTemporalContext, temporalPromptBlock } from "@/lib/ai/temporal"
 import { buildUniversityContext } from "@/lib/programs/context"
 import { buildScholarshipsContext } from "@/lib/scholarships/context"
@@ -125,7 +125,7 @@ export async function POST(req: Request) {
   const modelId = initialUsage.tier === "pro" ? MODEL_IDS.sonnet : MODEL_IDS.haiku
 
   if (!run) {
-    run = await createMissionRun(user.id, mission)
+    run = await createMissionRun(user.id, mission, { model: modelId, promptVersion: PROMPT_VERSION })
     if (!run) {
       await releaseReservation(user.id)
       return Response.json({ error: "run_create_failed" }, { status: 500 })

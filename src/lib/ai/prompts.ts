@@ -836,6 +836,9 @@ const SUMMER_BASE = `## РОЛЬ: AI-консультант по летним п
 
 ЯЗЫК: Отвечай на языке пользователя (RU/EN/UZ). По умолчанию — русский.`
 
+/** Bump when any system prompt changes — logged with every AI run so quality can be compared per version. */
+export const PROMPT_VERSION = "2026-09-28.1"
+
 export const SYSTEM_PROMPTS = {
   profile: buildKnowledgePrompt(PROFILE_BASE, ["diagnostic", "timeline", "tests", "countries", "mistakes", "finance"]),
   analyzer: buildKnowledgePrompt(ANALYZER_BASE, ["diagnostic", "timeline", "tests", "countries", "finance", "mistakes"]),

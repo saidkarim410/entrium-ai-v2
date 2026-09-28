@@ -63,7 +63,7 @@ export async function findProgramsForProfile(
     .filter((s) => s.match.outsideRequest.length === 0)
     .sort((a, b) => rank[a.match.status] - rank[b.match.status])
   const alternatives = scored
-    .filter((s) => s.match.outsideRequest.length === 1 && s.match.status !== "not_eligible" || (s.match.outsideRequest.length === 1))
+    .filter((s) => s.match.outsideRequest.length === 1 && !s.match.outsideRequest.includes("level"))
     .slice(0, 8)
   const items = [...inside.slice(0, limit), ...alternatives]
 

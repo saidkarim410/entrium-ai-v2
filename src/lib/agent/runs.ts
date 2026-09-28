@@ -44,7 +44,11 @@ function toolRunStatus(status: MissionRunStatus): "pending" | "success" | "error
   return "success"
 }
 
-export async function createMissionRun(userId: string, mission: Mission): Promise<MissionRunRecord | null> {
+export async function createMissionRun(
+  userId: string,
+  mission: Mission,
+  meta: { model?: string; promptVersion?: string } = {}
+): Promise<MissionRunRecord | null> {
   const now = new Date().toISOString()
   const record: Omit<MissionRunRecord, "id"> = {
     missionId: mission.id,
@@ -65,7 +69,13 @@ export async function createMissionRun(userId: string, mission: Mission): Promis
     .insert({
       user_id: userId,
       tool: "counselor",
-      input: { agent_mission: mission.id, mission_title: mission.title, run_version: RUN_VERSION },
+      input: {
+        agent_mission: mission.id,
+        mission_title: mission.title,
+        run_version: RUN_VERSION,
+        model: meta.model ?? null,
+        prompt_version: meta.promptVersion ?? null,
+      },
       output: { text: "", mission: record },
       status: "pending",
       duration_ms: 0,

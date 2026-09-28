@@ -1,7 +1,8 @@
 import { generateText } from "ai"
 import { z } from "zod"
 import { models, MODEL_IDS } from "@/lib/ai"
-import { SYSTEM_PROMPTS, type ToolKey } from "@/lib/ai/prompts"
+import { SYSTEM_PROMPTS, PROMPT_VERSION, type ToolKey } from "@/lib/ai/prompts"
+import { estimateCostUsd } from "@/lib/ai/pricing"
 import { DATA_GUARD, asUserData } from "@/lib/ai/guard"
 import { buildUniversityContextWithItems } from "@/lib/programs/context"
 import type { Program, ProgramMatch } from "@/lib/programs/types"
@@ -153,7 +154,16 @@ export async function POST(req: Request) {
     await saveToolRun({
       userId: user.id,
       tool,
-      input: { user: userMessage.slice(0, 4000) }, // truncate for storage
+      input: {
+        user: userMessage.slice(0, 4000), // truncate for storage
+        // TZ §5 diagnostics: model, prompt version, finish reason, retries, tokens, cost
+        model: modelId,
+        prompt_version: PROMPT_VERSION,
+        finish_reason: result.finishReason,
+        attempts: prompt === userMessage ? 1 : 2,
+        tokens: totalUsage,
+        cost_usd: estimateCostUsd(modelId, totalUsage.input, totalUsage.output),
+      },
       output: result.text,
       durationMs: Date.now() - startTime,
       status: "success",
