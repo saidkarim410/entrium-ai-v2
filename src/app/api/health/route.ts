@@ -1,3 +1,4 @@
+import { MODEL_IDS } from "@/lib/ai"
 import { stripeEnabled, telegramEnabled, emailEnabled } from "@/lib/env"
 
 export const runtime = "nodejs"
@@ -16,6 +17,8 @@ export async function GET() {
     ts: new Date().toISOString(),
     region: process.env.VERCEL_REGION ?? "local",
     commit: (process.env.VERCEL_GIT_COMMIT_SHA ?? "").slice(0, 7) || null,
+    // Active model tiers (env-overridable) — lets ops confirm a model switch without a test call
+    models: { pro: MODEL_IDS.sonnet, free: MODEL_IDS.haiku, background: MODEL_IDS.background },
     runtime: {
       node: process.version,
       env: process.env.NODE_ENV,

@@ -154,8 +154,11 @@ export async function generateForUser(userId: string, tier: "free" | "pro"): Pro
     langInstr,
   ].join("\n")
 
+  // Background job: the cheapest capable tier for everyone (it was the single largest cost
+  // line — 56 of 72 calls in September, on Sonnet for Pro users). Tier no longer matters here.
+  void tier
   const result = await generateObject({
-    model: tier === "pro" ? models.claudeSonnet : models.claudeHaiku,
+    model: models.claudeBackground,
     system,
     schema: SummarySchema,
     messages: [{ role: "user", content: stateBlock }],
@@ -164,7 +167,7 @@ export async function generateForUser(userId: string, tier: "free" | "pro"): Pro
   await recordUsage({
     userId,
     tool: "daily_summary",
-    model: tier === "pro" ? MODEL_IDS.sonnet : MODEL_IDS.haiku,
+    model: MODEL_IDS.background,
     inputTokens: result.usage?.inputTokens ?? 0,
     outputTokens: result.usage?.outputTokens ?? 0,
     costUsd: 0,
