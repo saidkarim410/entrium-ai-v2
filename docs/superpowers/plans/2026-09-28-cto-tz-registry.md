@@ -66,6 +66,10 @@
 
 ---
 
+## Выкладка — 2026-09-28
+
+**В ПРОДЕ.** `fix/cto-tz-2026-09` → `main` (fast-forward до `0a6ce0f`), Vercel production deploy `entrium-ai-v2-q0h13x48q` — Ready за 1 мин 21 с; алиас https://entrium-ai-v2.vercel.app. Превью до этого: `entrium-ai-v2-git-fix-cto-tz-2026-09-…vercel.app` (Vercel Authentication). PR через GitHub-токен создать нельзя (403) — мерж сделан пушем ветки в `main`.
+
 ## Применение к проду — статус 2026-09-28
 
 **ПРИМЕНЕНО 2026-09-28 06:04 UTC.** Владелец выдал Supabase Personal Access Token (хранится только в `.env.local`, `SUPABASE_ACCESS_TOKEN`); миграции 0022–0026 выполнены через Management API скриптом `scripts/apply-migrations.py` (0023 потребовала `drop function` перед сменой типа возврата — исправлено в файле миграции). Проверка: `try_consume_quota` возвращает `daily_limit`, `get_usage_status` есть, таблицы `programs` и `plan_tasks` созданы, у `scholarships` есть `status` (итог: open 55 · closed 81 · needs_review 153). Seed из 9 программ импортирован (`scripts/import-programs.ts`), все `needs_review` — ждут admissions-специалиста. Рекомендация владельцу: отозвать выданный токен после завершения работ (он засветился в чате).
